@@ -1,9 +1,12 @@
 const INDEX_CONFIG = {
+    // use for data dir and log dir isolate
+    isolate: 'testnet',
+
     btc: {
-        network: "testnet",
-        host: "127.0.0.1",
+        network: 'testnet',
+        host: '127.0.0.1',
         auth: {
-            cookie_file: "E:\\data\\testnet\\testnet3\\.cookie",
+            cookie_file: 'E:\\data\\testnet\\testnet3\\.cookie',
             // cookie: username:password
             // username: "",
             // password: ""
@@ -11,15 +14,15 @@ const INDEX_CONFIG = {
     },
 
     ord: {
-        url: "http://127.0.0.1:80",
+        url: 'http://127.0.0.1:80',
     },
 
     db: {
-        mongo_url: "mongodb://localhost:27017",
+        data_dir: 'E:\\data\\testnet\\testnet3',
     },
 
     genesis_block_height: 2543000,
-    token_name: "TTTT",
+    token_name: 'TTTT',
 };
 
 module.exports = INDEX_CONFIG;

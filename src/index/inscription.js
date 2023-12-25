@@ -13,15 +13,25 @@ class InscriptionIndex {
             config.btc.auth,
         );
         this.ord_client = new OrdClient(config.ord.server_url);
-        this.storage = new InscriptionLog(config.db.mongo_url);
+
+        const { ret, dir } = Util.get_data_dir(config);
+        if (ret !== 0) {
+            throw new Error(`failed to get data dir`);
+        }
+
+        this.storage = new InscriptionLog(dir);
         this.current_block_height = 0;
     }
 
     // run forever
     async run() {
-        while (true) {
-            await this.storage.ensure_connection();
+        const { ret: init_ret } = await this.storage.init();
+        if (init_ret !== 0) {
+            console.error(`failed to init inscription log storage`);
+            return;
+        }
 
+        while (true) {
             if (this.current_block_height === 0) {
                 // get latest block height already synced
                 const { ret, height } =
@@ -232,11 +242,17 @@ class InscriptionIndex {
                     return { ret };
                 }
 
-                assert(data.inscriptions.includes(inscription_id), `unmatched inscription id ${data.inscriptions[offset]} !== ${inscription_id}`);
+                assert(
+                    data.inscriptions.includes(inscription_id),
+                    `unmatched inscription id ${data.inscriptions[offset]} !== ${inscription_id}`,
+                );
                 output_utxo = data;
             }
 
-            assert(_.isString(output_utxo.address), `invalid output address ${inscription_id} ${output_utxo.address}`);
+            assert(
+                _.isString(output_utxo.address),
+                `invalid output address ${inscription_id} ${output_utxo.address}`,
+            );
 
             // record inscription
             {
@@ -289,6 +305,7 @@ class InscriptionIndex {
         // check content type at first
         const valid_content_types = [
             'text/plain;charset=utf-8',
+            'text/plain',
             'application/json',
         ];
         if (
@@ -343,7 +360,7 @@ class InscriptionIndex {
         );
 
         if (!this.check_content(content)) {
-            console.debug(`unknown inscription content ${content}`);
+            console.debug(`unknown inscription content  ${JSON.stringify(content)}`);
             return {
                 ret: 0,
                 valid: false,

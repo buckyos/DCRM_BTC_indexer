@@ -1,6 +1,34 @@
 const assert = require('assert');
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
+
+const dbDir = path.join(os.homedir(), '.myapp');
+const dbFilePath = path.join(dbDir, 'mydatabase.sqlite');
 
 class Util {
+    static get_data_dir(config) {
+        let dir = config.db.data_dir
+            ? config.db.data_dir
+            : path.join(os.homedir(), 'dcrm', 'data');
+
+        if (config.isolate) {
+            dir = path.join(dir, config.isolate);
+        }
+        
+        if (!fs.existsSync(dir)) {
+            try {
+                fs.mkdirSync(dir, { recursive: true });
+                console.log(`create data dir ${dir}`);
+            } catch (error) {
+                console.error(`failed to create data dir ${dir}`, error);
+                return { ret: -1, dir: null };
+            }
+        }
+
+        return { ret: 0, dir };
+    }
+
     /**
      *
      * @param {string} id
@@ -45,12 +73,15 @@ class Util {
     }
 
     /**
-     * 
-     * @param {string} sat_point_str 
+     *
+     * @param {string} sat_point_str
      * @returns {ret: number, outpoint: string, offset: number}
      */
     static parse_sat_point(sat_point_str) {
-        assert(_.isString(sat_point_str), `satpoint should be string ${sat_point_str}`);
+        assert(
+            _.isString(sat_point_str),
+            `satpoint should be string ${sat_point_str}`,
+        );
 
         const last_colon_index = sat_point_str.lastIndexOf(':');
         if (last_colon_index === -1) {

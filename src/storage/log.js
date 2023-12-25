@@ -1,115 +1,169 @@
-const MongoClient = require('mongodb').MongoClient;
+const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
+const path = require('path');
 
 class InscriptionLog {
-    constructor(mongo_url) {
+    constructor(data_dir) {
         assert(
-            _.isString(mongo_url),
-            `mongo_url should be string: ${mongo_url}`,
+            typeof data_dir === 'string',
+            `data_dir should be string: ${data_dir}`,
         );
 
-        this.mongo_url = mongo_url;
-        this.mongo_client = null;
-    }
-
-    async ensure_connection() {
-        if (this.mongo_client == null) {
-            const { ret } = await this.connect();
-            if (ret !== 0) {
-                console.error(`failed to connect to mongo`);
-                return { ret };
-            }
-        }
-
-        return { ret: 0 };
-    }
-
-    async connect() {
-        assert(this.mongo_client == null, `mongo_client should be null`);
-        assert(this.db == null, `db should be null`);
-        assert(this.log_collection == null, `log collection should be null`);
-        assert(
-            this.state_collection == null,
-            `state collection should be null`,
-        );
-
-        try {
-            console.log(`Connecting to ${this.mongo_url}`);
-            this.mongo_client = await MongoClient.connect(this.mongo_url);
-            this.db = this.mongo_client.db('inscription_index');
-
-            this.log_collection = this.db.collection('log');
-            await this.log_collection.createIndex(
-                { inscription_id: 1 },
-                { unique: true },
-            );
-
-            this.state_collection = this.db.collection('state');
-            console.log(`Connected to ${this.mongo_url}`);
-
-            return { ret: 0 };
-        } catch (e) {
-            console.error('failed to connect to mongo', e);
-            return { ret: -1 };
-        }
+        this.db_file_path = path.join(data_dir, 'inscriptions.sqlite');
+        this.db = null;
     }
 
     /**
      *
-     * @returns {Promise<{ret: number, height: number}>}
+     * @returns {ret: number}
+     */
+    async init() {
+        assert(this.db == null, `db should be null`);
+
+        return new Promise((resolve, reject) => {
+            assert(this.db == null, `db should be null`);
+            this.db = new sqlite3.Database(this.db_file_path, (err) => {
+                if (err) {
+                    console.error(`failed to connect to sqlite: ${err}`);
+                    resolve({ ret: -1 });
+                    return;
+                }
+
+                console.log(`Connected to ${this.db_file_path}`);
+                this.init_tables().then(({ ret }) => {
+                    resolve({ ret });
+                });
+            });
+        });
+    }
+
+    init_tables() {
+        assert(this.db != null, `db should not be null`);
+
+        return new Promise((resolve, reject) => {
+            this.db.serialize(() => {
+                let has_error = false;
+
+                // Create state table
+                this.db.run(
+                    `CREATE TABLE IF NOT EXISTS state (
+                    name TEXT PRIMARY KEY,
+                    value INTEGER
+                )`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create state table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                            return;
+                        }
+                        console.log(`created state table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
+                // Create inscriptions table
+                this.db.run(
+                    `CREATE TABLE IF NOT EXISTS inscriptions (
+                    block_height INTEGER,
+                    inscription_index INTEGER,
+                    txid TEXT,
+                    inscription_id TEXT PRIMARY KEY,
+                    address TEXT,
+                    output_address TEXT,
+                    content TEXT
+                )`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create inscriptions table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created inscriptions table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
+                // Create index on inscriptions table
+                this.db.run(
+                    `CREATE INDEX IF NOT EXISTS idx_inscription ON inscriptions (inscription_id)`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index on inscriptions table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on inscriptions table`);
+
+                        resolve({ ret: 0 });
+                    },
+                );
+            });
+
+            // resolve({ ret: 0 });
+        });
+    }
+
+    /**
+     *
+     * @returns {ret: number, height: number}
      */
     async get_latest_block_height() {
-        assert(
-            this.state_collection != null,
-            `state collection should not be null`,
-        );
+        assert(this.db != null, `db should not be null`);
 
-        try {
-            const state = await this.state_collection.findOne({
-                name: 'latest_block_height',
-            });
-            return {
-                ret: 0,
-                height: state ? state.value : 0,
-            };
-        } catch (error) {
-            console.error('failed to get latest block height', error);
-            return {
-                ret: -1,
-            };
-        }
+        return new Promise((resolve, reject) => {
+            this.db.get(
+                "SELECT value FROM state WHERE name = 'latest_block_height'",
+                (err, row) => {
+                    if (err) {
+                        console.error('failed to get latest block height', err);
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0, height: row ? row.value : 0 });
+                    }
+                },
+            );
+        });
     }
 
-    /**
-     *
-     * @param {*} block_height
-     * @returns {Promise<{ret: number}>
-     */
     async update_latest_block_height(block_height) {
+        assert(this.db != null, `db should not be null`);
         assert(
             Number.isInteger(block_height) && block_height >= 0,
             'block_height must be a non-negative integer',
         );
-        assert(
-            this.state_collection != null,
-            `state collection should not be null`,
-        );
 
-        try {
-            await this.state_collection.updateOne(
-                { name: 'latest_block_height' },
-                { $set: { value: block_height } },
-                { upsert: true },
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO state (name, value) VALUES ('latest_block_height', ?)`,
+                block_height,
+                (err) => {
+                    if (err) {
+                        console.error(
+                            'failed to update latest block height',
+                            err,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
             );
-            return {
-                ret: 0,
-            };
-        } catch (error) {
-            console.error('failed to update latest block height', error);
-            return {
-                ret: -1,
-            };
-        }
+        });
     }
 
     async log_inscription(
@@ -122,10 +176,6 @@ class InscriptionLog {
         content,
     ) {
         assert(
-            this.log_collection != null,
-            `log collection should not be null`,
-        );
-        assert(
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
@@ -133,37 +183,41 @@ class InscriptionLog {
             Number.isInteger(inscription_index) && inscription_index >= 0,
             `inscription_index should be non-negative integer`,
         );
-        assert(_.isString(txid), `txid should be string`);
-        assert(_.isString(inscription_id), `inscription_id should be string`);
-        assert(_.isString(address), `address should be string`);
-        assert(_.isString(output_address), `output_address should be string`);
+        assert(typeof txid === 'string', `txid should be string`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
+        assert(typeof address === 'string', `address should be string`);
+        assert(
+            typeof output_address === 'string',
+            `output_address should be string`,
+        );
         assert(typeof content === 'object', `content should be object`);
 
-        try {
-            await this.log_collection.updateOne(
-                { inscription_id },
-                {
-                    $set: {
-                        block_height,
-                        inscription_index,
-                        txid,
-                        inscription_id,
-                        address,
-                        output_address,
-                        content,
-                    },
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO inscriptions (block_height, inscription_index, txid, inscription_id, address, output_address, content) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    block_height,
+                    inscription_index,
+                    txid,
+                    inscription_id,
+                    address,
+                    output_address,
+                    JSON.stringify(content),
+                ],
+                (err) => {
+                    if (err) {
+                        console.error('failed to log inscriptions', err);
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
                 },
-                { upsert: true },
             );
-
-            return {
-                ret: 0,
-            };
-        } catch (error) {
-            console.error('failed to log inscription', error);
-            return {
-                ret: -1,
-            };
-        }
+        });
     }
 }
+
+module.exports = { InscriptionLog };
