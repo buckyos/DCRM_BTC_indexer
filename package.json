@@ -13,6 +13,13 @@
     "axios": "^1.6.2",
     "bitcoin-core": "^4.1.0",
     "mongodb": "^6.3.0",
-    "underscore": "^1.13.6"
+    "underscore": "^1.13.6",
+    "koa": "^2.13.1",
+    "koa-bodyparser": "^4.3.0",
+    "koa-cors": "0.0.16",
+    "koa-logger": "^3.2.1",
+    "koa-router": "^10.0.0",
+    "better-sqlite3": "^8.2.0",
+    "log4js": "^6.9.1"
   }
 }
