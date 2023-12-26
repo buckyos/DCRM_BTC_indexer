@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
 
-class InscriptionLog {
+class InscriptionLogStorage {
     constructor(data_dir) {
         assert(
             typeof data_dir === 'string',
@@ -37,7 +37,7 @@ class InscriptionLog {
         });
     }
 
-    init_tables() {
+    async init_tables() {
         assert(this.db != null, `db should not be null`);
 
         return new Promise((resolve, reject) => {
@@ -220,4 +220,4 @@ class InscriptionLog {
     }
 }
 
-module.exports = { InscriptionLog };
+module.exports = { InscriptionLogStorage };
