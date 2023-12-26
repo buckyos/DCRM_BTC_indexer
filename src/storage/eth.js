@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
+const { Util } = require('../util');
 
 class ETHIndexStorage {
     constructor(data_dir) {
@@ -139,6 +140,37 @@ class ETHIndexStorage {
         });
     }
 
+    /**
+     * 
+     * @param {number} block_height 
+     * @returns {ret: number, timestamp: number}
+     */
+    async get_timestamp(block_height) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof block_height === 'number',
+            `block_height should be number`,
+        );
+        assert(block_height >= 0, `block_height should be greater than 0`);
+
+        return new Promise((resolve, reject) => {
+            this.db.get(
+                `SELECT timestamp FROM blocks WHERE block_height = ?`,
+                block_height,
+                (err, row) => {
+                    if (err) {
+                        console.error(
+                            `failed to get timestamp: ${block_height} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0, timestamp: row ? row.timestamp : 0 });
+                    }
+                },
+            );
+        });
+    }
+
     async update_latest_block_height(block_height) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -165,7 +197,12 @@ class ETHIndexStorage {
         });
     }
 
-    // get point for hash before block_height(include block_height)
+    /**
+     * get point for hash before block_height(include block_height)
+     * @param {number} block_height 
+     * @param {string} hash 
+     * @returns {ret: number, point: number}
+     */
     async get_history_point(block_height, hash) {
         assert(this.db != null, `db should not be null`);
         assert(

@@ -116,24 +116,66 @@ class Util {
     }
 
     /**
+     * try to parse hash string as base58 or hex
+     * @param {string} str
+     * @returns {Uint8Array}
+     */
+    static parse_hash_str(hash_str) {
+        // Try to decode as base58
+        try {
+            return bs58.decode(hash_str);
+        } catch (err) {
+            console.warn(
+                `hash str tot a base58 string, now try hex ${hash_str} ${err}`,
+            );
+        }
+
+        // Try to decode as hex
+        try {
+            if (hash_str.startsWith('0x') || hash_str.startsWith('0X')) {
+                hash_str = hash_str.slice(2);
+            }
+            
+            return new Uint8Array(Buffer.from(hash_str, 'hex'));
+        } catch (err) {
+            console.warn(`hash not a hex string ${hash_str} ${err}`);
+        }
+
+        throw new Error(
+            `Hash is neither a hex string nor a base58 string ${hash_str}`,
+        );
+    }
+    /**
      *
      * @param {string} mixhash
      * @returns {method: number, size: number, hash: string}
      */
-    static parse_mixhash(mixhash) {
+    static decode_mixhash(mixhash) {
         assert(_.isString(mixhash), `mixhash should be string ${mixhash}`);
 
-        // 将 base58 编码的字符串解码为 Buffer
-        const decoded = bs58.decode(mixhash);
+        const decoded = this.parse_hash_str(mixhash);
 
-        // 获取前两位作为 method
-        const method = decoded.slice(0, 1).readUIntBE(0, 1) >> 6;
+        // Create a DataView for the decoded hash
+        const dataView = new DataView(decoded.buffer);
 
-        // 获取接下来的 62 位作为 size
-        const size = (decoded.slice(0, 8).readUIntBE(0, 8) << 2) >> 2;
+        // Parse the hash algorithm selection (2 bits)
+        const method = dataView.getUint8(0) >> 6;
 
-        // 获取剩余的 192 位作为 hash
-        const hash = decoded.slice(8).toString('hex');
+        // Parse the file size (62 bits)
+        // Note: JavaScript can only precisely represent integers up to 53 bits
+        // If the file size can be larger than that, we should use a library for big integers
+        const size =
+            ((dataView.getUint8(0) & 0x3f) << 56) |
+            (dataView.getUint8(1) << 48) |
+            (dataView.getUint8(2) << 40) |
+            (dataView.getUint8(3) << 32) |
+            (dataView.getUint8(4) << 24) |
+            (dataView.getUint8(5) << 16) |
+            (dataView.getUint8(6) << 8) |
+            dataView.getUint8(7);
+
+        // Parse the root node hash (192 bits)
+        const hash = new Uint8Array(decoded.buffer, 8, 24);
 
         return { method, size, hash };
     }
@@ -144,6 +186,16 @@ class Util {
      */
     static async sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    static calc_point(data_size, point) {
+        const baseScore =
+            999 /
+                (1 + Math.exp(-0.00000762939453125 * (data_size - 127999999))) +
+            1;
+        const baseRate = 19 / (1 + Math.exp(-0.15 * (point - 90))) + 1;
+        const score = baseScore * baseRate * 2;
+        return score;
     }
 }
 

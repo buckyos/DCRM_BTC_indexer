@@ -38,7 +38,10 @@ class ETHIndex {
             _.isString(this.config.eth.contract_address),
             `contract_address should be string`,
         );
-        assert(_.isObject(this.config.eth.contract_abi), `contract_abi should be object`);
+        assert(
+            _.isObject(this.config.eth.contract_abi),
+            `contract_abi should be object`,
+        );
 
         assert(this.web3 === undefined, `web3 should be undefined`);
         assert(this.contract === undefined, `contract should be undefined`);
@@ -76,6 +79,11 @@ class ETHIndex {
     async run() {
         while (true) {
             if (this.current_block_height === 0) {
+                assert(
+                    this.current_timestamp === 0,
+                    `invalid timestamp ${this.current_timestamp}`,
+                );
+
                 // get latest block height already synced
                 const { ret, height } =
                     await this.storage.get_latest_block_height();
@@ -95,6 +103,7 @@ class ETHIndex {
                     height > this.config.eth.genesis_block_height
                         ? height
                         : this.config.eth.genesis_block_height;
+
                 console.info(
                     `sync will start at block height ${this.current_block_height}`,
                 );
@@ -117,7 +126,8 @@ class ETHIndex {
     }
 
     async sync_once() {
-        let { ret: get_ret, height: latest_block_number } = await this.get_latest_block_number();
+        let { ret: get_ret, height: latest_block_number } =
+            await this.get_latest_block_number();
         if (get_ret !== 0) {
             console.error(`failed to get latest block number`);
             return { ret: get_ret };
@@ -158,7 +168,9 @@ class ETHIndex {
             }
         }
 
-        console.log(`sync eth blocks from ${this.current_block_height} to ${latest_block_number} success`);
+        console.log(
+            `sync eth blocks from ${this.current_block_height} to ${latest_block_number} success`,
+        );
         return { ret: 0 };
     }
 
@@ -176,7 +188,10 @@ class ETHIndex {
                 return { ret: -1 };
             }
 
-            const { ret } = await this.storage.insert_block(i, Number(block.timestamp));
+            const { ret } = await this.storage.insert_block(
+                i,
+                Number(block.timestamp),
+            );
             if (ret !== 0) {
                 console.error(`failed to insert eth block ${i}`);
                 return { ret };
@@ -220,9 +235,7 @@ class ETHIndex {
 
         // update latest block height
         {
-            const { ret } = await this.storage.update_latest_block_height(
-                end,
-            );
+            const { ret } = await this.storage.update_latest_block_height(end);
             if (ret !== 0) {
                 console.error(
                     `failed to update latest block height ${end - 1}`,
@@ -233,7 +246,55 @@ class ETHIndex {
 
         return { ret: 0 };
     }
-}
 
+    /**
+     * query point for hash at timestamp historically
+     * @param {number} timestamp
+     * @param {string} hash
+     * @returns {ret: number, point: number}
+     */
+    async query_hash_point(timestamp, hash) {
+        
+        // find target block height for timestamp
+        // if now found, we should wait for the block and retry
+        let target_block_height;
+        while (true) {
+            const { ret, block_height } =
+                await this.storage.query_block_with_timestamp(timestamp);
+            if (ret !== 0) {
+                console.error(`failed to query block with timestamp`);
+                return { ret };
+            }
+
+            if (block_height == null) {
+                console.warn(`no block found for timestamp ${timestamp}`);
+                await Util.sleep(1000 * 5);
+                continue;
+            }
+
+            target_block_height = block_height;
+            break;
+        }
+
+        const { ret: query_ret, point } = await this.storage.get_history_point(
+            target_block_height,
+            hash,
+        );
+        if (query_ret !== 0) {
+            console.error(`failed to query point ${hash}`);
+            return { ret: query_ret };
+        }
+
+        if (point == 0) {
+            console.warn(
+                `no point found for hash ${hash}, now use default value 1`,
+            );
+            return { ret: 0, point: 1 };
+        }
+
+        console.log(`query point ${hash} success ${point}`);
+        return { ret: 0, point };
+    }
+}
 
 module.exports = { ETHIndex };
