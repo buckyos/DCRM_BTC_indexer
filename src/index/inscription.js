@@ -68,16 +68,12 @@ class InscriptionIndex {
             const { ret } = await this.sync_once();
             if (ret !== 0) {
                 console.error(`failed to sync once`);
-                await this.sleep(1000 * 5);
+                await Util.sleep(1000 * 5);
                 continue;
             } else {
-                await this.sleep(1000 * 10);
+                await Util.sleep(1000 * 10);
             }
         }
-    }
-
-    async sleep(ms) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     // sync once

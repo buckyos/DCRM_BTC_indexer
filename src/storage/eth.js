@@ -44,6 +44,29 @@ class ETHIndexStorage {
             this.db.serialize(() => {
                 let has_error = false;
 
+                // Create state table
+                this.db.run(
+                    `CREATE TABLE IF NOT EXISTS state (
+                    name TEXT PRIMARY KEY,
+                    value INTEGER
+                )`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create state table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                            return;
+                        }
+                        console.log(`created state table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
                 // Create points table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS points (
@@ -91,6 +114,54 @@ class ETHIndexStorage {
                     },
                 );
             });
+        });
+    }
+
+    /**
+     *
+     * @returns {ret: number, height: number}
+     */
+    async get_latest_block_height() {
+        assert(this.db != null, `db should not be null`);
+
+        return new Promise((resolve, reject) => {
+            this.db.get(
+                "SELECT value FROM state WHERE name = 'latest_block_height'",
+                (err, row) => {
+                    if (err) {
+                        console.error('failed to get latest block height', err);
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0, height: row ? row.value : 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    async update_latest_block_height(block_height) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            'block_height must be a non-negative integer',
+        );
+
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO state (name, value) VALUES ('latest_block_height', ?)`,
+                block_height,
+                (err) => {
+                    if (err) {
+                        console.error(
+                            'failed to update latest block height',
+                            err,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
         });
     }
 
@@ -169,8 +240,8 @@ class ETHIndexStorage {
 
     /**
      * @comment insert block_height and timestamp
-     * @param {number} block_height 
-     * @param {number} timestamp 
+     * @param {number} block_height
+     * @param {number} timestamp
      * @returns {ret: number}
      */
     async insert_block(block_height, timestamp) {
@@ -195,7 +266,9 @@ class ETHIndexStorage {
                         return;
                     }
 
-                    console.log(`insert eth block: ${block_height} ${timestamp}`);
+                    console.log(
+                        `insert eth block: ${block_height} ${timestamp}`,
+                    );
                     resolve({ ret: 0 });
                 },
             );
@@ -204,7 +277,7 @@ class ETHIndexStorage {
 
     /**
      * @comment return block_height where timestamp <= target_timestamp && block_height + 1 timestamp > target_timestamp
-     * @param {number} target_timestamp 
+     * @param {number} target_timestamp
      * @returns {ret: number, block_height: number | null}
      */
     async query_block_with_timestamp(target_timestamp) {
@@ -215,7 +288,8 @@ class ETHIndexStorage {
         );
 
         return new Promise((resolve, reject) => {
-            this.db.get(`
+            this.db.get(
+                `
                 SELECT b1.block_height FROM blocks b1, blocks b2
                 WHERE b1.timestamp <= ? AND b2.timestamp > ? AND b2.block_height = b1.block_height + 1
                 ORDER BY b1.timestamp DESC

@@ -13,6 +13,13 @@ const INDEX_CONFIG = {
         },
     },
 
+    eth: {
+        rpc_url: 'https://mainnet.infura.io/v3/DMCs',
+        genesis_block_height: 100000,
+        contract_address: '0x000000',
+        contract_abi: 'contract.json',
+    },
+
     ord: {
         url: 'http://127.0.0.1:80',
     },

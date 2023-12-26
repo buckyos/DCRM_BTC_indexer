@@ -4,7 +4,6 @@ const path = require('path');
 const fs = require('fs');
 const bs58 = require('bs58');
 
-
 class Util {
     // the last 5 bytes of the address sum to 0x00
     static address_number(address) {
@@ -12,7 +11,7 @@ class Util {
         for (let i = 0; i < 5; i++) {
             sum += address.charCodeAt(address.length - 1 - i);
         }
-        
+
         return sum;
     }
 
@@ -24,7 +23,7 @@ class Util {
         if (config.isolate) {
             dir = path.join(dir, config.isolate);
         }
-        
+
         if (!fs.existsSync(dir)) {
             try {
                 fs.mkdirSync(dir, { recursive: true });
@@ -117,8 +116,8 @@ class Util {
     }
 
     /**
-     * 
-     * @param {string} mixhash 
+     *
+     * @param {string} mixhash
      * @returns {method: number, size: number, hash: string}
      */
     static parse_mixhash(mixhash) {
@@ -126,17 +125,25 @@ class Util {
 
         // 将 base58 编码的字符串解码为 Buffer
         const decoded = bs58.decode(mixhash);
-    
+
         // 获取前两位作为 method
         const method = decoded.slice(0, 1).readUIntBE(0, 1) >> 6;
-    
+
         // 获取接下来的 62 位作为 size
         const size = (decoded.slice(0, 8).readUIntBE(0, 8) << 2) >> 2;
-    
+
         // 获取剩余的 192 位作为 hash
         const hash = decoded.slice(8).toString('hex');
-    
+
         return { method, size, hash };
+    }
+
+    /**
+     * @comment sleep for milliseconds
+     * @param {number} ms
+     */
+    static async sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 

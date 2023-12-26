@@ -21,6 +21,7 @@
     "koa-router": "^10.0.0",
     "log4js": "^6.9.1",
     "sqlite3": "^5.1.6",
-    "underscore": "^1.13.6"
+    "underscore": "^1.13.6",
+    "web3": "^4.3.0"
   }
 }
