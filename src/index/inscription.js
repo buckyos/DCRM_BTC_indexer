@@ -196,6 +196,7 @@ class InscriptionIndex {
                     continue;
                 }
 
+                assert(content != null, `invalid inscription content`);
                 inscription_content = content;
             }
 
@@ -217,6 +218,23 @@ class InscriptionIndex {
 
                 assert(_.isString(ret.txid), `invalid txid ${ret.txid}`);
                 txid = ret.txid;
+            }
+
+            // only retive prev txid for inscribe op
+            let prev_txid;
+            if (this.is_content_inscribe_op(inscription_content)) {
+                // should get prev input txid
+
+                // get transaction
+                const { ret: get_tx_ret, tx } =
+                    await this.btc_client.get_transaction(txid);
+                if (get_tx_ret !== 0) {
+                    console.error(`failed to get transaction ${txid}`);
+                    return { ret: get_tx_ret };
+                }
+
+                // get prev txid
+                prev_txid = tx.vin[0].txid;
             }
 
             // get output utxo
@@ -280,6 +298,7 @@ class InscriptionIndex {
                 timestamp: inscription.timestamp,
                 inscription_index: i,
                 txid,
+                prev_txid,
                 inscription_id,
                 address: inscription.address,
                 output_address: output_utxo.address,
@@ -408,6 +427,24 @@ class InscriptionIndex {
         return false;
     }
 
+    /**
+     * check if content is inscribe op
+     * @param {object} content
+     * @returns {boolean}
+     */
+    is_content_inscribe_op(content) {
+        if (content.op != null && content.op.toLowerCase() == 'inscribe') {
+            return true;
+        }
+        if (
+            content.call != null &&
+            content.call.toLowerCase() == 'pdi-inscribe'
+        ) {
+            return true;
+        }
+
+        return false;
+    }
     /**
      * Handles an inscription item.
      *
