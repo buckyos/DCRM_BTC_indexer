@@ -89,6 +89,14 @@ class MintService {
             ctx.response.body = await this._getLuckyMintRecord(ctx);
         });
 
+        router.get("/mint_remain", async (ctx) => {
+            ctx.response.body = "not implemented";
+        });
+
+        router.get("/mint_last_24", async (ctx) => {
+            ctx.response.body = "not implemented";
+        });
+
         return 0;
     }
 }

@@ -44,6 +44,16 @@ class InscribeStore {
         return { count, list };
     }
 
+    queryInscriptionCount() {
+        const stmt = store.db.prepare('SELECT COUNT(*) AS count FROM inscribe');
+        const ret = stmt.get();
+        const count = ret.count;
+
+        logger.debug('queryInscriptionCount: ret:', count);
+
+        return count;
+    }
+
     // return {count, list}
     queryResonanceByHash(hash, length, offset, order) {
         order = order == "ASC" ? "ASC" : "DESC";

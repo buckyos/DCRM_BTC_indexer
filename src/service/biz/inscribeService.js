@@ -188,6 +188,14 @@ class InscribeService {
         }
     }
 
+    async _getInscriptionCount(ctx) {
+        let count = this.m_store.queryInscriptionCount();
+        return {
+            code: count == null ? 1 : 0,
+            count: count,
+        }
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -202,6 +210,10 @@ class InscribeService {
 
         router.get("/inscription_by_block/:begin_block/:end_block?/:length?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getInscriptionByBlock(ctx);
+        });
+
+        router.get("/inscription_count", async (ctx) => {
+            ctx.response.body = await this._getInscriptionCount(ctx);
         });
 
         router.get("/resonance_by_hash/:hash/:length?/:offset?/:order?", async (ctx) => {
