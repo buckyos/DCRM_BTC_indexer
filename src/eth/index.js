@@ -1,5 +1,5 @@
 const assert = require('assert');
-const Web3 = require('web3');
+const { Web3 } = require('web3');
 const { ETHIndexStorage } = require('../storage/eth');
 const { Util } = require('../util');
 
@@ -35,10 +35,6 @@ class ETHIndex {
     async init_web3() {
         assert(_.isString(this.config.eth.rpc_url), `rpc_url should be string`);
         assert(
-            _.isNumber(this.config.eth.start_block_height),
-            `start_block_height should be number`,
-        );
-        assert(
             _.isString(this.config.eth.contract_address),
             `contract_address should be string`,
         );
@@ -49,7 +45,7 @@ class ETHIndex {
 
         try {
             this.web3 = new Web3(this.config.eth.rpc_url);
-            this.contract = new web3.eth.Contract(
+            this.contract = new this.web3.eth.Contract(
                 this.config.eth.contract_abi,
                 this.config.eth.contract_address,
             );
@@ -68,8 +64,8 @@ class ETHIndex {
      */
     async get_latest_block_number() {
         try {
-            current_block = await this.web3.eth.getBlock('latest');
-            return { ret: 0, height: current_block.number };
+            let current_block = await this.web3.eth.getBlockNumber();
+            return { ret: 0, height: Number(current_block) };
         } catch (error) {
             console.error(`failed to get latest block number: ${error}`);
             return { ret: -1 };
@@ -121,29 +117,47 @@ class ETHIndex {
     }
 
     async sync_once() {
-        const { ret: get_ret, height: latest_block_number } = await this.get_latest_block_number();
+        let { ret: get_ret, height: latest_block_number } = await this.get_latest_block_number();
         if (get_ret !== 0) {
             console.error(`failed to get latest block number`);
             return { ret: get_ret };
         }
 
-        if (this.current_block_height >= latest_block_number) {
-            console.info(
-                `current block height ${this.current_block_height} is already latest`,
-            );
+        if (latest_block_number < this.current_block_height) {
             return { ret: 0 };
         }
 
-        const { ret } = await this.sync_blocks(
-            this.current_block_height,
-            latest_block_number + 1,
-        );
-        if (ret !== 0) {
-            console.error(`failed to sync eth blocks from ${this.current_block_height} to ${latest_block_number + 1}`);
-            return { ret };
+        latest_block_number += 1;
+
+        // sync block in chunk of 100
+        const chunk_size = 100;
+        while (true) {
+            let end = this.current_block_height + chunk_size;
+            if (end > latest_block_number) {
+                end = latest_block_number;
+            }
+
+            if (end <= this.current_block_height) {
+                break;
+            }
+
+            const { ret } = await this.sync_blocks(
+                this.current_block_height,
+                end,
+            );
+            if (ret !== 0) {
+                console.error(
+                    `failed to sync eth blocks from ${this.current_block_height} to ${end}`,
+                );
+                return { ret };
+            }
+
+            this.current_block_height = end;
+            if (this.current_block_height >= latest_block_number) {
+                break;
+            }
         }
 
-        this.current_block_height = latest_block_number + 1;
         console.log(`sync eth blocks from ${this.current_block_height} to ${latest_block_number} success`);
         return { ret: 0 };
     }
@@ -156,13 +170,13 @@ class ETHIndex {
         for (let i = begin; i < end; i++) {
             let block;
             try {
-                block = await web3.eth.getBlock(i, false);
+                block = await this.web3.eth.getBlock(i, false);
             } catch (error) {
                 console.error(`failed to get block ${i}: ${error}`);
                 return { ret: -1 };
             }
 
-            const { ret } = this.storage.insert_block(i, block.timestamp);
+            const { ret } = await this.storage.insert_block(i, Number(block.timestamp));
             if (ret !== 0) {
                 console.error(`failed to insert eth block ${i}`);
                 return { ret };
@@ -173,7 +187,7 @@ class ETHIndex {
         let events;
         try {
             events = await this.contract.getPastEvents(
-                'AllEvents', // the point change event name
+                'allEvents', // the point change event name
                 {
                     fromBlock: begin,
                     toBlock: end - 1,
@@ -191,7 +205,7 @@ class ETHIndex {
             const hash = event.returnValues.hash;
             const point = event.returnValues.point;
 
-            const { ret } = this.storage.update_point(
+            const { ret } = await this.storage.update_point(
                 block_height,
                 hash,
                 point,
@@ -207,7 +221,7 @@ class ETHIndex {
         // update latest block height
         {
             const { ret } = await this.storage.update_latest_block_height(
-                end - 1,
+                end,
             );
             if (ret !== 0) {
                 console.error(
@@ -220,3 +234,6 @@ class ETHIndex {
         return { ret: 0 };
     }
 }
+
+
+module.exports = { ETHIndex };

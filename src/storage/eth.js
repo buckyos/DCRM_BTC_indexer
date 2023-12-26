@@ -59,7 +59,7 @@ class ETHIndexStorage {
                             resolve({ ret: -1 });
                             return;
                         }
-                        console.log(`created state table`);
+                        console.log(`created eth state table`);
                     },
                 );
 
@@ -79,7 +79,7 @@ class ETHIndexStorage {
                     (err) => {
                         if (err) {
                             console.error(
-                                `failed to create points table: ${err}`,
+                                `failed to create eth points table: ${err}`,
                             );
                             has_error = true;
                             resolve({ ret: -1 });
@@ -95,14 +95,14 @@ class ETHIndexStorage {
 
                 // Create blocks table
                 this.db.run(
-                    `CREATE TABLE blocks (
+                    `CREATE TABLE IF NOT EXISTS blocks (
                         block_height INTEGER PRIMARY KEY,
-                        timestamp INTEGER,
+                        timestamp INTEGER
                     )`,
                     (err) => {
                         if (err) {
                             console.error(
-                                `failed to create blocks table: ${err}`,
+                                `failed to create eth blocks table: ${err}`,
                             );
                             has_error = true;
                             resolve({ ret: -1 });
