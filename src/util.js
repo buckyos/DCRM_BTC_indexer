@@ -2,11 +2,20 @@ const assert = require('assert');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
+const bs58 = require('bs58');
 
-const dbDir = path.join(os.homedir(), '.myapp');
-const dbFilePath = path.join(dbDir, 'mydatabase.sqlite');
 
 class Util {
+    // the last 5 bytes of the address sum to 0x00
+    static address_number(address) {
+        let sum = 0;
+        for (let i = 0; i < 5; i++) {
+            sum += address.charCodeAt(address.length - 1 - i);
+        }
+        
+        return sum;
+    }
+
     static get_data_dir(config) {
         let dir = config.db.data_dir
             ? config.db.data_dir
@@ -105,6 +114,29 @@ class Util {
             outpoint: out_point,
             offset: off_set,
         };
+    }
+
+    /**
+     * 
+     * @param {string} mixhash 
+     * @returns {method: number, size: number, hash: string}
+     */
+    static parse_mixhash(mixhash) {
+        assert(_.isString(mixhash), `mixhash should be string ${mixhash}`);
+
+        // 将 base58 编码的字符串解码为 Buffer
+        const decoded = bs58.decode(mixhash);
+    
+        // 获取前两位作为 method
+        const method = decoded.slice(0, 1).readUIntBE(0, 1) >> 6;
+    
+        // 获取接下来的 62 位作为 size
+        const size = (decoded.slice(0, 8).readUIntBE(0, 8) << 2) >> 2;
+    
+        // 获取剩余的 192 位作为 hash
+        const hash = decoded.slice(8).toString('hex');
+    
+        return { method, size, hash };
     }
 }
 

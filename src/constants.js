@@ -1,0 +1,8 @@
+
+const LUCKY_MINT_MAX_AMOUNT = 2100;
+const NORMAL_MINT_MAX_AMOUNT = 210;
+
+module.exports = {
+    LUCKY_MINT_MAX_AMOUNT,
+    NORMAL_MINT_MAX_AMOUNT,
+};

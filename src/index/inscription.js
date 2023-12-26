@@ -1,8 +1,9 @@
 const assert = require('assert');
 const { BTCClient } = require('../btc/btc');
 const { OrdClient } = require('../btc/ord');
-const { InscriptionLog } = require('../storage/log');
+const { InscriptionLogStorage } = require('../storage/log');
 const { Util } = require('../util');
+const {TokenIndex} = require('./token');
 
 class InscriptionIndex {
     constructor(config) {
@@ -19,8 +20,10 @@ class InscriptionIndex {
             throw new Error(`failed to get data dir`);
         }
 
-        this.storage = new InscriptionLog(dir);
+        this.storage = new InscriptionLogStorage(dir);
         this.current_block_height = 0;
+
+        this.token_index = new TokenIndex(config);
     }
 
     // run forever
@@ -160,6 +163,8 @@ class InscriptionIndex {
             return { ret: 0 };
         }
 
+        // process inscriptions in block one by one
+        const block_inscriptions = [];
         for (let i = 0; i < data.inscriptions.length; i++) {
             const inscription_id = data.inscriptions[i];
 
@@ -276,6 +281,7 @@ class InscriptionIndex {
             // index inscription
             const inscription_item = {
                 block_height,
+                timestamp: inscription.timestamp,
                 inscription_index: i,
                 txid,
                 inscription_id,
@@ -284,14 +290,19 @@ class InscriptionIndex {
                 content: inscription_content,
             };
 
-            {
-                const { ret } = await this.on_inscription(inscription_item);
-                if (ret !== 0) {
-                    console.error(
-                        `failed to index inscription ${inscription_id}`,
-                    );
-                    return { ret };
-                }
+            block_inscriptions.push(inscription_item);
+        }
+
+        if (block_inscriptions.length > 0) {
+            const { ret } = await this.on_block_inscriptions(
+                block_height,
+                block_inscriptions,
+            );
+            if (ret !== 0) {
+                console.error(
+                    `failed to index inscriptions in block ${block_height}`,
+                );
+                return { ret };
             }
         }
 
@@ -360,7 +371,9 @@ class InscriptionIndex {
         );
 
         if (!this.check_content(content)) {
-            console.debug(`unknown inscription content  ${JSON.stringify(content)}`);
+            console.debug(
+                `unknown inscription content  ${JSON.stringify(content)}`,
+            );
             return {
                 ret: 0,
                 valid: false,
@@ -411,8 +424,9 @@ class InscriptionIndex {
      * @param {Object} inscription_item.content - The content of the inscription.
      * @returns {Promise<{ret: number}>}
      */
-    async on_inscription(inscription_item) {
-        console.info(`indexing inscription ${inscription_item.inscription_id}`);
+    async on_block_inscriptions(block_height, block_inscriptions) {
+        console.info(`indexing inscriptions at block ${block_height} count ${block_inscriptions.length}`);
+
         return { ret: 0 };
     }
 }
