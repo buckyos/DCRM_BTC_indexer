@@ -5,6 +5,7 @@ const logger = require('koa-logger');
 const bodyParser = require('koa-bodyparser');
 const log4js = require('log4js');
 const { InscribeService } = require('./biz/inscribeService');
+const { MintService } = require('./biz/mintService');
 
 const LISTEN_PORT = 3020;
 
@@ -20,6 +21,9 @@ class Service {
     _register() {
         const inscribeService = new InscribeService();
         inscribeService.registerRouter(this.m_router);
+
+        const mintService = new MintService();
+        mintService.registerRouter(this.m_router);
     }
 
     async start() {
