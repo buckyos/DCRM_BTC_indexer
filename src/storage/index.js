@@ -100,7 +100,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on chant_records table
+                // Create chant_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS chant_records (
                         inscription_id TEXT PRIMARY KEY,
@@ -125,7 +125,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on transfer_records table
+                // Create transfer_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS transfer_records (
                         inscription_id TEXT PRIMARY KEY,
@@ -151,7 +151,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on set_price_records table
+                // Create set_price_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS set_price_records (
                         inscription_id TEXT PRIMARY KEY,
@@ -176,7 +176,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on resonance_records table
+                // Create resonance_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS resonance_records (
                         inscription_id TEXT PRIMARY KEY,
@@ -201,7 +201,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on balance table
+                // Create balance table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS balance (
                         address TEXT PRIMARY KEY,
@@ -222,7 +222,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on inscribe_data table
+                // Create inscribe_data table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS inscribe_data (
                         hash TEXT PRIMARY KEY,
@@ -250,7 +250,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on user_ops table
+                // Create user_ops table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS user_ops (
                         address TEXT,
@@ -274,7 +274,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on data_resonance table
+                // Create data_resonance table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS data_resonance (
                         hash TEXT,
@@ -301,7 +301,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create index on data_chant table
+                // Create data_chant table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS data_chant (
                         hash TEXT,
@@ -671,6 +671,11 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     * 
+     * @param {string} address 
+     * @returns {ret: number, amount: number}
+     */
     async get_balance(address) {
         const sql = `
             SELECT amount FROM balance WHERE address = ?
@@ -686,6 +691,51 @@ class TokenIndexStorage {
                 }
             });
         });
+    }
+
+    /**
+     * 
+     * @param {string} from_address 
+     * @param {string} to_address 
+     * @param {int} amount 
+     * @returns {ret: number} 
+     */
+    async transfer_balance(from_address, to_address, amount) {
+        assert(from_address != to_address, `from_address should not be equal to to_address ${from_address}`);
+
+        assert(this.db != null, `db should not be null`);
+        assert(typeof from_address === 'string', `from_address should be string`);
+        assert(typeof to_address === 'string', `to_address should be string`);
+        assert(Number.isInteger(amount), `amount should be integer`);
+
+        // should exec in transaction
+        assert(this.during_transaction, `should be during transaction`);
+
+        const {ret: get_from_balance_ret, amount: from_balance} = await this.get_balance(from_address);
+        if (get_from_balance_ret != 0) {
+            console.error(`Could not get balance ${from_address}`);
+            return { ret: -1 }; 
+        }
+
+        if (from_balance < amount) {
+            console.error(`Insufficient balance ${from_address} : ${from_balance} < ${amount}`);
+            return { ret: -1 };
+        }
+
+        const {ret: update_from_balance_ret} = await this.update_balance(from_address, -amount);
+        if (update_from_balance_ret != 0) {
+            console.error(`Could not update balance ${from_address}`);
+            return { ret: -1 }; 
+        }
+
+        const {ret: update_to_balance_ret} = await this.update_balance(to_address, amount);
+        if (update_to_balance_ret != 0) {
+            console.error(`Could not update balance ${to_address}`);
+            return { ret: -1 }; 
+        }
+
+        console.log(`transfer balance ${from_address} ${to_address} ${amount}`);
+        return { ret: 0 };
     }
 
     // inscribe_data related methods
