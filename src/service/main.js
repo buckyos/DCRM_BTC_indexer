@@ -1,28 +1,25 @@
-
 const Koa = require('koa');
 const Router = require('koa-router');
 const cors = require('koa-cors');
 const logger = require('koa-logger');
 const bodyParser = require('koa-bodyparser');
-const InscribeService = require('./biz/inscribeService');
 const log4js = require('log4js');
+const { InscribeService } = require('./biz/inscribeService');
 
-const LISTEN_PORT: number = 3020;
+const LISTEN_PORT = 3020;
 
 class Service {
-    m_router: Router;
-
     constructor() {
         this.m_router = new Router();
     }
 
-    get router(): Router {
+    get router() {
         return this.m_router;
     }
 
     _register() {
         const inscribeService = new InscribeService();
-        inscribeService.registerRouters(this.m_router);
+        inscribeService.registerRouter(this.m_router);
     }
 
     async start() {
