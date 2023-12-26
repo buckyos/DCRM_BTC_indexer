@@ -3,7 +3,7 @@ const { BTCClient } = require('../btc/btc');
 const { OrdClient } = require('../btc/ord');
 const { InscriptionLogStorage } = require('../storage/log');
 const { Util } = require('../util');
-const {TokenIndex} = require('./token');
+const { TokenIndex } = require('./token');
 
 class InscriptionIndex {
     constructor(config) {
@@ -425,7 +425,9 @@ class InscriptionIndex {
      * @returns {Promise<{ret: number}>}
      */
     async on_block_inscriptions(block_height, block_inscriptions) {
-        console.info(`indexing inscriptions at block ${block_height} count ${block_inscriptions.length}`);
+        console.info(
+            `indexing inscriptions at block ${block_height} count ${block_inscriptions.length}`,
+        );
 
         return { ret: 0 };
     }
