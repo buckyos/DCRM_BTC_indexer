@@ -14,72 +14,81 @@ class MintService {
         this.m_inited = true;
     }
 
-    async _getMintRecordByHash(ctx) {
-        let txHash = ctx.params.tx_hash;
+    // async _getMintRecordByHash(ctx) {
+    //     let txHash = ctx.params.tx_hash;
 
-        if (!txHash) {
-            return {
-                code: 1,
-                msg: "invalid param"
-            };
-        }
+    //     if (!txHash) {
+    //         return {
+    //             err: 1,
+    //             msg: "invalid param"
+    //         };
+    //     }
 
-        let ret = this.m_store.queryMintRecordByHash(txHash);
-        return {
-            code: ret == null ? 1 : 0,
-            data: ret
-        };
-    }
+    //     let ret = this.m_store.queryMintRecordByHash(txHash);
+    //     return {
+    //         err: ret == null ? 1 : 0,
+    //         data: ret
+    //     };
+    // }
 
     async _getMintRecordByAddress(ctx) {
-        let address = ctx.params.address;
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
         if (!address) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let { count, list } = this.m_store.queryMintRecordByAddress(
+        const result = this.m_store.queryMintRecordByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
         }
     }
 
     async _getLuckyMintRecord(ctx) {
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
-        let { count, list } = this.m_store.queryLuckyMintRecord(
+        const result = this.m_store.queryLuckyMintRecord(
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
+        }
+    }
+
+    async _getTotalMintLast24(ctx) {
+        const beginTime = Date.now() - 24 * 60 * 60 * 1000;
+        const endTime = Date.now() + 1;
+
+        const total = this.m_store.queryTotalMintByTime(beginTime, endTime);
+        return {
+            err: 0,
+            result: total,
         }
     }
 
     registerRouter(router) {
         this._init();
 
-        router.get("/mint_record_by_tx/:tx_hash", async (ctx) => {
-            ctx.response.body = await this._getMintRecordByHash(ctx);
-        });
+        // router.get("/mint_record_by_tx/:tx_hash", async (ctx) => {
+        //     ctx.response.body = await this._getMintRecordByHash(ctx);
+        // });
 
         router.get("/mint_record_by_address/:address/:length?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getMintRecordByAddress(ctx);
@@ -94,7 +103,7 @@ class MintService {
         });
 
         router.get("/mint_last_24", async (ctx) => {
-            ctx.response.body = "not implemented";
+            ctx.response.body = await this._getTotalMintLast24(ctx);
         });
 
         return 0;

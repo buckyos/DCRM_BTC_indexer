@@ -1,6 +1,6 @@
 const Database = require('better-sqlite3');
-
-const DB_PATH = './data/inscribe.db';
+const path = require('path');
+const INDEX_CONFIG = require('../../../config');
 
 class Store {
     constructor() {
@@ -12,7 +12,9 @@ class Store {
             return true;
         }
 
-        this.m_db = new Database(DB_PATH, { fileMustExist: true });
+        const dataPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.index_db_file);
+
+        this.m_db = new Database(dataPath, { /*fileMustExist: true,*/ readonly: true });
 
         console.info('init db success');
     }

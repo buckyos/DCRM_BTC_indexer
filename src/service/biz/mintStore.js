@@ -17,11 +17,11 @@ class MintStore {
     //return {count, list}
     queryMintRecordByAddress(address, length, offset, order) {
         order = order == "ASC" ? "ASC" : "DESC";
-        const countStmt = store.db.prepare('SELECT COUNT(*) AS count FROM mint WHERE address = ?');
+        const countStmt = store.db.prepare('SELECT COUNT(*) AS count FROM mint_records WHERE address = ?');
         const countResult = countStmt.get(address);
         const count = countResult.count;
 
-        const pageStmt = store.db.prepare(`SELECT * FROM mint WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+        const pageStmt = store.db.prepare(`SELECT * FROM mint_records WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
         const list = pageStmt.all(address, length, offset);
 
         logger.debug('queryMintRecordByAddress:', address, offset, length, "ret:", count, list);
@@ -31,16 +31,26 @@ class MintStore {
 
     queryLuckyMintRecord(length, offset, order) {
         order = order == "ASC" ? "ASC" : "DESC";
-        const countStmt = store.db.prepare('SELECT COUNT(*) AS count FROM mint WHERE lucky is not null');
+        const countStmt = store.db.prepare('SELECT COUNT(*) AS count FROM mint_records WHERE lucky is not null');
         const countResult = countStmt.get();
         const count = countResult.count;
 
-        const pageStmt = store.db.prepare(`SELECT * FROM mint WHERE lucky is not null ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+        const pageStmt = store.db.prepare(`SELECT * FROM mint_records WHERE lucky is not null ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
         const list = pageStmt.all(length, offset);
 
         logger.debug('queryLuckyMintRecord:', offset, length, "ret:", count, list);
 
         return { count, list };
+    }
+
+    queryTotalMintByTime(beginTime, endTime) {
+        const stmt = store.db.prepare('SELECT SUM(amount) AS total FROM mint_records WHERE timestamp >= ? AND timestamp < ?');
+        const ret = stmt.get(beginTime, endTime);
+        const total = ret.total;
+
+        logger.debug('queryTotalMintByTime: ret:', total);
+
+        return total;
     }
 }
 

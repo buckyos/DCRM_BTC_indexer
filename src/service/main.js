@@ -6,8 +6,7 @@ const bodyParser = require('koa-bodyparser');
 const log4js = require('log4js');
 const { InscribeService } = require('./biz/inscribeService');
 const { MintService } = require('./biz/mintService');
-
-const LISTEN_PORT = 3020;
+const INDEX_CONFIG = require('../../config');
 
 class Service {
     constructor() {
@@ -27,6 +26,8 @@ class Service {
     }
 
     async start() {
+        const listenPort = INDEX_CONFIG.service.port;
+
         this._register();
 
         const app = new Koa();
@@ -42,8 +43,8 @@ class Service {
 
         app.use(this.m_router.routes());
 
-        console.log('service will listen on port:', LISTEN_PORT);
-        app.listen(LISTEN_PORT);
+        console.log('service will listen on port:', listenPort);
+        app.listen(listenPort);
     }
 }
 

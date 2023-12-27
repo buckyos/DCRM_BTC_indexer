@@ -15,62 +15,61 @@ class InscribeService {
     }
 
     async _getInscriptionByHash(ctx) {
-        let hash = ctx.params.hash;
+        const hash = ctx.params.hash;
         if (!hash) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let ret = this.m_store.queryInscriptionByHash(hash);
+        const ret = this.m_store.queryInscriptionByHash(hash);
         return {
-            code: ret == null ? 1 : 0,
-            data: ret
+            err: ret == null ? 1 : 0,
+            result: ret
         };
     }
 
     async _getInscriptionByAddress(ctx) {
-        let address = ctx.params.address;
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
         if (!address) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let { count, list } = this.m_store.queryInscriptionByAddress(
+        const result = this.m_store.queryInscriptionByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
         }
     }
 
     async _getInscriptionByBlock(ctx) {
-        let beginBlock = ctx.params.begin_block;
-        let endBlock = ctx.params.end_block;
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const beginBlock = ctx.params.begin_block;
+        const endBlock = ctx.params.end_block;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
         if (!beginBlock) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let { count, list } = this.m_store.queryInscriptionByBlock(
+        const result = this.m_store.queryInscriptionByBlock(
             beginBlock,
             endBlock == 0 || endBlock == null ? Number.MAX_SAFE_INTEGER : endBlock,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
@@ -78,121 +77,116 @@ class InscribeService {
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
         }
     }
 
     async _getResonanceByHash(ctx) {
-        let hash = ctx.params.hash;
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const hash = ctx.params.hash;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
         if (!hash) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let { count, list } = this.m_store.queryResonanceByHash(
+        const result = this.m_store.queryResonanceByHash(
             hash,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
         }
     }
 
     async _getResonanceByAddress(ctx) {
-        let address = ctx.params.address;
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
         if (!address) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let { count, list } = this.m_store.queryResonanceByAddress(
+        const result = this.m_store.queryResonanceByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
         }
     }
 
     async _getChantByHash(ctx) {
-        let hash = ctx.params.hash;
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const hash = ctx.params.hash;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
         if (!hash) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let { count, list } = this.m_store.queryChantByHash(
+        const result = this.m_store.queryChantByHash(
             hash,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
         }
     }
 
     async _getChantByAddress(ctx) {
-        let address = ctx.params.address;
-        let offset = ctx.params.offset;
-        let length = ctx.params.length;
-        let order = ctx.params.order;
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const length = ctx.params.length;
+        const order = ctx.params.order;
 
         if (!address) {
             return {
-                code: 1,
+                err: 1,
                 msg: "invalid param"
             };
         }
 
-        let { count, list } = this.m_store.queryChantByAddress(
+        const result = this.m_store.queryChantByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
         return {
-            code: 0,
-            count: count,
-            list: list,
+            err: 0,
+            result
         }
     }
 
     async _getInscriptionCount(ctx) {
-        let count = this.m_store.queryInscriptionCount();
+        const count = this.m_store.queryInscriptionCount();
         return {
-            code: count == null ? 1 : 0,
-            count: count,
+            err: count == null ? 1 : 0,
+            result: count,
         }
     }
 

@@ -26,6 +26,11 @@ const INDEX_CONFIG = {
 
     db: {
         data_dir: 'E:\\data\\testnet\\testnet3',
+        index_db_file: 'index.sqlite',
+    },
+
+    service: {
+        port: 13020,
     },
 
     genesis_block_height: 2543000,
