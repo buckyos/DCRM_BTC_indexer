@@ -5,8 +5,9 @@ const { Util } = require('../util');
 const { ETHIndex } = require('../eth/index');
 const { HashHelper } = require('./ops/hash');
 const { InscribeOperator } = require('./ops/inscribe');
-const { MintManger } = require('./ops/mint');
+const { MintManger, MintOperator } = require('./ops/mint');
 const { TransferOperator } = require('./ops/transfer');
+const {ChantOperator} = require('./ops/chant');
 
 class TokenIndex {
     constructor(config) {
@@ -92,8 +93,9 @@ class TokenBlockIndex {
             storage,
             hash_helper,
         );
-        this.mint_operator = new MintManger(storage);
+        this.mint_operator = new MintOperator(config, storage);
         this.transfer_operator = new TransferOperator(storage);
+        this.chant_operator = new ChantOperator(config, storage, hash_helper);
     }
 
     async process_inscriptions() {
@@ -233,7 +235,9 @@ class TokenBlockIndex {
         return await this.on_resonance(inscription_item);
     }
 
-    async on_chant(inscription_item) {}
+    async on_chant(inscription_item) {
+        return await this.chant_operator.on_chant(inscription_item);
+    }
 }
 
 module.exports = { TokenIndex };

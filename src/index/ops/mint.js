@@ -3,12 +3,14 @@ const { TokenIndexStorage } = require('../../storage/token');
 const constants = require('../../constants');
 
 class MintOperator {
-    constructor(storage) {
+    constructor(config, storage) {
+        assert(_.isObject(config), `config should be object`);
         assert(
             storage instanceof TokenIndexStorage,
             `storage should be TokenIndexStorage`,
         );
-
+        
+        this.config = config;
         this.storage = storage;
     }
 

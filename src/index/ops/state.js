@@ -19,7 +19,11 @@ const InscriptionOpState = {
     // hash not found
     HASH_NOT_FOUND: 6,
 
+    // permission denied
     PERMISSION_DENIED: 7,
+
+    // invalid params
+    INVALID_PARAMS: 8,
 };
 
 

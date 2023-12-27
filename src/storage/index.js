@@ -107,7 +107,11 @@ class TokenIndexStorage {
                     `CREATE TABLE IF NOT EXISTS chant_records (
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
+                        timestamp INTEGER,
+                        address TEXT,
                         hash TEXT,
+                        user_bouns INTEGER,
+                        owner_bouns INTEGER,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -508,7 +512,7 @@ class TokenIndexStorage {
         });
     }
 
-    async add_chant_record(inscription_id, block_height, hash, state) {
+    async add_chant_record(inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',
@@ -518,16 +522,27 @@ class TokenIndexStorage {
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
+        assert(typeof address === 'string', `address should be string`);
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
+        assert(
+            Number.isInteger(user_bouns) && user_bouns >= 0,
+            `user_bouns should be non-negative integer`,
+        );
+        assert(
+            Number.isInteger(owner_bouns) && owner_bouns >= 0,
+            `owner_bouns should be non-negative integer`,
+        );
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
 
+        
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO chant_records (inscription_id, block_height, hash, state) VALUES (?, ?, ?, ?)`,
-                [inscription_id, block_height, hash, state],
+                `INSERT OR REPLACE INTO chant_records (inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state) VALUES (?, ?, ?, ?)`,
+                [inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state],
                 (err) => {
                     if (err) {
                         console.error('failed to add chant record', err);
