@@ -3,8 +3,7 @@ const { TokenIndexStorage } = require('../../storage/token');
 const assert = require('assert');
 const { InscriptionOpState } = require('./state');
 
-
-class TransferManager {
+class TransferOperator {
     constructor(storage) {
         assert(
             storage instanceof TokenIndexStorage,
@@ -95,3 +94,6 @@ class TransferManager {
         return { ret: 0, state: InscriptionOpState.OK };
     }
 }
+
+
+module.exports = { TransferOperator };

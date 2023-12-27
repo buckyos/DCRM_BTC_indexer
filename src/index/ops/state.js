@@ -1,3 +1,4 @@
+
 // inscription op's state
 const InscriptionOpState = {
     OK: 0,
@@ -14,6 +15,11 @@ const InscriptionOpState = {
 
     // balance not enough
     INSUFFICIENT_BALANCE: 5,
+
+    // hash not found
+    HASH_NOT_FOUND: 6,
+
+    PERMISSION_DENIED: 7,
 };
 
 

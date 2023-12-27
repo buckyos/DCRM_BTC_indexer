@@ -4,7 +4,6 @@ const { TokenIndex } = require('../../storage/index');
 const { HashHelper } = require('../hash');
 const { InscriptionOpState } = require('./state');
 
-
 class PendingInscribeOp {
     constructor(inscription_item, state, hash_distance) {
         this.inscription_item = inscription_item;
@@ -13,7 +12,7 @@ class PendingInscribeOp {
     }
 }
 
-class InscribeManager {
+class InscribeOperator {
     constructor(config, storage, hash_helper) {
         assert(config, `config should not be null`);
         assert(storage instanceof TokenIndex, `storage should be TokenIndex`);
@@ -33,7 +32,7 @@ class InscribeManager {
     async on_inscribe(inscription_item) {
         // first check if hash and amt field is exists
         const hash = inscription_item.content.ph;
-        if (hahs == null || !_.isString(hash)) {
+        if (hash == null || !_.isString(hash)) {
             console.warn(
                 `invalid inscription ph ${inscription_item.inscription_id} ${hash}`,
             );
@@ -305,4 +304,4 @@ class InscribeManager {
     }
 }
 
-module.exports = { InscribeManager };
+module.exports = { InscribeOperator };

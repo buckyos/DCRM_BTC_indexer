@@ -158,8 +158,11 @@ class TokenIndexStorage {
                     `CREATE TABLE IF NOT EXISTS set_price_records (
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
+                        timestamp INTEGER,
+                        hash TEXT,
                         address TEXT,
-                        price INTEGER
+                        price INTEGER,
+                        state INTEGER
                     )`,
                     (err) => {
                         if (err) {
@@ -183,6 +186,9 @@ class TokenIndexStorage {
                     `CREATE TABLE IF NOT EXISTS resonance_records (
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
+                        timestamp INTEGER,
+                        hash TEXT,
+                        address TEXT,
                         amount INTEGER,
                         state INTEGER DEFAULT 0
                     )`,
@@ -576,7 +582,17 @@ class TokenIndexStorage {
         });
     }
 
-    async add_set_price_record(inscription_id, block_height, address, price) {
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {string} hash 
+     * @param {string} address 
+     * @param {number} price 
+     * @returns {ret: number}
+     */
+    async add_set_price_record(inscription_id, block_height, timestamp, hash, address, price, state) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',
@@ -586,16 +602,22 @@ class TokenIndexStorage {
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
         assert(
             Number.isInteger(price) && price >= 0,
             `price should be non-negative integer`,
         );
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO set_price_records (inscription_id, block_height, address, price) VALUES (?, ?, ?, ?)`,
-                [inscription_id, block_height, address, price],
+                `INSERT OR REPLACE INTO set_price_records (inscription_id, block_height, timestamp, hash, address, price, state) VALUES (?, ?, ?, ?)`,
+                [inscription_id, block_height, timestamp, hash, address, price, state],
                 (err) => {
                     if (err) {
                         console.error('failed to add set price record', err);
@@ -608,7 +630,7 @@ class TokenIndexStorage {
         });
     }
 
-    async add_resonance_record(inscription_id, block_height, amount, state) {
+    async add_resonance_record(inscription_id, block_height, timestamp, hash, address, amount, state) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',
@@ -618,6 +640,9 @@ class TokenIndexStorage {
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof address === 'string', `address should be string`);
         assert(
             Number.isInteger(amount) && amount >= 0,
             `amount should be non-negative integer`,
@@ -629,8 +654,8 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO resonance_records (inscription_id, block_height, amount, state) VALUES (?, ?, ?, ?)`,
-                [inscription_id, block_height, amount, state],
+                `INSERT OR REPLACE INTO resonance_records (inscription_id, block_height, timestamp, hash, address, amount, state) VALUES (?, ?, ?, ?)`,
+                [inscription_id, block_height, timestamp, hash, address, amount, state],
                 (err) => {
                     if (err) {
                         console.error('failed to add resonance record', err);
@@ -643,6 +668,34 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     * check user's last resonance record on a data hash
+     * @param {string} address 
+     * @param {string} hash 
+     * @returns {ret: number, data: object}
+     */
+    async query_user_resonance(address, hash) {
+        const sql = `
+            SELECT * 
+            FROM resonance_records 
+            WHERE address = ? AND hash = ? AND state = 0 
+            ORDER BY block_height DESC 
+            LIMIT 1
+        `;
+        
+        return new Promise((resolve, reject) => {
+            this.db.get(sql, [address, hash], (err, row) => {
+                if (err) {
+                    console.error(`Could not query user resonance ${address} ${hash} ${err}`);
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, data: row });
+                }
+            });
+        });
+    }
+
+    
     async add_balance(address, amount) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
@@ -860,7 +913,7 @@ class TokenIndexStorage {
     /**
      * 
      * @param {string} hash 
-     * @returns {ret: number, data: object}
+     * @returns {ret: number, data: object | null}
      */
     async get_inscribe_data(hash) {
         assert(this.db != null, `db should not be null`);

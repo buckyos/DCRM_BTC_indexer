@@ -4,9 +4,9 @@ const constants = require('../constants');
 const { Util } = require('../util');
 const { ETHIndex } = require('../eth/index');
 const { HashHelper } = require('./ops/hash');
-const { InscribeManager } = require('./ops/inscribe');
+const { InscribeOperator } = require('./ops/inscribe');
 const { MintManger } = require('./ops/mint');
-const { TransferManager } = require('./ops/transfer');
+const { TransferOperator } = require('./ops/transfer');
 
 class TokenIndex {
     constructor(config) {
@@ -87,13 +87,13 @@ class TokenBlockIndex {
         this.block_height = block_height;
         this.block_inscriptions = block_inscriptions;
 
-        this.inscribe_manager = new InscribeManager(
+        this.inscribe_operator = new InscribeOperator(
             config,
             storage,
             hash_helper,
         );
-        this.mint_manager = new MintManger(storage);
-        this.transfer_manager = new TransferManager(storage);
+        this.mint_operator = new MintManger(storage);
+        this.transfer_operator = new TransferOperator(storage);
     }
 
     async process_inscriptions() {
@@ -206,23 +206,23 @@ class TokenBlockIndex {
 
     // mint
     async on_mint(inscription_item) {
-        return await this.mint_manager.on_mint(inscription_item);
+        return await this.mint_operator.on_mint(inscription_item);
     }
 
     // inscribe
     async on_inscribe(inscription_item) {
-        return await this.inscribe_manager.on_inscribe(inscription_item);
+        return await this.inscribe_operator.on_inscribe(inscription_item);
     }
 
     async on_transfer_with_inscribe(inscription_item) {
-        return await this.inscribe_manager.on_transfer_with_inscribe(
+        return await this.inscribe_operator.on_transfer_with_inscribe(
             inscription_item,
         );
     }
 
     // transfer
     async on_transfer(inscription_item) {
-        return await this.transfer_manager.on_transfer(inscription_item);
+        return await this.transfer_operator.on_transfer(inscription_item);
     }
 
     async on_set_resonance_price(inscription_item) {}

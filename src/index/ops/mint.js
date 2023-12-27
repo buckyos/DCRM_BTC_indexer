@@ -2,7 +2,7 @@ const { Util } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const constants = require('../../constants');
 
-class MintManager {
+class MintOperator {
     constructor(storage) {
         assert(
             storage instanceof TokenIndexStorage,
@@ -125,5 +125,4 @@ class MintManager {
     }
 }
 
-
-module.exports = { MintManager };
+module.exports = { MintOperator };
