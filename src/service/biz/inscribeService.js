@@ -16,18 +16,8 @@ class InscribeService {
 
     async _getInscriptionByHash(ctx) {
         const hash = ctx.params.hash;
-        if (!hash) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
 
-        const ret = this.m_store.queryInscriptionByHash(hash);
-        return {
-            err: ret == null ? 1 : 0,
-            result: ret
-        };
+        return this.m_store.queryInscriptionByHash(hash);
     }
 
     async _getInscriptionByAddress(ctx) {
@@ -36,23 +26,12 @@ class InscribeService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        if (!address) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
-
-        const result = this.m_store.queryInscriptionByAddress(
+        return this.m_store.queryInscriptionByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getInscriptionByBlock(ctx) {
@@ -62,24 +41,13 @@ class InscribeService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        if (!beginBlock) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
-
-        const result = this.m_store.queryInscriptionByBlock(
+        return this.m_store.queryInscriptionByBlock(
             beginBlock,
             endBlock == 0 || endBlock == null ? Number.MAX_SAFE_INTEGER : endBlock,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getResonanceByHash(ctx) {
@@ -88,23 +56,12 @@ class InscribeService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        if (!hash) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
-
-        const result = this.m_store.queryResonanceByHash(
+        return this.m_store.queryResonanceByHash(
             hash,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getResonanceByAddress(ctx) {
@@ -113,23 +70,12 @@ class InscribeService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        if (!address) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
-
-        const result = this.m_store.queryResonanceByAddress(
+        return this.m_store.queryResonanceByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getChantByHash(ctx) {
@@ -138,23 +84,12 @@ class InscribeService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        if (!hash) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
-
-        const result = this.m_store.queryChantByHash(
+        return this.m_store.queryChantByHash(
             hash,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getChantByAddress(ctx) {
@@ -163,31 +98,16 @@ class InscribeService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        if (!address) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
-
-        const result = this.m_store.queryChantByAddress(
+        return this.m_store.queryChantByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getInscriptionCount(ctx) {
-        const count = this.m_store.queryInscriptionCount();
-        return {
-            err: count == null ? 1 : 0,
-            result: count,
-        }
+        return this.m_store.queryInscriptionCount();
     }
 
     registerRouter(router) {

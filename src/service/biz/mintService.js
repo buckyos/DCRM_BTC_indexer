@@ -37,23 +37,12 @@ class MintService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        if (!address) {
-            return {
-                err: 1,
-                msg: "invalid param"
-            };
-        }
-
-        const result = this.m_store.queryMintRecordByAddress(
+        return this.m_store.queryMintRecordByAddress(
             address,
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getLuckyMintRecord(ctx) {
@@ -61,26 +50,24 @@ class MintService {
         const length = ctx.params.length;
         const order = ctx.params.order;
 
-        const result = this.m_store.queryLuckyMintRecord(
+        return this.m_store.queryLuckyMintRecord(
             length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
-        return {
-            err: 0,
-            result
-        }
     }
 
     async _getTotalMintLast24(ctx) {
         const beginTime = Date.now() - 24 * 60 * 60 * 1000;
         const endTime = Date.now() + 1;
 
-        const total = this.m_store.queryTotalMintByTime(beginTime, endTime);
-        return {
-            err: 0,
-            result: total,
-        }
+        return this.m_store.queryTotalMintByTime(beginTime, endTime);
+    }
+
+    async _getBalanceByAddress(ctx) {
+        const address = ctx.params.address;
+
+        return this.m_store.queryBalanceByAddress(address);
     }
 
     registerRouter(router) {
@@ -104,6 +91,10 @@ class MintService {
 
         router.get("/mint_last_24", async (ctx) => {
             ctx.response.body = await this._getTotalMintLast24(ctx);
+        });
+
+        router.get("/balance/:address", async (ctx) => {
+            ctx.response.body = await this._getBalanceByAddress(ctx);
         });
 
         return 0;

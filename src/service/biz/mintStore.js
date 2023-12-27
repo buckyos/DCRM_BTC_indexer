@@ -1,4 +1,5 @@
-const { store } = require('./store');
+const { store, TABLE_NAME } = require('./store');
+const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
 
 class MintStore {
     constructor() {
@@ -16,41 +17,104 @@ class MintStore {
 
     //return {count, list}
     queryMintRecordByAddress(address, length, offset, order) {
+        if (!address) {
+            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+        }
+
         order = order == "ASC" ? "ASC" : "DESC";
-        const countStmt = store.db.prepare('SELECT COUNT(*) AS count FROM mint_records WHERE address = ?');
-        const countResult = countStmt.get(address);
-        const count = countResult.count;
+        let count = 0;
+        let list = [];
 
-        const pageStmt = store.db.prepare(`SELECT * FROM mint_records WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
-        const list = pageStmt.all(address, length, offset);
+        try {
+            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.MINT} WHERE address = ?`);
+            const countResult = countStmt.get(address);
+            count = countResult.count;
 
-        logger.debug('queryMintRecordByAddress:', address, offset, length, "ret:", count, list);
+            if (count > 0) {
+                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.MINT} WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+                list = pageStmt.all(address, length, offset);
+            }
 
-        return { count, list };
+            logger.debug('queryMintRecordByAddress:', address, offset, length, "ret:", count, list);
+
+        } catch (error) {
+            logger.error('queryMintRecordByAddress failed:', error);
+
+            return makeReponse(ERR_CODE.DB_ERROR, error);
+        }
+
+        return makeSuccessReponse({ count, list });
     }
 
     queryLuckyMintRecord(length, offset, order) {
         order = order == "ASC" ? "ASC" : "DESC";
-        const countStmt = store.db.prepare('SELECT COUNT(*) AS count FROM mint_records WHERE lucky is not null');
-        const countResult = countStmt.get();
-        const count = countResult.count;
+        let count = 0;
+        let list = [];
 
-        const pageStmt = store.db.prepare(`SELECT * FROM mint_records WHERE lucky is not null ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
-        const list = pageStmt.all(length, offset);
+        try {
+            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.MINT} WHERE lucky is not null`);
+            const countResult = countStmt.get();
+            count = countResult.count;
 
-        logger.debug('queryLuckyMintRecord:', offset, length, "ret:", count, list);
+            if (count > 0) {
+                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.MINT} WHERE lucky is not null ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+                list = pageStmt.all(length, offset);
+            }
 
-        return { count, list };
+            logger.debug('queryLuckyMintRecord:', offset, length, "ret:", count, list);
+
+        } catch (error) {
+            logger.error('queryLuckyMintRecord failed:', error);
+
+            return makeReponse(ERR_CODE.DB_ERROR, error);
+        }
+
+        return makeSuccessReponse({ count, list });
     }
 
     queryTotalMintByTime(beginTime, endTime) {
-        const stmt = store.db.prepare('SELECT SUM(amount) AS total FROM mint_records WHERE timestamp >= ? AND timestamp < ?');
-        const ret = stmt.get(beginTime, endTime);
-        const total = ret.total;
+        if (!beginTime || !endTime) {
+            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+        }
 
-        logger.debug('queryTotalMintByTime: ret:', total);
+        try {
+            const stmt = store.db.prepare(`SELECT SUM(amount) AS total FROM ${TABLE_NAME.MINT} WHERE timestamp >= ? AND timestamp < ?`);
+            const ret = stmt.get(beginTime, endTime);
+            const total = ret.total;
 
-        return total;
+            logger.debug('queryTotalMintByTime: ret:', total);
+
+            return makeSuccessReponse(total);
+
+        } catch (error) {
+            logger.error('queryTotalMintByTime failed:', error);
+
+            return makeReponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryBalanceByAddress(address) {
+        if (!address) {
+            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+        }
+
+        try {
+            const stmt = store.db.prepare(`SELECT amount FROM ${TABLE_NAME.BALANCE} WHERE address = ?`);
+            const ret = stmt.get(address);
+            if (ret != null) {
+                const amount = ret.amount;
+                logger.debug('queryBalanceByAddress:', address, "ret:", amount);
+
+                return makeSuccessReponse(amount);
+            }
+
+            return makeReponse(ERR_CODE.NOT_FOUND);
+
+        } catch (error) {
+            logger.error('queryBalanceByAddress failed:', error);
+
+            return makeReponse(ERR_CODE.DB_ERROR, error);
+        }
     }
 }
 

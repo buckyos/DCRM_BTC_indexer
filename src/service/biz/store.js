@@ -27,6 +27,15 @@ class Store {
 const store = new Store();
 store.init();
 
+const TABLE_NAME = {
+    INSCRIBE: "inscribe_data",
+    RESONANCE: "data_resonance",
+    CHANT: "data_chant",
+    MINT: "mint_records",
+    BALANCE: "balance"
+};
+
 module.exports = {
-    store
+    store,
+    TABLE_NAME
 };
