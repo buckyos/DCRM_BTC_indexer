@@ -4,12 +4,6 @@ const { TokenIndex } = require('../../storage/index');
 const { HashHelper } = require('../hash');
 const { InscriptionOpState } = require('./state');
 
-class PendingChantOp {
-    constructor(inscription_item, state) {
-        this.inscription_item = inscription_item;
-        this.hash = inscription_item.content.ph;
-    }
-}
 
 class ChantOperator {
     constructor(config, storage, hash_helper) {

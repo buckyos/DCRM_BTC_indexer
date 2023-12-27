@@ -7,7 +7,9 @@ const { HashHelper } = require('./ops/hash');
 const { InscribeOperator } = require('./ops/inscribe');
 const { MintManger, MintOperator } = require('./ops/mint');
 const { TransferOperator } = require('./ops/transfer');
-const {ChantOperator} = require('./ops/chant');
+const { ChantOperator } = require('./ops/chant');
+const { ResonanceOperator } = require('./ops/resonance');
+const { SetPriceOperator } = require('./ops/set_price');
 
 class TokenIndex {
     constructor(config) {
@@ -96,6 +98,12 @@ class TokenBlockIndex {
         this.mint_operator = new MintOperator(config, storage);
         this.transfer_operator = new TransferOperator(storage);
         this.chant_operator = new ChantOperator(config, storage, hash_helper);
+        this.resonance_operator = new ResonanceOperator(
+            config,
+            storage,
+            hash_helper,
+        );
+        this.set_price_operator = new SetPriceOperator(storage, hash_helper);
     }
 
     async process_inscriptions() {
@@ -121,6 +129,26 @@ class TokenBlockIndex {
                     is_failed = true;
                     return { ret };
                 }
+            }
+
+            const { ret: inscribe_ret } =
+                await this.inscribe_operator.process_pending_inscribe_ops();
+            if (inscribe_ret !== 0) {
+                console.error(
+                    `failed to process pending inscribe ops at block ${this.block_height}`,
+                );
+                is_failed = true;
+                return { ret: inscribe_ret };
+            }
+
+            const { ret: resonance_ret } =
+                await this.resonance_operator.process_pending_resonance_ops();
+            if (resonance_ret !== 0) {
+                console.error(
+                    `failed to process pending resonance ops at block ${this.block_height}`,
+                );
+                is_failed = true;
+                return { ret: resonance_ret };
             }
         } catch (error) {
             console.error(
@@ -203,6 +231,8 @@ class TokenBlockIndex {
 
     // deploy
     async on_deploy(inscription_item) {
+        console.log(`on_deploy ${inscription_item.inscription_id}`);
+
         // no need process any more
     }
 
@@ -227,14 +257,23 @@ class TokenBlockIndex {
         return await this.transfer_operator.on_transfer(inscription_item);
     }
 
-    async on_set_resonance_price(inscription_item) {}
-
-    async on_resonance(inscription_item) {}
-
-    async on_transfer_with_resonance(inscription_item) {
-        return await this.on_resonance(inscription_item);
+    // set resonance price
+    async on_set_resonance_price(inscription_item) {
+        return await this.set_price_operator.on_set_price(inscription_item);
     }
 
+    // resonance
+    async on_resonance(inscription_item) {
+        return await this.resonance_operator.on_resonance(inscription_item);
+    }
+
+    async on_transfer_with_resonance(inscription_item) {
+        return await this.resonance_operator.on_transfer_with_resonance(
+            inscription_item,
+        );
+    }
+
+    // chant
     async on_chant(inscription_item) {
         return await this.chant_operator.on_chant(inscription_item);
     }

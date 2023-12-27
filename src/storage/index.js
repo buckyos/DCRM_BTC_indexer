@@ -193,7 +193,8 @@ class TokenIndexStorage {
                         timestamp INTEGER,
                         hash TEXT,
                         address TEXT,
-                        amount INTEGER,
+                        owner_bouns INTEGER,
+                        service_charge INTEGER,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -425,7 +426,7 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO mint_records (inscription_id, block_height, timestamp, address, amount, lucky) VALUES (?, ?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO mint_records (inscription_id, block_height, timestamp, address, amount, lucky) VALUES (?, ?, ?, ?, ?, ?)`,
                 [inscription_id, block_height, timestamp, address, amount, lucky],
                 (err) => {
                     if (err) {
@@ -488,7 +489,7 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO inscribe_records (inscription_id, block_height, address, timestamp, hash, amount, text, price, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO inscribe_records (inscription_id, block_height, address, timestamp, hash, amount, text, price, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -541,7 +542,7 @@ class TokenIndexStorage {
         
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO chant_records (inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state) VALUES (?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO chant_records (inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state],
                 (err) => {
                     if (err) {
@@ -552,6 +553,35 @@ class TokenIndexStorage {
                     }
                 },
             );
+        });
+    }
+
+    /**
+     * 
+     * @param {string} address 
+     * @returns {ret: number, data: object}
+     */
+    async get_user_last_chant(address) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof address === 'string', `address should be string`);
+
+        const sql = `
+            SELECT * 
+            FROM chant_records 
+            WHERE address = ? 
+            ORDER BY block_height DESC 
+            LIMIT 1
+        `;
+        
+        return new Promise((resolve, reject) => {
+            this.db.get(sql, [address], (err, row) => {
+                if (err) {
+                    console.error(`Could not get user last chant ${address} ${err}`);
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, data: row });
+                }
+            });
         });
     }
 
@@ -631,7 +661,7 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO set_price_records (inscription_id, block_height, timestamp, hash, address, price, state) VALUES (?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO set_price_records (inscription_id, block_height, timestamp, hash, address, price, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [inscription_id, block_height, timestamp, hash, address, price, state],
                 (err) => {
                     if (err) {
@@ -645,7 +675,7 @@ class TokenIndexStorage {
         });
     }
 
-    async add_resonance_record(inscription_id, block_height, timestamp, hash, address, amount, state) {
+    async add_resonance_record(inscription_id, block_height, timestamp, hash, address, owner_bouns, service_charge, state) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',
@@ -658,10 +688,8 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
-        assert(
-            Number.isInteger(amount) && amount >= 0,
-            `amount should be non-negative integer`,
-        );
+        assert(Number.isInteger(owner_bouns), `owner_bouns should be integer`);
+        assert(Number.isInteger(service_charge), `service_charge should be integer`);
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
@@ -669,8 +697,8 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO resonance_records (inscription_id, block_height, timestamp, hash, address, amount, state) VALUES (?, ?, ?, ?)`,
-                [inscription_id, block_height, timestamp, hash, address, amount, state],
+                `INSERT OR REPLACE INTO resonance_records (inscription_id, block_height, timestamp, hash, address, owner_bouns, service_charge, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [inscription_id, block_height, timestamp, hash, address, owner_bouns, service_charge, state],
                 (err) => {
                     if (err) {
                         console.error('failed to add resonance record', err);
@@ -849,7 +877,7 @@ class TokenIndexStorage {
 
         const sql = `
                 INSERT INTO inscribe_data (hash, address, block_height, timestamp, text, price, resonance_count)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
 
         return new Promise((resolve, reject) => {
@@ -896,6 +924,11 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     * 
+     * @param {string} hash 
+     * @returns {ret: number}
+     */
     async update_resonance_count(hash) {
         assert(this.db != null, `db should not be null`);
         assert(typeof hash === 'string', `hash should be string`);

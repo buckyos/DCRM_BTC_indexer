@@ -10,7 +10,7 @@ const InscriptionOpState = {
     // competition failed in same block
     COMPETITION_FAILED: 3,
 
-    // amt is less than hash weight
+    // amt is invalid
     INVALID_AMT: 4,
 
     // balance not enough
@@ -24,6 +24,15 @@ const InscriptionOpState = {
 
     // invalid params
     INVALID_PARAMS: 8,
+
+    // invalid price
+    INVALID_PRICE: 9,
+
+    OUT_OF_RESONANCE_LIMIT: 10,
+
+    HAS_NO_VALID_CHANT: 11,
+
+    OUT_ADDRESS_IS_NOT_OWNER: 12,
 };
 
 
