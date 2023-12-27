@@ -73,12 +73,12 @@ async function test_eth() {
         assert(method === 2, `method should be 2, but ${method}`);
         assert(data_size === 93745654, `data size should be 93745654, but ${data_size}`);
     }
-    
+
     await client.query_hash_point(1439800483, "0x80000000059671f61d06b37cf3769b5a35548d4db9496aed632b876e40469bdd");
 
     await client.run();
 }
 
-test_eth().then(console.log).catch(console.error);
+test_token().then(console.log).catch(console.error);
 
 Util.sleep(1000 * 1000);

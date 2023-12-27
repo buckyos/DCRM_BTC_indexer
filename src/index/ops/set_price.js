@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { Util } = require('../../util');
-const { TokenIndex } = require('../../storage/index');
-const { HashHelper } = require('../hash');
+const { TokenIndex } = require('../../storage/token');
+const { HashHelper } = require('./hash');
 const {InscriptionOpState} = require('./state');
 
 class SetPriceOperator {
@@ -17,7 +17,7 @@ class SetPriceOperator {
     }
 
     async on_set_price(inscription_item) {
-        
+
         // do set price
         const { ret, state } = await this._set_price(inscription_item);
         if (ret !== 0) {

@@ -12,7 +12,7 @@ class Config {
         assert(this.config.isolate, `isolate should be set`);
         assert(this.config.eth.contract_abi, `contract_abi should be set`);
 
-        console.log(this.config);
+        console.log(JSON.stringify(this.config));
 
         // load abi file from config file in the same dir
         const abi_file = path.join(

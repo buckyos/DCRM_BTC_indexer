@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { Util } = require('../../util');
-const { TokenIndex } = require('../../storage/index');
-const { HashHelper } = require('../hash');
+const { TokenIndex } = require('../../storage/token');
+const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 
 class PendingResonanceOp {
@@ -215,8 +215,8 @@ class ResonanceOperator {
     }
 
     async _resonance(inscription_item, state) {
-        assert(_.isNumber(state), `state should be number`));
-        
+        assert(_.isNumber(state), `state should be number`);
+
         // 1. first transfer balance for bouns and service charge
         const amt = inscription_item.content.amt;
         assert(_.isNumber(amt), `amt should be number`);

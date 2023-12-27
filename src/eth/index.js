@@ -15,6 +15,10 @@ class ETHIndex {
         this.current_block_height = 0;
     }
 
+    /**
+     * init eth index at start
+     * @returns {Promise<{ret: number}>}
+     */
     async init() {
         const { ret } = await this.storage.init();
         if (ret !== 0) {

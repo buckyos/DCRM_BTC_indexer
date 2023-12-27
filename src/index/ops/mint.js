@@ -1,3 +1,4 @@
+const assert = require('assert');
 const { Util } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const constants = require('../../constants');

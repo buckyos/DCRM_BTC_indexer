@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { Util } = require('../../util');
-const { TokenIndex } = require('../../storage/index');
-const { HashHelper } = require('../hash');
+const { TokenIndex } = require('../../storage/token');
+const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 
 
@@ -196,7 +196,7 @@ class ChantOperator {
         }
 
         if (user_bonus > 0) {
-            const { ret } = this.storage.transfer_balance(
+            const { ret } = await this.storage.transfer_balance(
                 this.config.token.account.mint_pool_address,
                 inscription_item.address,
                 user_bonus,
@@ -214,7 +214,7 @@ class ChantOperator {
         }
 
         if (owner_bonus > 0) {
-            const { ret } = this.storage.transfer_balance(
+            const { ret } = await this.storage.transfer_balance(
                 this.config.token.account.mint_pool_address,
                 data.address,
                 owner_bonus,

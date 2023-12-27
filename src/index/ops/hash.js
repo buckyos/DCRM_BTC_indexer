@@ -1,3 +1,4 @@
+const assert = require('assert');
 const { ETHIndex } = require('../../eth/index');
 const { Util } = require('../../util');
 

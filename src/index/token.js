@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { TokenIndexStorage } = require('../storage/index');
+const { TokenIndexStorage } = require('../storage/token');
 const constants = require('../constants');
 const { Util } = require('../util');
 const { ETHIndex } = require('../eth/index');

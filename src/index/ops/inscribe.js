@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { Util } = require('../../util');
-const { TokenIndex } = require('../../storage/index');
-const { HashHelper } = require('../hash');
+const { TokenIndex } = require('../../storage/token');
+const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 
 class PendingInscribeOp {

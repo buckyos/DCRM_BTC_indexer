@@ -4,6 +4,7 @@ const { OrdClient } = require('../btc/ord');
 const { InscriptionLogStorage } = require('../storage/log');
 const { Util } = require('../util');
 const { TokenIndex } = require('./token');
+const { ETHIndex } = require('../eth/index');
 
 class InscriptionIndex {
     constructor(config) {
@@ -26,14 +27,34 @@ class InscriptionIndex {
         this.token_index = new TokenIndex(config);
     }
 
-    // run forever
-    async run() {
-        const { ret: init_ret } = await this.storage.init();
-        if (init_ret !== 0) {
+    /**
+     * 
+     * @param {ETHIndex} eth_index 
+     * @returns {Promise<{ret: number}>}
+     */
+    async init(eth_index) {
+        assert(eth_index instanceof ETHIndex, `eth_index should be ETHIndex`);
+
+        // first init storage
+        const { ret: init_storage_ret } = await this.storage.init();
+        if (init_storage_ret !== 0) {
             console.error(`failed to init inscription log storage`);
-            return;
+            return { ret: init_storage_ret };
         }
 
+        // then init token index
+        const { ret: init_token_index_ret } = await this.token_index.init(eth_index);
+        if (init_token_index_ret !== 0) {
+            console.error(`failed to init token index`);
+            return { ret: init_token_index_ret };
+        }
+
+        console.info(`init inscription index success`);
+        return { ret: 0 };
+    }
+
+    // run forever
+    async run() {
         while (true) {
             if (this.current_block_height === 0) {
                 // get latest block height already synced
@@ -326,10 +347,10 @@ class InscriptionIndex {
     }
 
     /**
-     * 
-     * @param {number} block_height 
-     * @param {string} inscription_id 
-     * @param {object} inscription 
+     *
+     * @param {number} block_height
+     * @param {string} inscription_id
+     * @param {object} inscription
      * @returns {Promise<{ret: number, valid: boolean, content: object}>}
      */
     async check_inscription(block_height, inscription_id, inscription) {
@@ -525,7 +546,10 @@ class InscriptionIndex {
             `indexing inscriptions at block ${block_height} count ${block_inscriptions.length}`,
         );
 
-        return { ret: 0 };
+        return await this.token_index.process_block_inscriptions(
+            block_height,
+            block_inscriptions,
+        );
     }
 }
 
