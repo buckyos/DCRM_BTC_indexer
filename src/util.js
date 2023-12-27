@@ -116,6 +116,39 @@ class Util {
     }
 
     /**
+     * try convert hash string to base58 string, maybe hex string
+     * @param {string} hash_str 
+     * @returns {ret: number, hash_str: string}
+     */
+    static hex_to_base58(hash_str) {
+        // Try to decode as base58
+        try {
+            bs58.decode(hash_str);
+            return { ret: 0, hash_str };
+        } catch (err) {
+            console.warn(
+                `hash str tot a base58 string, now try hex ${hash_str} ${err}`,
+            );
+        }
+
+        // Try to decode as hex
+        try {
+            if (hash_str.startsWith('0x') || hash_str.startsWith('0X')) {
+                hash_str = hash_str.slice(2);
+            }
+
+            const ret = new Uint8Array(Buffer.from(hash_str, 'hex'));
+            hash_str = bs58.encode(ret);
+
+            return { ret: 0, hash_str };
+        } catch (err) {
+            console.warn(`hash not a hex string ${hash_str} ${err}`);
+        }
+
+        return { ret: -1 };
+    }
+
+    /**
      * try to parse hash string as base58 or hex
      * @param {string} str
      * @returns {Uint8Array}
@@ -135,7 +168,7 @@ class Util {
             if (hash_str.startsWith('0x') || hash_str.startsWith('0X')) {
                 hash_str = hash_str.slice(2);
             }
-            
+
             return new Uint8Array(Buffer.from(hash_str, 'hex'));
         } catch (err) {
             console.warn(`hash not a hex string ${hash_str} ${err}`);
@@ -196,6 +229,38 @@ class Util {
         const baseRate = 19 / (1 + Math.exp(-0.15 * (point - 90))) + 1;
         const score = baseScore * baseRate * 2;
         return score;
+    }
+
+    /**
+     * 
+     * @param {string} hash in base58
+     * @param {string} txid in hex
+     * @returns {boolean}
+     */
+    static check_inscribe_hash_and_txid(hash, txid) {
+        assert(_.isString(hash), `hash should be string ${hash}`);
+        assert(_.isString(txid), `txid should be string ${txid}`);
+
+        const hash_number = this.address_number(hash);
+        const txid_number = this.address_number(txid);
+        const ret = Math.abs(hash_number - txid_number) % 32;
+        return ret === 0;
+    }
+
+    /**
+     *
+     * @param {string} hash base58
+     * @param {string} address base58
+     * @returns {number}
+     */
+    static calc_distance_with_hash_and_address(hash, address) {
+        assert(_.isString(hash), `hash should be string ${hash}`);
+        assert(_.isString(address), `address should be string ${address}`);
+
+        const hash_number = this.address_number(hash);
+        const address_number = this.address_number(address);
+        const distance = Math.abs(hash_number - address_number);
+        return distance;
     }
 }
 

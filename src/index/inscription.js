@@ -47,14 +47,14 @@ class InscriptionIndex {
 
                 // get config start block height that should be synced
                 assert(
-                    _.isNumber(this.config.genesis_block_height),
+                    _.isNumber(this.config.token.genesis_block_height),
                     `invalid start block height`,
                 );
 
                 this.current_block_height =
-                    height > this.config.genesis_block_height
+                    height > this.config.token.genesis_block_height
                         ? height
-                        : this.config.genesis_block_height;
+                        : this.config.token.genesis_block_height;
                 console.info(
                     `sync will start at block height ${this.current_block_height}`,
                 );
@@ -174,7 +174,7 @@ class InscriptionIndex {
 
             assert(
                 inscription.genesis_height === block_height,
-                `invalid inscription genesis block height: ${inscription.genesis_block_height} !== ${block_height}`,
+                `invalid inscription genesis block height: ${inscription.genesis_height} !== ${block_height}`,
             );
 
             // filter invalid inscription
@@ -325,8 +325,15 @@ class InscriptionIndex {
         return { ret: 0 };
     }
 
+    /**
+     * 
+     * @param {number} block_height 
+     * @param {string} inscription_id 
+     * @param {object} inscription 
+     * @returns {Promise<{ret: number, valid: boolean, content: object}>}
+     */
     async check_inscription(block_height, inscription_id, inscription) {
-        console.info(`checking inscription ${inscription_id}`);
+        console.info(`checking inscription ${block_height} ${inscription_id}`);
 
         // check content type at first
         const valid_content_types = [
@@ -395,6 +402,22 @@ class InscriptionIndex {
             };
         }
 
+        // try fix the ph, if encoded in hex, convert to base58
+        if (content.ph != null) {
+            if (!_.isString(content.ph)) {
+                console.error(`invalid content hash value: ${content.ph}`);
+                return { ret: 0, valid: false };
+            }
+            
+            const { ret, hash_str } = Util.hex_to_base58(content.ph);
+            if (ret !== 0) {
+                console.error(`invalid content hash value: ${content.ph}`);
+                return { ret: 0, valid: false };
+            }
+
+            content.ph = hash_str;
+        }
+
         return {
             ret: 0,
             valid: true,
@@ -412,12 +435,17 @@ class InscriptionIndex {
             return false;
         }
 
+        if (!_.isString(content.p)) {
+            return false;
+        }
+
         if (content.p.toLowerCase() === 'brc-20') {
             assert(
-                _.isString(this.config.token_name),
-                `invalid token name config ${this.config.token_name}`,
+                _.isString(this.config.token.token_name),
+                `invalid token name config ${this.config.token.token_name}`,
             );
-            if (content.tick == this.config.token_name) {
+
+            if (content.tick == this.config.token.token_name) {
                 return true;
             }
         } else if (content.p.toLowerCase() === 'pdi') {

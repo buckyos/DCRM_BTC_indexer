@@ -33,8 +33,15 @@ const INDEX_CONFIG = {
         port: 13020,
     },
 
-    genesis_block_height: 2543000,
-    token_name: 'TTTT',
+    token: {
+        account: {
+            mint_pool: '0x0',
+            foundation: '0x0',
+        },
+
+        genesis_block_height: 2543000,
+        token_name: 'TTTT',
+    }
 };
 
 module.exports = INDEX_CONFIG;
