@@ -1,4 +1,4 @@
-1. 获取铭文信息：
+1. 根据公共数据hash获取铭文信息：
 
     /inscription/:hash
 
@@ -6,7 +6,7 @@
 
     参数：
 
-    hash：铭文hash
+    hash：公共数据hash
 
     返回：
 
