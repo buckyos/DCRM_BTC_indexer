@@ -402,13 +402,45 @@ class InscriptionIndex {
             };
         }
 
+        // check price if exists
+        if (content.price != null) {
+            if (!_.isNumber(content.price)) {
+                console.error(`invalid content price value: ${content.price}`);
+                return { ret: 0, valid: false };
+            }
+        }
+
+        // check amt if exists
+        if (content.amt != null) {
+            if (!_.isNumber(content.amt)) {
+                console.error(`invalid content amt value: ${content.amt}`);
+                return { ret: 0, valid: false };
+            }
+        }
+
+        // check text if exists
+        if (content.text != null) {
+            if (!_.isString(content.text)) {
+                console.error(`invalid content text value: ${content.text}`);
+                return { ret: 0, valid: false };
+            }
+        }
+
+        // check lucky if exists
+        if (content.lucky != null) {
+            if (!_.isString(content.lucky)) {
+                console.error(`invalid content lucky value: ${content.lucky}`);
+                return { ret: 0, valid: false };
+            }
+        }
+
         // try fix the ph, if encoded in hex, convert to base58
         if (content.ph != null) {
             if (!_.isString(content.ph)) {
                 console.error(`invalid content hash value: ${content.ph}`);
                 return { ret: 0, valid: false };
             }
-            
+
             const { ret, hash_str } = Util.hex_to_base58(content.ph);
             if (ret !== 0) {
                 console.error(`invalid content hash value: ${content.ph}`);
@@ -478,10 +510,13 @@ class InscriptionIndex {
      *
      * @param {Object} inscription_item - The inscription item to handle.
      * @param {number} inscription_item.block_height - The block height of the inscription.
+     * @param {number} inscription_item.timestamp - The timestamp of the inscription.
      * @param {number} inscription_item.inscription_index - The index of the inscription.
      * @param {string} inscription_item.txid - The transaction ID of the inscription.
+     * @param {string} inscription_item.prev_txid - The previous transaction ID of the inscription.
      * @param {string} inscription_item.inscription_id - The ID of the inscription.
      * @param {string} inscription_item.address - The address of the inscription.
+     * @param {string} inscription_item.output_address - The output address of the inscription.
      * @param {Object} inscription_item.content - The content of the inscription.
      * @returns {Promise<{ret: number}>}
      */

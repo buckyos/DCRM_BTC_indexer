@@ -35,8 +35,8 @@ const INDEX_CONFIG = {
 
     token: {
         account: {
-            mint_pool: '0x0',
-            foundation: '0x0',
+            mint_pool_address: '0x0',
+            foundation_address: '0x0',
         },
 
         genesis_block_height: 2543000,

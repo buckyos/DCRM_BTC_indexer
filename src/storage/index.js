@@ -77,6 +77,8 @@ class TokenIndexStorage {
                     `CREATE TABLE IF NOT EXISTS inscribe_records (
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
+                        address TEXT,
+                        timestamp INTEGER,
                         hash TEXT,
                         amount TEXT,
                         text TEXT,
@@ -427,9 +429,24 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @param {number} block_height 
+     * @param {string} address 
+     * @param {number} timestamp 
+     * @param {string} hash 
+     * @param {number} amount 
+     * @param {string} text 
+     * @param {number} price 
+     * @param {number} state 
+     * @returns 
+     */
     async add_inscribe_record(
         inscription_id,
         block_height,
+        address,
+        timestamp,
         hash,
         amount,
         text,
@@ -445,6 +462,8 @@ class TokenIndexStorage {
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
+        assert(typeof address === 'string', `address should be string`);
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof amount === 'string', `amount should be string`);
         assert(typeof text === 'string', `text should be string`);
@@ -459,10 +478,12 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO inscribe_records (inscription_id, block_height, hash, amount, text, price, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO inscribe_records (inscription_id, block_height, address, timestamp, hash, amount, text, price, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
+                    address,
+                    timestamp,
                     hash,
                     amount,
                     text,
@@ -740,7 +761,7 @@ class TokenIndexStorage {
 
     // inscribe_data related methods
 
-    async insert_inscribe_data(hash, address, block_height, timestamp, text, price, resonance_count) {
+    async add_inscribe_data(hash, address, block_height, timestamp, text, price, resonance_count) {
         assert(this.db != null, `db should not be null`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
@@ -836,6 +857,11 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     * 
+     * @param {string} hash 
+     * @returns {ret: number, data: object}
+     */
     async get_inscribe_data(hash) {
         assert(this.db != null, `db should not be null`);
         assert(typeof hash === 'string', `hash should be string`);
