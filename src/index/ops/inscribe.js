@@ -226,7 +226,7 @@ class InscribeOperator {
 
         // 98% of the DMC paid by the user for inscribing a public data inscription goes to the DMC Mint Pool, and the remaining 2% goes to the Foundation's account as a handling fee.
         const mint_amt = Math.floor(amt * 0.98);
-        const foundation_amt = amt - mint_amt;
+        const service_charge = amt - mint_amt;
 
         assert(
             _.isString(this.config.token.account.mint_pool_address),
@@ -252,11 +252,11 @@ class InscribeOperator {
         const { ret: transfer_ret2 } = await this.storage.transfer_balance(
             op.inscription_item.address,
             this.config.token.account.foundation_address,
-            foundation_amt,
+            service_charge,
         );
         if (transfer_ret2 !== 0) {
             console.error(
-                `failed to transfer balance to foundation ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${foundation_amt}`,
+                `failed to transfer service charge to foundation ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${service_charge}`,
             );
             return { ret: transfer_ret2 };
         }
@@ -268,7 +268,8 @@ class InscribeOperator {
             op.inscription_item.address,
             op.inscription_item.timestamp,
             op.inscription_item.content.ph,
-            op.inscription_item.content.amt,
+            mint_amt,
+            service_charge,
             op.inscription_item.content.text,
             op.inscription_item.content.price,
             op.state,

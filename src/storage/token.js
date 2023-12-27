@@ -80,7 +80,8 @@ class TokenIndexStorage {
                         address TEXT,
                         timestamp INTEGER,
                         hash TEXT,
-                        amount TEXT,
+                        mint_amount INTEGER,
+                        service_charge INTEGER,
                         text TEXT,
                         price INTEGER,
                         state INTEGER DEFAULT 0
@@ -459,7 +460,8 @@ class TokenIndexStorage {
         address,
         timestamp,
         hash,
-        amount,
+        mint_amount,
+        service_charge,
         text,
         price,
         state,
@@ -476,7 +478,8 @@ class TokenIndexStorage {
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
-        assert(typeof amount === 'string', `amount should be string`);
+        assert(typeof mint_amount === 'number', `mint_amount should be number`);
+        assert(typeof service_charge === 'number', `service_charge should be number`);
         assert(typeof text === 'string', `text should be string`);
         assert(
             Number.isInteger(price) && price >= 0,
@@ -489,14 +492,26 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO inscribe_records (inscription_id, block_height, address, timestamp, hash, amount, text, price, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO inscribe_records 
+                    (inscription_id, 
+                    block_height, 
+                    address, 
+                    timestamp, 
+                    hash, 
+                    mint_amount, 
+                    service_charge, 
+                    text, 
+                    price, 
+                    state) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     address,
                     timestamp,
                     hash,
-                    amount,
+                    mint_amount,
+                    service_charge,
                     text,
                     price,
                     state,
