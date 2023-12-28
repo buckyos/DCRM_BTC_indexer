@@ -83,11 +83,7 @@ class ETHIndex {
     async run() {
         while (true) {
             if (this.current_block_height === 0) {
-                assert(
-                    this.current_timestamp === 0,
-                    `invalid timestamp ${this.current_timestamp}`,
-                );
-
+ 
                 // get latest block height already synced
                 const { ret, height } =
                     await this.storage.get_latest_block_height();

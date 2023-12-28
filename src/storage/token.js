@@ -132,6 +132,28 @@ class TokenIndexStorage {
                     return;
                 }
 
+                // create index for hash and address field on chant_records table
+                this.db.exec(
+                    `CREATE INDEX IF NOT EXISTS idx_chant_records_hash ON chant_records (hash);
+                     CREATE INDEX IF NOT EXISTS idx_chant_records_address ON chant_records (address);
+                     `,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index on chant_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on chant_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
                 // Create transfer_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS transfer_records (
@@ -208,6 +230,28 @@ class TokenIndexStorage {
                         }
 
                         console.log(`created resonance_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
+                // Create index for hash and address field on resonance_records table
+                this.db.exec(
+                    `CREATE INDEX IF NOT EXISTS idx_resonance_records_hash ON resonance_records (hash);
+                     CREATE INDEX IF NOT EXISTS idx_resonance_records_address ON resonance_records (address);
+                     `,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index on resonance_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on resonance_records table`);
                     },
                 );
 
@@ -342,7 +386,7 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
+     *
      * @returns {ret: number}
      */
     async begin_transaction() {
@@ -367,7 +411,7 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
+     *
      * @param {boolean} is_success
      * @returns {ret: number}
      */
@@ -428,7 +472,14 @@ class TokenIndexStorage {
         return new Promise((resolve, reject) => {
             this.db.run(
                 `INSERT OR REPLACE INTO mint_records (inscription_id, block_height, timestamp, address, amount, lucky) VALUES (?, ?, ?, ?, ?, ?)`,
-                [inscription_id, block_height, timestamp, address, amount, lucky],
+                [
+                    inscription_id,
+                    block_height,
+                    timestamp,
+                    address,
+                    amount,
+                    lucky,
+                ],
                 (err) => {
                     if (err) {
                         console.error('failed to add mint record', err);
@@ -442,17 +493,17 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} inscription_id 
-     * @param {number} block_height 
-     * @param {string} address 
-     * @param {number} timestamp 
-     * @param {string} hash 
-     * @param {number} amount 
-     * @param {string} text 
-     * @param {number} price 
-     * @param {number} state 
-     * @returns 
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {string} address
+     * @param {number} timestamp
+     * @param {string} hash
+     * @param {number} amount
+     * @param {string} text
+     * @param {number} price
+     * @param {number} state
+     * @returns
      */
     async add_inscribe_record(
         inscription_id,
@@ -479,7 +530,10 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof mint_amount === 'number', `mint_amount should be number`);
-        assert(typeof service_charge === 'number', `service_charge should be number`);
+        assert(
+            typeof service_charge === 'number',
+            `service_charge should be number`,
+        );
         assert(typeof text === 'string', `text should be string`);
         assert(
             Number.isInteger(price) && price >= 0,
@@ -528,7 +582,16 @@ class TokenIndexStorage {
         });
     }
 
-    async add_chant_record(inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state) {
+    async add_chant_record(
+        inscription_id,
+        block_height,
+        timestamp,
+        address,
+        hash,
+        user_bouns,
+        owner_bouns,
+        state,
+    ) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',
@@ -554,11 +617,19 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
-        
         return new Promise((resolve, reject) => {
             this.db.run(
                 `INSERT OR REPLACE INTO chant_records (inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state],
+                [
+                    inscription_id,
+                    block_height,
+                    timestamp,
+                    address,
+                    hash,
+                    user_bouns,
+                    owner_bouns,
+                    state,
+                ],
                 (err) => {
                     if (err) {
                         console.error('failed to add chant record', err);
@@ -572,8 +643,8 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} address 
+     *
+     * @param {string} address
      * @returns {ret: number, data: object}
      */
     async get_user_last_chant(address) {
@@ -587,11 +658,13 @@ class TokenIndexStorage {
             ORDER BY block_height DESC 
             LIMIT 1
         `;
-        
+
         return new Promise((resolve, reject) => {
             this.db.get(sql, [address], (err, row) => {
                 if (err) {
-                    console.error(`Could not get user last chant ${address} ${err}`);
+                    console.error(
+                        `Could not get user last chant ${address} ${err}`,
+                    );
                     resolve({ ret: -1 });
                 } else {
                     resolve({ ret: 0, data: row });
@@ -643,16 +716,24 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} inscription_id 
-     * @param {number} block_height 
-     * @param {number} timestamp 
-     * @param {string} hash 
-     * @param {string} address 
-     * @param {number} price 
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} hash
+     * @param {string} address
+     * @param {number} price
      * @returns {ret: number}
      */
-    async add_set_price_record(inscription_id, block_height, timestamp, hash, address, price, state) {
+    async add_set_price_record(
+        inscription_id,
+        block_height,
+        timestamp,
+        hash,
+        address,
+        price,
+        state,
+    ) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',
@@ -677,7 +758,15 @@ class TokenIndexStorage {
         return new Promise((resolve, reject) => {
             this.db.run(
                 `INSERT OR REPLACE INTO set_price_records (inscription_id, block_height, timestamp, hash, address, price, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [inscription_id, block_height, timestamp, hash, address, price, state],
+                [
+                    inscription_id,
+                    block_height,
+                    timestamp,
+                    hash,
+                    address,
+                    price,
+                    state,
+                ],
                 (err) => {
                     if (err) {
                         console.error('failed to add set price record', err);
@@ -690,7 +779,16 @@ class TokenIndexStorage {
         });
     }
 
-    async add_resonance_record(inscription_id, block_height, timestamp, hash, address, owner_bouns, service_charge, state) {
+    async add_resonance_record(
+        inscription_id,
+        block_height,
+        timestamp,
+        hash,
+        address,
+        owner_bouns,
+        service_charge,
+        state,
+    ) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',
@@ -704,7 +802,10 @@ class TokenIndexStorage {
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(owner_bouns), `owner_bouns should be integer`);
-        assert(Number.isInteger(service_charge), `service_charge should be integer`);
+        assert(
+            Number.isInteger(service_charge),
+            `service_charge should be integer`,
+        );
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
@@ -713,7 +814,16 @@ class TokenIndexStorage {
         return new Promise((resolve, reject) => {
             this.db.run(
                 `INSERT OR REPLACE INTO resonance_records (inscription_id, block_height, timestamp, hash, address, owner_bouns, service_charge, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [inscription_id, block_height, timestamp, hash, address, owner_bouns, service_charge, state],
+                [
+                    inscription_id,
+                    block_height,
+                    timestamp,
+                    hash,
+                    address,
+                    owner_bouns,
+                    service_charge,
+                    state,
+                ],
                 (err) => {
                     if (err) {
                         console.error('failed to add resonance record', err);
@@ -728,8 +838,8 @@ class TokenIndexStorage {
 
     /**
      * check user's last resonance record on a data hash
-     * @param {string} address 
-     * @param {string} hash 
+     * @param {string} address
+     * @param {string} hash
      * @returns {ret: number, data: object}
      */
     async query_user_resonance(address, hash) {
@@ -740,11 +850,13 @@ class TokenIndexStorage {
             ORDER BY block_height DESC 
             LIMIT 1
         `;
-        
+
         return new Promise((resolve, reject) => {
             this.db.get(sql, [address, hash], (err, row) => {
                 if (err) {
-                    console.error(`Could not query user resonance ${address} ${hash} ${err}`);
+                    console.error(
+                        `Could not query user resonance ${address} ${hash} ${err}`,
+                    );
                     resolve({ ret: -1 });
                 } else {
                     resolve({ ret: 0, data: row });
@@ -753,7 +865,6 @@ class TokenIndexStorage {
         });
     }
 
-    
     async add_balance(address, amount) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
@@ -804,8 +915,8 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} address 
+     *
+     * @param {string} address
      * @returns {ret: number, amount: number}
      */
     async get_balance(address) {
@@ -826,44 +937,59 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} from_address 
-     * @param {string} to_address 
-     * @param {int} amount 
-     * @returns {ret: number} 
+     *
+     * @param {string} from_address
+     * @param {string} to_address
+     * @param {int} amount
+     * @returns {ret: number}
      */
     async transfer_balance(from_address, to_address, amount) {
-        assert(from_address != to_address, `from_address should not be equal to to_address ${from_address}`);
+        assert(
+            from_address != to_address,
+            `from_address should not be equal to to_address ${from_address}`,
+        );
 
         assert(this.db != null, `db should not be null`);
-        assert(typeof from_address === 'string', `from_address should be string`);
+        assert(
+            typeof from_address === 'string',
+            `from_address should be string`,
+        );
         assert(typeof to_address === 'string', `to_address should be string`);
         assert(Number.isInteger(amount), `amount should be integer`);
 
         // should exec in transaction
         assert(this.during_transaction, `should be during transaction`);
 
-        const {ret: get_from_balance_ret, amount: from_balance} = await this.get_balance(from_address);
+        const { ret: get_from_balance_ret, amount: from_balance } =
+            await this.get_balance(from_address);
         if (get_from_balance_ret != 0) {
             console.error(`Could not get balance ${from_address}`);
-            return { ret: -1 }; 
-        }
-
-        if (from_balance < amount) {
-            console.error(`Insufficient balance ${from_address} : ${from_balance} < ${amount}`);
             return { ret: -1 };
         }
 
-        const {ret: update_from_balance_ret} = await this.update_balance(from_address, -amount);
-        if (update_from_balance_ret != 0) {
-            console.error(`Could not update balance ${from_address}`);
-            return { ret: -1 }; 
+        if (from_balance < amount) {
+            console.error(
+                `Insufficient balance ${from_address} : ${from_balance} < ${amount}`,
+            );
+            return { ret: -1 };
         }
 
-        const {ret: update_to_balance_ret} = await this.update_balance(to_address, amount);
+        const { ret: update_from_balance_ret } = await this.update_balance(
+            from_address,
+            -amount,
+        );
+        if (update_from_balance_ret != 0) {
+            console.error(`Could not update balance ${from_address}`);
+            return { ret: -1 };
+        }
+
+        const { ret: update_to_balance_ret } = await this.update_balance(
+            to_address,
+            amount,
+        );
         if (update_to_balance_ret != 0) {
             console.error(`Could not update balance ${to_address}`);
-            return { ret: -1 }; 
+            return { ret: -1 };
         }
 
         console.log(`transfer balance ${from_address} ${to_address} ${amount}`);
@@ -872,14 +998,25 @@ class TokenIndexStorage {
 
     // inscribe_data related methods
 
-    async add_inscribe_data(hash, address, block_height, timestamp, text, price, resonance_count) {
+    async add_inscribe_data(
+        hash,
+        address,
+        block_height,
+        timestamp,
+        text,
+        price,
+        resonance_count,
+    ) {
         assert(this.db != null, `db should not be null`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
         if (text) {
             assert(typeof text === 'string', `text should be string`);
         }
-        assert(Number.isInteger(block_height), `block_height should be integer`);
+        assert(
+            Number.isInteger(block_height),
+            `block_height should be integer`,
+        );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(
             Number.isInteger(price) && price >= 0,
@@ -898,7 +1035,15 @@ class TokenIndexStorage {
         return new Promise((resolve, reject) => {
             this.db.run(
                 sql,
-                [hash, address, block_height, timestamp, text, price, resonance_count],
+                [
+                    hash,
+                    address,
+                    block_height,
+                    timestamp,
+                    text,
+                    price,
+                    resonance_count,
+                ],
                 (err) => {
                     if (err) {
                         if (err.code === 'SQLITE_CONSTRAINT') {
@@ -940,8 +1085,8 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} hash 
+     *
+     * @param {string} hash
      * @returns {ret: number}
      */
     async update_resonance_count(hash) {
@@ -974,8 +1119,8 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} hash 
+     *
+     * @param {string} hash
      * @returns {ret: number, data: object | null}
      */
     async get_inscribe_data(hash) {
