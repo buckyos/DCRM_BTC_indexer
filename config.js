@@ -27,6 +27,8 @@ const INDEX_CONFIG = {
     db: {
         data_dir: 'E:\\data\\testnet\\testnet3',
         index_db_file: 'index.sqlite',
+        eth_db_file: 'eth_index.sqlite',
+        inscription_db_file: 'inscriptions.sqlite',
     },
 
     service: {

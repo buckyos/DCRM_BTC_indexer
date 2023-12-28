@@ -4,23 +4,36 @@ const INDEX_CONFIG = require('../../../config');
 
 class Store {
     constructor() {
-        this.m_db = null;
+        this.m_indexDB = null;
+        this.m_ethDB = null;
+        this.m_inscriptionDB = null;
     }
 
     init() {
-        if (this.m_db) {
-            return true;
-        }
+        // if init failed, let it crash
 
-        const dataPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.index_db_file);
+        const indexDBPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.index_db_file);
+        this.m_indexDB = new Database(indexDBPath, { /*fileMustExist: true,*/ readonly: true });
 
-        this.m_db = new Database(dataPath, { /*fileMustExist: true,*/ readonly: true });
+        const ethDBPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.eth_db_file);
+        this.m_ethDB = new Database(ethDBPath, { readonly: true });
 
-        console.info('init db success');
+        const inscriptionDBPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.inscription_db_file);
+        this.m_inscriptionDB = new Database(inscriptionDBPath, { readonly: true });
+
+        logger.info('init db success');
     }
 
-    get db() {
-        return this.m_db;
+    get indexDB() {
+        return this.m_indexDB;
+    }
+
+    get ethDB() {
+        return this.m_ethDB;
+    }
+
+    get inscriptionDB() {
+        return this.m_inscriptionDB;
     }
 }
 
@@ -32,7 +45,8 @@ const TABLE_NAME = {
     RESONANCE: "data_resonance",
     CHANT: "data_chant",
     MINT: "mint_records",
-    BALANCE: "balance"
+    BALANCE: "balance",
+    STATE: 'state',
 };
 
 module.exports = {

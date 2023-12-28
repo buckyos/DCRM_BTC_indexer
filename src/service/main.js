@@ -1,9 +1,9 @@
+require('./global');
 const Koa = require('koa');
 const Router = require('koa-router');
 const cors = require('koa-cors');
 const logger = require('koa-logger');
 const bodyParser = require('koa-bodyparser');
-const log4js = require('log4js');
 const { InscribeService } = require('./biz/inscribeService');
 const { MintService } = require('./biz/mintService');
 const INDEX_CONFIG = require('../../config');
@@ -49,29 +49,6 @@ class Service {
 }
 
 function main() {
-
-    log4js.configure({
-        appenders: {
-            console: { type: "console" },
-            fileAppender: {
-                type: 'file',
-                filename: `./logs/service-${process.pid}.log`,
-                maxLogSize: 10485760, // 10 MB
-                backups: 10,
-                compress: false,
-            },
-        },
-        categories: {
-            default: {
-                appenders: ['console', 'fileAppender'],
-                level: 'debug',
-            },
-        },
-    });
-
-    const logger = log4js.getLogger();
-    global.logger = logger;
-
     const service = new Service();
     service.start();
 }

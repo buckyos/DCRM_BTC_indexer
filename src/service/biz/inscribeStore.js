@@ -12,7 +12,7 @@ class InscribeStore {
         }
 
         try {
-            const stmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE hash = ?`);
+            const stmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE hash = ?`);
             const ret = stmt.get(hash);
 
             logger.debug('queryInscriptionByHash:', hash, "ret:", ret);
@@ -39,12 +39,12 @@ class InscribeStore {
         order = order == "ASC" ? "ASC" : "DESC";
         try {
             let list = [];
-            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE} WHERE address = ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE} WHERE address = ?`);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(address, length, offset);
             }
 
@@ -69,12 +69,12 @@ class InscribeStore {
         order = order == "ASC" ? "ASC" : "DESC";
         try {
             let list = [];
-            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE} WHERE block_height >= ? AND block_height < ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE} WHERE block_height >= ? AND block_height < ?`);
             const countResult = countStmt.get(beginBlock, endBlock);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE block_height >= ? AND block_height < ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE block_height >= ? AND block_height < ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(beginBlock, endBlock, length, offset);
             }
 
@@ -91,7 +91,7 @@ class InscribeStore {
 
     queryInscriptionCount() {
         try {
-            const stmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE}`);
+            const stmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE}`);
             const ret = stmt.get();
             const count = ret.count;
 
@@ -115,11 +115,11 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.RESONANCE} WHERE hash = ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.RESONANCE} WHERE hash = ?`);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
             if (count > 0) {
-                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.RESONANCE} WHERE hash = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.RESONANCE} WHERE hash = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
                 const list = pageStmt.all(hash, length, offset);
             }
 
@@ -143,12 +143,12 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.RESONANCE} WHERE address = ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.RESONANCE} WHERE address = ?`);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.RESONANCE} WHERE address = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.RESONANCE} WHERE address = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(address, length, offset);
             }
 
@@ -173,12 +173,12 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.CHANT} WHERE hash = ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.CHANT} WHERE hash = ?`);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.CHANT} WHERE hash = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.CHANT} WHERE hash = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(hash, length, offset);
             }
 
@@ -203,12 +203,12 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.db.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.CHANT} WHERE address = ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.CHANT} WHERE address = ?`);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.db.prepare(`SELECT * FROM ${TABLE_NAME.CHANT} WHERE address = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.CHANT} WHERE address = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(address, length, offset);
             }
 

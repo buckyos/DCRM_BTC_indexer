@@ -70,6 +70,10 @@ class MintService {
         return this.m_store.queryBalanceByAddress(address);
     }
 
+    async _getIndexerState(ctx) {
+        return this.m_store.queryIndexerState();
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -95,6 +99,10 @@ class MintService {
 
         router.get("/balance/:address", async (ctx) => {
             ctx.response.body = await this._getBalanceByAddress(ctx);
+        });
+
+        router.get("/indexer/state", async (ctx) => {
+            ctx.response.body = await this._getIndexerState(ctx);
         });
 
         return 0;
