@@ -3,7 +3,8 @@ const ERR_CODE = {
     INVALID_PARAM: 1,
     NOT_FOUND: 2,
     DB_ERROR: 3,
-    UNKNOWN_ERROR: 4,
+    NOT_IMPLEMENTED: 4,
+    UNKNOWN_ERROR: 5,
 }
 
 function makeReponse(err, msg, result) {
@@ -18,8 +19,8 @@ function makeReponse(err, msg, result) {
             case ERR_CODE.NOT_FOUND:
                 msg = "not found";
                 break;
-            case ERR_CODE.UNKNOWN_ERROR:
-                msg = "unknown error";
+            case ERR_CODE.NOT_IMPLEMENTED:
+                msg = "not implemented";
                 break;
             default:
                 msg = "unknown error";

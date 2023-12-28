@@ -1,9 +1,17 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const INDEX_CONFIG = require('../../../config');
+const { Util } = require('../../util');
 
 class Store {
     constructor() {
+        const { ret, dir } = Util.get_data_dir(INDEX_CONFIG);
+        if (ret !== 0) {
+            throw new Error(`failed to get data dir`);
+        }
+
+        this.m_dataDir = dir;
+
         this.m_indexDB = null;
         this.m_ethDB = null;
         this.m_inscriptionDB = null;
@@ -12,13 +20,13 @@ class Store {
     init() {
         // if init failed, let it crash
 
-        const indexDBPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.index_db_file);
+        const indexDBPath = path.join(this.m_dataDir, INDEX_CONFIG.db.index_db_file);
         this.m_indexDB = new Database(indexDBPath, { /*fileMustExist: true,*/ readonly: true });
 
-        const ethDBPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.eth_db_file);
+        const ethDBPath = path.join(this.m_dataDir, INDEX_CONFIG.db.eth_db_file);
         this.m_ethDB = new Database(ethDBPath, { readonly: true });
 
-        const inscriptionDBPath = path.join(INDEX_CONFIG.db.data_dir, INDEX_CONFIG.db.inscription_db_file);
+        const inscriptionDBPath = path.join(this.m_dataDir, INDEX_CONFIG.db.inscription_db_file);
         this.m_inscriptionDB = new Database(inscriptionDBPath, { readonly: true });
 
         logger.info('init db success');

@@ -80,7 +80,7 @@ class MintStore {
         try {
             const stmt = store.indexDB.prepare(`SELECT SUM(amount) AS total FROM ${TABLE_NAME.MINT} WHERE timestamp >= ? AND timestamp < ?`);
             const ret = stmt.get(beginTime, endTime);
-            const total = ret.total;
+            const total = ret.total || 0;
 
             logger.debug('queryTotalMintByTime: ret:', total);
 

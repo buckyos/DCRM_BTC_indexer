@@ -6,6 +6,7 @@ const logger = require('koa-logger');
 const bodyParser = require('koa-bodyparser');
 const { InscribeService } = require('./biz/inscribeService');
 const { MintService } = require('./biz/mintService');
+const { ChainService } = require('./biz/chainService');
 const INDEX_CONFIG = require('../../config');
 
 class Service {
@@ -23,6 +24,9 @@ class Service {
 
         const mintService = new MintService();
         mintService.registerRouter(this.m_router);
+
+        const chainService = new ChainService();
+        chainService.registerRouter(this.m_router);
     }
 
     async start() {
