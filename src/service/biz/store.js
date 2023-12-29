@@ -19,15 +19,20 @@ class Store {
 
     init() {
         // if init failed, let it crash
+        const option = {
+            readonly: true,
+            //verbose: console.log,
+            //fileMustExist: true,
+        }
 
         const indexDBPath = path.join(this.m_dataDir, INDEX_CONFIG.db.index_db_file);
-        this.m_indexDB = new Database(indexDBPath, { /*fileMustExist: true,*/ readonly: true });
+        this.m_indexDB = new Database(indexDBPath, option);
 
         const ethDBPath = path.join(this.m_dataDir, INDEX_CONFIG.db.eth_db_file);
-        this.m_ethDB = new Database(ethDBPath, { readonly: true });
+        this.m_ethDB = new Database(ethDBPath, option);
 
         const inscriptionDBPath = path.join(this.m_dataDir, INDEX_CONFIG.db.inscription_db_file);
-        this.m_inscriptionDB = new Database(inscriptionDBPath, { readonly: true });
+        this.m_inscriptionDB = new Database(inscriptionDBPath, option);
 
         logger.info('init db success');
     }
@@ -50,8 +55,8 @@ store.init();
 
 const TABLE_NAME = {
     INSCRIBE: "inscribe_data",
-    RESONANCE: "data_resonance",
-    CHANT: "data_chant",
+    RESONANCE: "resonance_records",
+    CHANT: "chant_records",
     MINT: "mint_records",
     BALANCE: "balance",
     STATE: 'state',

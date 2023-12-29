@@ -23,9 +23,9 @@ const logger = log4js.getLogger();
 global.logger = logger;
 
 process.on('uncaughtException', (err) => {
-    logger.error(`uncaughtException: ${err}`);
+    logger.error(`uncaughtException: ${err}\n`, err.stack);
 });
 
 process.on('unhandledRejection', (reason, p) => {
-    logger.error(`unhandledRejection: ${reason}`);
+    logger.error(`unhandledRejection: ${reason}\n`, reason.stack);
 });

@@ -31,7 +31,7 @@ class InscribeStore {
     }
 
     //return {count, list}
-    queryInscriptionByAddress(address, length, offset, order) {
+    queryInscriptionByAddress(address, limit, offset, order) {
         if (!address) {
             return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
@@ -45,10 +45,10 @@ class InscribeStore {
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
-                list = pageStmt.all(address, length, offset);
+                list = pageStmt.all(address, limit, offset);
             }
 
-            logger.debug('queryInscriptionByAddress:', address, offset, length, "ret:", count, list);
+            logger.debug('queryInscriptionByAddress:', address, offset, limit, "ret:", count, list);
 
             return makeSuccessReponse({ count, list });
 
@@ -61,7 +61,7 @@ class InscribeStore {
     }
 
     //[begin, end) return {count, list}
-    queryInscriptionByBlock(beginBlock, endBlock, length, offset, order) {
+    queryInscriptionByBlock(beginBlock, endBlock, limit, offset, order) {
         if (!beginBlock) {
             return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
@@ -75,10 +75,10 @@ class InscribeStore {
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE block_height >= ? AND block_height < ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
-                list = pageStmt.all(beginBlock, endBlock, length, offset);
+                list = pageStmt.all(beginBlock, endBlock, limit, offset);
             }
 
-            logger.debug('queryInscriptionByBlock:', beginBlock, endBlock, offset, length, "ret:", count, list);
+            logger.debug('queryInscriptionByBlock:', beginBlock, endBlock, offset, limit, "ret:", count, list);
 
             return makeSuccessReponse({ count, list });
 
@@ -106,7 +106,7 @@ class InscribeStore {
     }
 
     // return {count, list}
-    queryResonanceByHash(hash, length, offset, order) {
+    queryResonanceByHash(hash, limit, offset, order) {
         if (!hash) {
             return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
@@ -115,15 +115,24 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.RESONANCE} WHERE hash = ?`);
+            const countStmt = store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.RESONANCE} 
+                WHERE hash = ? AND state = 1`
+            );
             const countResult = countStmt.get(hash);
             const count = countResult.count;
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.RESONANCE} WHERE hash = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
-                const list = pageStmt.all(hash, length, offset);
+                const pageStmt = store.indexDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.RESONANCE} 
+                    WHERE hash = ? AND state = 1
+                    ORDER BY timestamp ${order} 
+                    LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(hash, limit, offset);
             }
 
-            logger.debug('queryResonanceByHash:', hash, offset, length, "ret:", count, list);
+            logger.debug('queryResonanceByHash:', hash, offset, limit, "ret:", count, list);
 
             return makeSuccessReponse({ count, list });
         } catch (error) {
@@ -134,7 +143,7 @@ class InscribeStore {
     }
 
     // return {count, list}
-    queryResonanceByAddress(address, length, offset, order) {
+    queryResonanceByAddress(address, limit, offset, order) {
         if (!address) {
             return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
@@ -143,16 +152,25 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.RESONANCE} WHERE address = ?`);
+            const countStmt = store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.RESONANCE} 
+                WHERE address = ? AND state = 1`
+            );
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.RESONANCE} WHERE address = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
-                list = pageStmt.all(address, length, offset);
+                const pageStmt = store.indexDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.RESONANCE} 
+                    WHERE address = ? AND state = 1
+                    ORDER BY timestamp ${order} 
+                    LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(address, limit, offset);
             }
 
-            logger.debug('queryResonanceByAddress:', address, offset, length, "ret:", count, list);
+            logger.debug('queryResonanceByAddress:', address, offset, limit, "ret:", count, list);
 
             return makeSuccessReponse({ count, list });
 
@@ -164,7 +182,7 @@ class InscribeStore {
     }
 
     // return {count, list}
-    queryChantByHash(hash, length, offset, order) {
+    queryChantByHash(hash, limit, offset, order) {
         if (!hash) {
             return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
@@ -173,16 +191,25 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.CHANT} WHERE hash = ?`);
+            const countStmt = store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.CHANT} 
+                WHERE hash = ? AND state = 1`
+            );
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.CHANT} WHERE hash = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
-                list = pageStmt.all(hash, length, offset);
+                const pageStmt = store.indexDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.CHANT} 
+                    WHERE hash = ? AND state = 1 
+                    ORDER BY timestamp ${order} 
+                    LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(hash, limit, offset);
             }
 
-            logger.debug('queryChantByHash:', hash, offset, length, "ret:", count, list);
+            logger.debug('queryChantByHash:', hash, offset, limit, "ret:", count, list);
 
             return makeSuccessReponse({ count, list });
 
@@ -194,7 +221,7 @@ class InscribeStore {
     }
 
     // return {count, list}
-    queryChantByAddress(address, length, offset, order) {
+    queryChantByAddress(address, limit, offset, order) {
         if (!address) {
             return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
@@ -203,16 +230,25 @@ class InscribeStore {
 
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.CHANT} WHERE address = ?`);
+            const countStmt = store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.CHANT} 
+                WHERE address = ? AND state = 1`
+            );
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.CHANT} WHERE address = ? ORDER BY block_height ${order} LIMIT ? OFFSET ?`);
-                list = pageStmt.all(address, length, offset);
+                const pageStmt = store.indexDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.CHANT} 
+                    WHERE address = ? AND state = 1 
+                    ORDER BY timestamp ${order} 
+                    LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(address, limit, offset);
             }
 
-            logger.debug('queryChantByAddress:', address, offset, length, "ret:", count, list);
+            logger.debug('queryChantByAddress:', address, offset, limit, "ret:", count, list);
 
             return makeSuccessReponse({ count, list });
         } catch (error) {

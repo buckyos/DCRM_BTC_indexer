@@ -34,12 +34,13 @@ class MintService {
     async _getMintRecordByAddress(ctx) {
         const address = ctx.params.address;
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryMintRecordByAddress(
             address,
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            //limit == 0 || limit == null ? Number.MAX_SAFE_INTEGER : limit,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -47,11 +48,12 @@ class MintService {
 
     async _getLuckyMintRecord(ctx) {
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryLuckyMintRecord(
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            //length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -74,6 +76,18 @@ class MintService {
         return this.m_store.queryIndexerState();
     }
 
+    async _getIncome(ctx) {
+        const address = ctx.params.address;
+        const beginTime = ctx.params.begin_time;
+        const endTime = ctx.params.end_time;
+
+        return this.m_store.queryIncomeByTime(
+            address,
+            beginTime,
+            endTime == 0 || endTime == null ? Number.MAX_SAFE_INTEGER : endTime
+        );
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -81,11 +95,11 @@ class MintService {
         //     ctx.response.body = await this._getMintRecordByHash(ctx);
         // });
 
-        router.get("/mint_record_by_address/:address/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/mint_record_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getMintRecordByAddress(ctx);
         });
 
-        router.get("/luck_mint/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/luck_mint/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getLuckyMintRecord(ctx);
         });
 
@@ -103,6 +117,10 @@ class MintService {
 
         router.get("/indexer/state", async (ctx) => {
             ctx.response.body = await this._getIndexerState(ctx);
+        });
+
+        router.get("/income_index/:address/:begin_time/:end_time?", async (ctx) => {
+            ctx.response.body = await this._getIncome(ctx);
         });
 
         return 0;

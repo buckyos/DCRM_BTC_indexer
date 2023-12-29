@@ -23,12 +23,13 @@ class InscribeService {
     async _getInscriptionByAddress(ctx) {
         const address = ctx.params.address;
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryInscriptionByAddress(
             address,
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            //length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -38,13 +39,13 @@ class InscribeService {
         const beginBlock = ctx.params.begin_block;
         const endBlock = ctx.params.end_block;
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryInscriptionByBlock(
             beginBlock,
             endBlock == 0 || endBlock == null ? Number.MAX_SAFE_INTEGER : endBlock,
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -53,12 +54,13 @@ class InscribeService {
     async _getResonanceByHash(ctx) {
         const hash = ctx.params.hash;
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryResonanceByHash(
             hash,
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            //length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -67,12 +69,12 @@ class InscribeService {
     async _getResonanceByAddress(ctx) {
         const address = ctx.params.address;
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryResonanceByAddress(
             address,
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -81,12 +83,12 @@ class InscribeService {
     async _getChantByHash(ctx) {
         const hash = ctx.params.hash;
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryChantByHash(
             hash,
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -95,12 +97,12 @@ class InscribeService {
     async _getChantByAddress(ctx) {
         const address = ctx.params.address;
         const offset = ctx.params.offset;
-        const length = ctx.params.length;
+        const limit = ctx.params.limit;
         const order = ctx.params.order;
 
         return this.m_store.queryChantByAddress(
             address,
-            length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
+            limit || 0,
             offset || 0,
             order ? order.toUpperCase() : "DESC"
         );
@@ -118,11 +120,11 @@ class InscribeService {
         });
 
         //order - asc or desc
-        router.get("/inscription_by_address/:address/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/inscription_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getInscriptionByAddress(ctx);
         });
 
-        router.get("/inscription_by_block/:begin_block/:end_block?/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/inscription_by_block/:begin_block/:end_block?/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getInscriptionByBlock(ctx);
         });
 
@@ -130,19 +132,19 @@ class InscribeService {
             ctx.response.body = await this._getInscriptionCount(ctx);
         });
 
-        router.get("/resonance_by_hash/:hash/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/resonance_by_hash/:hash/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getResonanceByHash(ctx);
         });
 
-        router.get("/resonance_by_address/:address/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/resonance_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getResonanceByAddress(ctx);
         });
 
-        router.get("/chant_by_hash/:hash/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/chant_by_hash/:hash/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getChantByHash(ctx);
         });
 
-        router.get("/chant_by_address/:address/:length?/:offset?/:order?", async (ctx) => {
+        router.get("/chant_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getChantByAddress(ctx);
         });
 

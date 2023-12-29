@@ -18,7 +18,6 @@ class ChainService {
         }
     }
 
-
     async _getLastBtcBlockHeight() {
         try {
             this._init();

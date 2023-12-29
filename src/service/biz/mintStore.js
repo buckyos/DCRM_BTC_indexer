@@ -16,7 +16,7 @@ class MintStore {
     }
 
     //return {count, list}
-    queryMintRecordByAddress(address, length, offset, order) {
+    queryMintRecordByAddress(address, limit, offset, order) {
         if (!address) {
             return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
@@ -26,16 +26,24 @@ class MintStore {
         let list = [];
 
         try {
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.MINT} WHERE address = ?`);
+            const countStmt = store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.MINT} WHERE address = ?`
+            );
             const countResult = countStmt.get(address);
             count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.MINT} WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
-                list = pageStmt.all(address, length, offset);
+                const pageStmt = store.indexDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.MINT} 
+                    WHERE address = ? 
+                    ORDER BY timestamp ${order} 
+                    LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(address, limit, offset);
             }
 
-            logger.debug('queryMintRecordByAddress:', address, offset, length, "ret:", count, list);
+            logger.debug('queryMintRecordByAddress:', address, offset, limit, "ret:", count, list);
 
         } catch (error) {
             logger.error('queryMintRecordByAddress failed:', error);
@@ -46,22 +54,31 @@ class MintStore {
         return makeSuccessReponse({ count, list });
     }
 
-    queryLuckyMintRecord(length, offset, order) {
+    queryLuckyMintRecord(limit, offset, order) {
         order = order == "ASC" ? "ASC" : "DESC";
         let count = 0;
         let list = [];
 
         try {
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.MINT} WHERE lucky is not null`);
+            const countStmt = store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.MINT} 
+                WHERE lucky is not null`
+            );
             const countResult = countStmt.get();
             count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.MINT} WHERE lucky is not null ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
-                list = pageStmt.all(length, offset);
+                const pageStmt = store.indexDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.MINT} 
+                    WHERE lucky is not null 
+                    ORDER BY timestamp ${order} 
+                    LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(limit, offset);
             }
 
-            logger.debug('queryLuckyMintRecord:', offset, length, "ret:", count, list);
+            logger.debug('queryLuckyMintRecord:', offset, limit, "ret:", count, list);
 
         } catch (error) {
             logger.error('queryLuckyMintRecord failed:', error);
@@ -78,7 +95,11 @@ class MintStore {
         }
 
         try {
-            const stmt = store.indexDB.prepare(`SELECT SUM(amount) AS total FROM ${TABLE_NAME.MINT} WHERE timestamp >= ? AND timestamp < ?`);
+            const stmt = store.indexDB.prepare(
+                `SELECT SUM(amount) AS total 
+                FROM ${TABLE_NAME.MINT} 
+                WHERE timestamp >= ? AND timestamp < ?`
+            );
             const ret = stmt.get(beginTime, endTime);
             const total = ret.total || 0;
 
@@ -99,7 +120,10 @@ class MintStore {
         }
 
         try {
-            const stmt = store.indexDB.prepare(`SELECT amount FROM ${TABLE_NAME.BALANCE} WHERE address = ?`);
+            const stmt = store.indexDB.prepare(
+                `SELECT amount FROM ${TABLE_NAME.BALANCE} 
+                WHERE address = ?`
+            );
             const ret = stmt.get(address);
             if (ret != null) {
                 const amount = ret.amount;
@@ -119,11 +143,15 @@ class MintStore {
 
     queryIndexerState() {
         try {
-            const ethStmt = store.ethDB.prepare(`SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`);
+            const ethStmt = store.ethDB.prepare(
+                `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`
+            );
             const ethRet = ethStmt.get('latest_block_height');
             const ethHeight = ethRet.value;
 
-            const btcStmt = store.inscriptionDB.prepare(`SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`);
+            const btcStmt = store.inscriptionDB.prepare(
+                `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`
+            );
             const btcRet = btcStmt.get('latest_block_height');
             const btcHeight = btcRet.value;
 
@@ -141,7 +169,59 @@ class MintStore {
 
             return makeReponse(ERR_CODE.DB_ERROR, error);
         }
+    }
 
+    queryIncomeByTime(address, beginTime, endTime) {
+        try {
+            const result = {
+                mint: 0,              // mint
+                chant_bouns: 0,       // chant other's inscription
+                chanted_bouns: 0,     // chanted by others
+                resonance_bouns: 0,   // resonance by others
+            };
+            let stmt = store.indexDB.prepare(
+                `SELECT SUM(amount) AS total 
+                FROM ${TABLE_NAME.MINT} 
+                WHERE address = ? AND timestamp >= ? AND timestamp < ?`
+            );
+            let ret = stmt.get(address, beginTime, endTime);
+            result.mint = ret.total || 0;
+
+            stmt = store.indexDB.prepare(
+                `SELECT SUM(r.owner_bouns) AS resonance_bouns
+                FROM ${TABLE_NAME.INSCRIBE} i
+                INNER JOIN ${TABLE_NAME.RESONANCE} r ON i.hash = r.hash
+                WHERE i.address = ? AND r.timestamp >= ? AND r.timestamp < ? AND r.state = 1`
+            );
+            ret = stmt.get(address, beginTime, endTime);
+            result.resonance_bouns = ret.resonance_bouns || 0;
+
+            stmt = store.indexDB.prepare(
+                `SELECT SUM(c.owner_bouns) AS chanted_bouns
+                FROM ${TABLE_NAME.INSCRIBE} i
+                INNER JOIN  ${TABLE_NAME.CHANT} c ON i.hash = c.hash
+                WHERE i.address = ? AND c.timestamp >= ? AND c.timestamp < ? AND c.state = 1`
+            );
+            ret = stmt.get(address, beginTime, endTime);
+            result.chanted_bouns = ret.chanted_bouns || 0;
+
+            stmt = store.indexDB.prepare(
+                `SELECT SUM(user_bouns) AS chant_bouns
+                FROM ${TABLE_NAME.CHANT}
+                WHERE address = ? AND timestamp >= ? AND timestamp < ? AND state = 1`
+            );
+            ret = stmt.get(address, beginTime, endTime);
+            result.chant_bouns = ret.chant_bouns || 0;
+
+            logger.debug('queryIncomeByTime: ret:', result);
+
+            return makeSuccessReponse(result);
+
+        } catch (error) {
+            logger.error('queryIncomeByTime failed:', error);
+
+            return makeReponse(ERR_CODE.DB_ERROR, error);
+        }
     }
 }
 
