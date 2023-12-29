@@ -119,7 +119,7 @@ class MintService {
             ctx.response.body = await this._getIndexerState(ctx);
         });
 
-        router.get("/income_index/:address/:begin_time/:end_time?", async (ctx) => {
+        router.get("/income/:address/:begin_time/:end_time?", async (ctx) => {
             ctx.response.body = await this._getIncome(ctx);
         });
 

@@ -28,7 +28,7 @@
 
 2. 获取某地址拥有的铭文：
 
-    /inscription_by_address/:address/:length?/:offset?/:order?
+    /inscription_by_address/:address/:limit?/:offset?/:order?
 
     GET
 
@@ -36,7 +36,7 @@
 
     address：地址
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -57,7 +57,7 @@
 
 3. 获取区块范围内的新增的铭文 [begin, end)：
 
-    /inscription_by_block/:begin_block/:end_block?/:length?/:offset?/:order?
+    /inscription_by_block/:begin_block/:end_block?/:limit?/:offset?/:order?
 
     GET
 
@@ -67,7 +67,7 @@
 
     end_block: 结束区块，0表示一直获取到最新的，默认为0
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -104,7 +104,7 @@
 
 5. 获取某数据的共鸣记录：
 
-    /resonance_by_hash/:hash/:length?/:offset?/:order?
+    /resonance_by_hash/:hash/:limit?/:offset?/:order?
 
     GET
 
@@ -112,7 +112,7 @@
 
     hash： 数据hash
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -131,8 +131,10 @@
                     hash,               // 数据hash
                     inscription_id,     // 铭文id
                     address,            // 共鸣地址
+                    owner_bouns,        // 数据owner奖励
+                    service_charge,     // 手续费
                     block_height,       // 共鸣区块
-                    amount              // 共鸣价格
+                    timestamp,          // 共鸣时间
                 }
             ]
         }
@@ -141,7 +143,7 @@
 
 6. 获取某地址的共鸣记录：
 
-    /resonance_by_address/:address/:length?/:offset?/:order?
+    /resonance_by_address/:address/:limit?/:offset?/:order?
 
     GET
 
@@ -149,7 +151,7 @@
 
     address: 地址
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -170,7 +172,7 @@
 
 7. 获取某数据的吟唱记录：
 
-    /chant_by_hash/:hash/:length?/:offset?/:order?
+    /chant_by_hash/:hash/:limit?/:offset?/:order?
 
     GET
 
@@ -178,7 +180,7 @@
 
     hash: 数据hash
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -196,9 +198,11 @@
                 {
                     hash,               // 数据hash
                     inscription_id,     // 铭文id
-                    address,            // 吟唱地址
+                    address,            // 吟唱发起人地址
                     block_height,       // 吟唱区块
-                    amount              // 
+                    timestamp,
+                    user_bouns,         // 吟唱人奖励
+                    owner_bouns,        // 数据owner奖励
                 }
             ]
         }
@@ -207,7 +211,7 @@
 
 8. 获取某数据的吟唱记录：
 
-    /chant_by_address/:address/:length?/:offset?/:order?
+    /chant_by_address/:address/:limit?/:offset?/:order?
 
     GET
 
@@ -215,7 +219,7 @@
 
     address: 地址
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -236,7 +240,7 @@
 
 9. 获取某地址的mint记录：
 
-    /mint_record_by_address/:address/:length?/:offset?/:order?
+    /mint_record_by_address/:address/:limit?/:offset?/:order?
 
     GET
 
@@ -244,7 +248,7 @@
 
     address: 地址
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -274,13 +278,13 @@
 
 10. 获取幸运铭刻列表：
 
-    /luck_mint/:length?/:offset?/:order?
+    /luck_mint/:limit?/:offset?/:order?
 
     GET
 
     参数
 
-    length: 返回的列表的长度限制，0表示不限制，默认为0
+    limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
 
@@ -312,5 +316,86 @@
         err: 0,
         msg: "错误信息",
         result: totalAmount
+    }
+    ```
+    
+12. 获取某地址余额：
+
+    /balance/:address
+
+    GET
+
+    参数
+
+    address: 返回的列表的长度限制，默认为0
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: balance
+    }
+    ```
+
+13. 获取当前index服务的同步状态：
+
+    /indexer/state
+
+    GET
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            eth_height,         // 已处理的eth的高度
+            btc_height          // 已处理的btc的高度
+        }
+    }
+    ```
+
+14. 获取当前btc链最新的块号：
+
+    /block_height/btc
+
+    GET
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: height
+    }
+    ```
+
+15. 获取某地址在时间段内的收益：
+
+    /income/:address/:begin_time/:end_time?
+
+    GET
+
+    参数
+
+    begin_time: 起始时间（UTC）
+    end_time: 结束时间，默认到当前时间
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            mint,               // mint部分
+            chant_bouns,        // 吟唱奖励
+            chanted_bouns,      // 被他人吟唱的奖励
+            resonance_bouns     // 数据被共鸣的奖励
+        }
     }
     ```

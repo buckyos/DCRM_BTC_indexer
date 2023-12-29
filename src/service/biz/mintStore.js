@@ -156,8 +156,8 @@ class MintStore {
             const btcHeight = btcRet.value;
 
             const ret = {
-                ethHeight,
-                btcHeight,
+                eth_height: ethHeight,
+                btc_height: btcHeight,
             };
 
             logger.debug('queryIndexerState: ret:', ret);
