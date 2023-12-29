@@ -57,6 +57,17 @@ class BTCClient {
         }
     }
 
+    async get_block(block_height) {
+        try {
+            const blockhash = await this.client.getBlockHash(block_height);
+            const block = await this.client.getBlock(blockhash);
+            return { ret: 0, block };
+        } catch (err) {
+            console.error(`failed to get block ${blockhash}, ${err}`);
+            return { ret: -1 };
+        }
+    }
+
     /**
      * @returns {Promise<{ret: number, txs: []}>}
      */
