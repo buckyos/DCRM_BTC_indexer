@@ -3,6 +3,7 @@ const { OrdClient } = require('../btc/ord');
 const { InscriptionIndex } = require('../index/inscription');
 const { Util } = require('../util');
 const { ETHIndex } = require('../eth/index');
+const assert = require('assert');
 
 global._ = require('underscore');
 
@@ -11,8 +12,7 @@ const { Config } = require('../config');
 const path = require('path');
 const fs = require('fs');
 
-const { assert } = require('console');
-const config_path = path.resolve(__dirname, '../../config.js');
+const config_path = path.resolve(__dirname, '../../config/test.js');
 assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
 const config = new Config(config_path);
 

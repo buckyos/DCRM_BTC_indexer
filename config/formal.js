@@ -1,15 +1,12 @@
 const INDEX_CONFIG = {
     // use for data dir and log dir isolate
-    isolate: 'testnet',
+    isolate: 'formal',
 
     btc: {
-        network: 'testnet',
-        host: '127.0.0.1',
+        network: 'mainnet',
+        host: '75.4.200.194',
         auth: {
-            cookie_file: 'E:\\data\\testnet\\testnet3\\.cookie',
-            // cookie: username:password
-            // username: "",
-            // password: ""
+            cookie: "dcrm_test:dcrm_test_123456",
         },
     },
 
@@ -21,11 +18,11 @@ const INDEX_CONFIG = {
     },
 
     ord: {
-        url: 'http://127.0.0.1:80',
+        rpc_url: 'http://75.4.200.194:8081',
     },
 
     db: {
-        data_dir: 'E:\\data\\testnet\\testnet3',
+        data_dir: 'E:\\data\\mainnet',
         index_db_file: 'index.sqlite',
         eth_db_file: 'eth_index.sqlite',
         inscription_db_file: 'inscriptions.sqlite',
