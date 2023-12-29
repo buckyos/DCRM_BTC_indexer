@@ -46,6 +46,7 @@ class InscriptionTransferStorage {
                         timestamp INTEGER,
                         satpoint TEXT,
                         address TEXT,
+                        value INTEGER,
                         PRIMARY KEY(inscription_id, timestamp)
                       );`,
                     (err) => {
@@ -72,6 +73,7 @@ class InscriptionTransferStorage {
         timestamp,
         satpoint,
         address,
+        value,
     ) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -94,16 +96,20 @@ class InscriptionTransferStorage {
             typeof timestamp === 'number',
             `timestamp should be number: ${timestamp}`,
         );
+        assert(
+            typeof value === 'number',
+            `value should be number: ${value}`,
+        );
 
         return new Promise((resolve, reject) => {
             const sql = `
-                INSERT OR REPLACE INTO inscription_transfers(inscription_id, block_height, timestamp, satpoint, address)
-                VALUES(?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO inscription_transfers(inscription_id, block_height, timestamp, satpoint, address, value)
+                VALUES(?, ?, ?, ?, ?, ?)
             `;
 
             this.db.run(
                 sql,
-                [inscription_id, block_height, timestamp, satpoint, address],
+                [inscription_id, block_height, timestamp, satpoint, address, value],
                 function (err) {
                     if (err) {
                         console.error(

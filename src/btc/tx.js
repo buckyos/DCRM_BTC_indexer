@@ -36,8 +36,13 @@ class TxSimpleItem {
         }
     }
 
-    // output {outpoint, value}
-    // return {ret, point, address} point is SatPoint, is null if not found
+    /**
+     * 
+     * @param {SatPoint} satpoint 
+     * @param {UTXOMemoryCache} utxo_cache 
+     * @returns {Promise<{ret: number, point: SatPoint, address: string, value: number}>}
+     * point is SatPoint, is null if not found
+     */
     async calc_next_satpoint(satpoint, utxo_cache) {
         assert(satpoint instanceof SatPoint, `invalid satpoint`);
 
@@ -74,7 +79,7 @@ class TxSimpleItem {
                 console.log(
                     `found ordinal ${satpoint.to_string()} -> ${point.to_string()}, address: ${output.address}`,
                 );
-                return { ret: 0, point, address: output.address };
+                return { ret: 0, point, address: output.address, value: output.value };
             }
 
             current += output.value;

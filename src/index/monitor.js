@@ -139,12 +139,14 @@ class InscriptionTransferMonitor {
         timestamp,
         creator_address,
         satpoint,
+        value,
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
         assert(_.isString(creator_address), `invalid creator address`);
         assert(satpoint instanceof SatPoint, `invalid satpoint`);
+        assert(_.isNumber(value), `invalid value`);
 
         const { ret } = await this._on_inscription_transfer(
             inscription_id,
@@ -152,6 +154,7 @@ class InscriptionTransferMonitor {
             timestamp,
             satpoint,
             creator_address,
+            value,
         );
         if (ret !== 0) {
             console.error(
@@ -166,7 +169,7 @@ class InscriptionTransferMonitor {
     /**
      * The inscription content is contained within the input of a reveal transaction, and the inscription is made on the first sat of its input. This sat can then be tracked using the familiar rules of ordinal theory, allowing it to be transferred, bought, sold, lost to fees, and recovered.
      * @param {string} inscription_id
-     * @returns {Promise<{ret: number, satpoint: SatPoint, address: string}>}
+     * @returns {Promise<{ret: number, satpoint: SatPoint, address: string, value: number}>}
      */
     async calc_create_satpoint(inscription_id) {
         const {
@@ -197,6 +200,7 @@ class InscriptionTransferMonitor {
             ret: calc_ret,
             point,
             address,
+            value,
         } = await tx_item.calc_next_satpoint(satpoint, this.utxo_cache);
         if (calc_ret !== 0) {
             console.error(
@@ -209,7 +213,7 @@ class InscriptionTransferMonitor {
             `found creator satpoint ${inscription_id} ${point.to_string()}, address: ${address}`,
         );
 
-        return { ret: 0, satpoint: point, address };
+        return { ret: 0, satpoint: point, address, value };
     }
 
     async process_block(block_height) {
@@ -300,6 +304,7 @@ class InscriptionTransferMonitor {
         timestamp,
         satpoint,
         address,
+        value,
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(
@@ -309,6 +314,7 @@ class InscriptionTransferMonitor {
         assert(_.isNumber(timestamp), `invalid timestamp ${timestamp}`);
         assert(satpoint instanceof SatPoint, `invalid satpoint`);
         assert(_.isString(address), `invalid address ${address}`);
+        assert(_.isNumber(value), `invalid value ${value}`);
 
         // update db
         const { ret } = await this.storage.insert_transfer(
@@ -317,6 +323,7 @@ class InscriptionTransferMonitor {
             timestamp,
             satpoint.to_string(),
             address,
+            value,
         );
         if (ret !== 0) {
             console.error(

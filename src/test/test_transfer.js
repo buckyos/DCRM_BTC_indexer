@@ -138,6 +138,7 @@ class InscrtionTransferMonitorRunner {
                 ret: get_address_ret,
                 satpoint: creator_satpoint,
                 address: creator_address,
+                value: creator_value,
             } = await this.monitor.calc_create_satpoint(
                 inscription_id,
             );
@@ -154,6 +155,7 @@ class InscrtionTransferMonitorRunner {
                 inscription.timestamp,
                 creator_address,
                 creator_satpoint,
+                creator_value,
             );
             if (add_ret !== 0) {
                 console.error(
