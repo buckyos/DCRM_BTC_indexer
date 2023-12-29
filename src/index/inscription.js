@@ -28,8 +28,8 @@ class InscriptionIndex {
     }
 
     /**
-     * 
-     * @param {ETHIndex} eth_index 
+     *
+     * @param {ETHIndex} eth_index
      * @returns {Promise<{ret: number}>}
      */
     async init(eth_index) {
@@ -43,7 +43,9 @@ class InscriptionIndex {
         }
 
         // then init token index
-        const { ret: init_token_index_ret } = await this.token_index.init(eth_index);
+        const { ret: init_token_index_ret } = await this.token_index.init(
+            eth_index,
+        );
         if (init_token_index_ret !== 0) {
             console.error(`failed to init token index`);
             return { ret: init_token_index_ret };
@@ -363,6 +365,7 @@ class InscriptionIndex {
             'application/json',
         ];
         if (
+            inscription.content_type == null ||
             !valid_content_types.includes(
                 inscription.content_type.toLowerCase(),
             )

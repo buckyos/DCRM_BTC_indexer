@@ -29,6 +29,9 @@ async function test_token() {
     ordClient.get_inscription_by_block(2543908).then(console.log);
     
     const index = new InscriptionIndex(config.config);
+
+    const eth_index = new ETHIndex(config.config);
+    await index.init(eth_index);
     index.run().then(console.log);
 }
 
