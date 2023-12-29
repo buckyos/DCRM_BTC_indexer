@@ -167,7 +167,7 @@ class InscriptionIndex {
     async sync_block(block_height) {
         console.info(`syncing block ${block_height}`);
 
-        const { ret, data } = await this.ord_client.get_inscription_by_block(
+        const { ret, data: inscriptions } = await this.ord_client.get_inscription_by_block(
             block_height,
         );
         if (ret !== 0) {
@@ -177,15 +177,15 @@ class InscriptionIndex {
             return { ret };
         }
 
-        if (data.inscriptions.length === 0) {
+        if (inscriptions.length === 0) {
             console.info(`no inscription in block ${block_height}`);
             return { ret: 0 };
         }
 
         // process inscriptions in block one by one
         const block_inscriptions = [];
-        for (let i = 0; i < data.inscriptions.length; i++) {
-            const inscription_id = data.inscriptions[i];
+        for (let i = 0; i < inscriptions.length; i++) {
+            const inscription_id = inscriptions[i];
 
             // fetch inscription by id
             const { ret: get_ret, inscription } =
@@ -285,8 +285,8 @@ class InscriptionIndex {
                 }
 
                 assert(
-                    data.inscriptions.includes(inscription_id),
-                    `unmatched inscription id ${data.inscriptions[offset]} !== ${inscription_id}`,
+                    inscriptions.includes(inscription_id),
+                    `unmatched inscription id ${inscriptions[offset]} !== ${inscription_id}`,
                 );
                 output_utxo = data;
             }

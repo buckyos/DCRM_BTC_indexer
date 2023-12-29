@@ -1,7 +1,25 @@
 const Client = require('bitcoin-core');
 const fs = require('fs');
 const { Util } = require('../util');
+const { LRUCache } = require('lru-cache');
 
+// add lru cache for tx
+class TxCache {
+    constructor() {
+        this.cache = new LRUCache ({
+            max: 1024 * 512,
+            maxAge: 1000 * 60 * 60 * 24,
+        });
+    }
+
+    get(txid) {
+        return this.cache.get(txid);
+    }
+
+    set(txid, tx) {
+        this.cache.set(txid, tx);
+    }
+}
 
 class BTCClient {
     constructor(host, network, auth) {
@@ -26,6 +44,7 @@ class BTCClient {
         });
 
         this.retry_count = 3;
+        this.tx_cache = new TxCache();
     }
 
     _should_retry(error) {
@@ -82,6 +101,13 @@ class BTCClient {
      * @returns {Promise<{ret: number, tx: object}>}
      */
     async get_transaction(txid) {
+        // first check cache
+        const cached_tx = this.tx_cache.get(txid);
+        if (cached_tx != null) {
+            return { ret: 0, tx: cached_tx };
+        }
+
+        // not found in cache, fetch from bitcoind rpc server
         for (let i = 0; i < this.retry_count; i++) {
             const { ret, tx, error } = await this._get_transaction(txid);
             if (ret === 0) {
@@ -103,6 +129,7 @@ class BTCClient {
     async _get_transaction(txid) {
         try {
             const tx = await this.client.getRawTransaction(txid, true);
+            this.tx_cache.set(txid, tx);
             return {
                 ret: 0,
                 tx: tx,

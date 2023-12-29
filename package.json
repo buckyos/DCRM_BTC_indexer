@@ -20,6 +20,7 @@
     "koa-logger": "^3.2.1",
     "koa-router": "^10.0.0",
     "log4js": "^6.9.1",
+    "lru-cache": "^10.1.0",
     "sqlite3": "^5.1.6",
     "underscore": "^1.13.6",
     "web3": "^4.3.0",

@@ -37,14 +37,33 @@ class OrdClient {
         }
     }
 
+    /**
+     * 
+     * @param {numver} block_height 
+     * @returns {Promise<{ret: number, data: object}>}
+     */
     async get_inscription_by_block(block_height) {
         try {
-            const response = await this.client.get(
-                `/inscriptions/block/${block_height}`,
-            );
+            
+            // get by pages
+            let page = 0;
+            let inscriptions = [];
+            while (true) {
+                const response = await this.client.get(
+                    `/inscriptions/block/${block_height}/${page}`,
+                );
+                
+                inscriptions = inscriptions.concat(response.data.inscriptions);
+                if (!response.data.more) {
+                    break;
+                }
+
+                page++;
+            }
+
             return {
                 ret: 0,
-                data: response.data,
+                data: inscriptions,
             };
         } catch (error) {
             console.error(error);

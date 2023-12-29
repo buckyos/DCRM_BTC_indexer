@@ -100,7 +100,7 @@ class InscrtionTransferMonitorRunner {
     async _process_block_inscriptions(block_height) {
         assert(block_height != null, `block_height should not be null`);
 
-        const { ret, data } = await this.ord_client.get_inscription_by_block(
+        const { ret, data: inscriptions } = await this.ord_client.get_inscription_by_block(
             block_height,
         );
 
@@ -111,14 +111,14 @@ class InscrtionTransferMonitorRunner {
             return { ret };
         }
 
-        if (data.inscriptions.length === 0) {
+        if (inscriptions.length === 0) {
             console.info(`no inscription in block ${block_height}`);
             return { ret: 0 };
         }
 
         // process inscriptions in block
-        for (let i = 0; i < data.inscriptions.length; i++) {
-            const inscription_id = data.inscriptions[i];
+        for (let i = 0; i < inscriptions.length; i++) {
+            const inscription_id = inscriptions[i];
 
             // fetch inscription by id
             const { ret: get_ret, inscription } =
