@@ -20,10 +20,11 @@ class UTXOMemoryCache {
     async get_uxto(outpoint) {
         assert(_.isString(outpoint), `invalid outpoint ${outpoint}`);
 
-        const { value, address } = this.utxo.get(outpoint);
-        if (value != null) {
-            return { ret: 0, value, address };
+        const item = this.utxo.get(outpoint);
+        if (item != null) {
+            return { ret: 0, value: item.value, address: item.address };
         }
+
 
         // search
         const { ret, value: search_value, address: search_address } = await this._search_utxo(outpoint);
@@ -56,14 +57,14 @@ class UTXOMemoryCache {
             return { ret: get_tx_ret };
         }
 
-        if (outpoint.vout >= tx.outputs.length) {
+        if (outpoint.vout >= tx.vout.length) {
             console.error(
-                `invalid offset ${outpoint_str} ${tx.outputs.length}`,
+                `invalid offset ${outpoint_str} ${tx.vout.length}`,
             );
             return { ret: -1 };
         }
 
-        const vout = tx.outputs[outpoint.vout];
+        const vout = tx.vout[outpoint.vout];
         const value = vout.value * 100000000;
 
         let address = null;

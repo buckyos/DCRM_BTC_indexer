@@ -28,6 +28,18 @@ class InscriptionTransferRecordItem {
             record.address,
         );
     }
+
+    is_equal(other) {
+        assert(other instanceof InscriptionTransferRecordItem, `invalid other`);
+
+        return (
+            this.inscription_id === other.inscription_id &&
+            this.block_height === other.block_height &&
+            this.timestamp === other.timestamp &&
+            this.satpoint === other.satpoint &&
+            this.address === other.address
+        );
+    }
 }
 
 class InscriptionTransferMonitor {
@@ -52,27 +64,53 @@ class InscriptionTransferMonitor {
         this.utxo_cache = new UTXOMemoryCache(this.btc_client);
     }
 
+    /**
+     * init inscription transfer monitor at start
+     * @returns {Promise<{ret: number}>}
+     */
+    async init() {
+        const { ret } = await this.storage.init();
+        if (ret !== 0) {
+            console.error(`failed to init inscription transfer storage`);
+            return { ret };
+        }
+
+        const { ret: load_ret } = await this.load_all();
+        if (load_ret !== 0) {
+            console.error(`failed to load all inscriptions`);
+            return { ret: load_ret };
+        }
+
+        console.info(`init inscription transfer monitor success`);
+        return { ret: 0 };
+    }
+
     async load_all() {
-        const { ret, records } = await this.storage.get_all_transfer();
+        const { ret, data } = await this.storage.get_all_inscriptions_with_last_transfer();
         if (ret !== 0) {
             console.error(`failed to get all transfer`);
             return { ret };
         }
 
-        for (let i = 0; i < records.length; ++i) {
-            const record = records[i];
+        if (data == null || data.length === 0) {
+            console.info(`no inscription transfer loaded`);
+            return { ret: 0 };
+        }
+
+        for (let i = 0; i < data.length; ++i) {
+            const record = data[i];
             const item = InscriptionTransferRecordItem.from_db_record(record);
             assert(
                 this.inscriptions.get(item.satpoint) == null,
                 `satpoint ${item.satpoint} already exists`,
             );
 
-            const { ret, point } = SatPoint.parse(item.satpoint);
+            const { ret, satpoint } = SatPoint.parse(item.satpoint);
             assert(ret === 0, `invalid satpoint ${item.satpoint}`);
-            assert(point != null, `invalid satpoint ${item.satpoint}`);
+            assert(satpoint != null, `invalid satpoint ${item.satpoint}`);
 
             // index by outpoint
-            const outpoint_str = point.outpoint.to_string();
+            const outpoint_str = satpoint.outpoint.to_string();
             assert(
                 this.inscriptions.get(outpoint_str) == null,
                 `outpoint ${outpoint_str} already exists`,
@@ -84,8 +122,17 @@ class InscriptionTransferMonitor {
         return { ret: 0 };
     }
 
-    // add new inscription on inscription index scanner, then we can monitor it
-    // it's the firt step to monitor a new inscription, and it's the first transfer record
+    
+    /**
+     * add new inscription on inscription index scanner, then we can monitor it
+     * it's the firt step to monitor a new inscription, and it's the first transfer record
+     * @param {string} inscription_id 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {string} creator_address 
+     * @param {SatPoint} satpoint 
+     * @returns {Promise<{ret: number}>}
+     */
     async add_new_inscription(
         inscription_id,
         block_height,
@@ -97,7 +144,7 @@ class InscriptionTransferMonitor {
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
         assert(_.isString(creator_address), `invalid creator address`);
-        assert(_.isString(satpoint), `invalid satpoint`);
+        assert(satpoint instanceof SatPoint, `invalid satpoint`);
 
         const { ret } = await this._on_inscription_transfer(
             inscription_id,
@@ -114,6 +161,55 @@ class InscriptionTransferMonitor {
         }
 
         return { ret: 0 };
+    }
+
+    /**
+     * The inscription content is contained within the input of a reveal transaction, and the inscription is made on the first sat of its input. This sat can then be tracked using the familiar rules of ordinal theory, allowing it to be transferred, bought, sold, lost to fees, and recovered.
+     * @param {string} inscription_id
+     * @returns {Promise<{ret: number, satpoint: SatPoint, address: string}>}
+     */
+    async calc_create_satpoint(inscription_id) {
+        const {
+            ret: parse_ret,
+            txid,
+            index,
+        } = Util.parse_inscription_id(inscription_id);
+        assert(
+            parse_ret === 0,
+            `failed to parse inscription id: ${inscription_id}`,
+        );
+
+        const { ret: tx_ret, tx } = await this.btc_client.get_transaction(txid);
+        if (tx_ret !== 0) {
+            console.error(`failed to get transaction ${txid}`);
+            return { ret: tx_ret };
+        }
+
+        assert(
+            index < tx.vin.length,
+            `invalid index ${inscription_id} ${index} >= ${tx.vin.length}`,
+        );
+        const vin = tx.vin[index];
+        const satpoint = new SatPoint(new OutPoint(vin.txid, vin.vout), 0);
+
+        const tx_item = new TxSimpleItem(tx);
+        const {
+            ret: calc_ret,
+            point,
+            address,
+        } = await tx_item.calc_next_satpoint(satpoint, this.utxo_cache);
+        if (calc_ret !== 0) {
+            console.error(
+                `failed to calc creator satpoint ${satpoint.to_string()}`,
+            );
+            return { ret: calc_ret };
+        }
+
+        console.log(
+            `found creator satpoint ${inscription_id} ${point.to_string()}, address: ${address}`,
+        );
+
+        return { ret: 0, satpoint: point, address };
     }
 
     async process_block(block_height) {
@@ -239,10 +335,16 @@ class InscriptionTransferMonitor {
         );
 
         const outpoint_str = satpoint.outpoint.to_string();
-        assert(
-            this.inscriptions.get(outpoint_str) == null,
-            `outpoint ${outpoint_str} already exists`,
-        );
+
+        const current_item = this.inscriptions.get(outpoint_str);
+        if (current_item != null) {
+            assert(
+                current_item.is_equal(new_item),
+                `invalid inscription transfer ${JSON.stringify(current_item)} ${JSON.stringify(new_item)}`,
+            );
+            return { ret: 0 };
+        }
+
         this.inscriptions.set(outpoint_str, new_item);
 
         return { ret: 0 };
@@ -250,4 +352,3 @@ class InscriptionTransferMonitor {
 }
 
 module.exports = { InscriptionTransferMonitor };
-

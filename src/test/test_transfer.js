@@ -2,7 +2,8 @@ const { InscriptionTransferMonitor } = require('../index/monitor');
 const { Config } = require('../config');
 const { OrdClient } = require('../btc/ord');
 const assert = require('assert');
-const { SatPoint } = require('../btc/point');
+const { SatPoint, OutPoint } = require('../btc/point');
+const { Util } = require('../util');
 
 class BlockGenerator {
     constructor() {
@@ -53,7 +54,18 @@ class RangeBlockGenerator extends BlockGenerator {
 class InscrtionTransferMonitorRunner {
     constructor(config) {
         this.monitor = new InscriptionTransferMonitor(config);
-        this.ord_client = new OrdClient(config.ord.server_url);
+        this.ord_client = new OrdClient(config.ord.rpc_url);
+    }
+
+    async init() {
+        const { ret } = await this.monitor.init();
+        if (ret !== 0) {
+            console.error(`failed to init monitor`);
+            return { ret };
+        }
+
+        console.log(`init monitor success`);
+        return { ret: 0 };
     }
 
     async run(block_generator) {
@@ -88,7 +100,7 @@ class InscrtionTransferMonitorRunner {
     async _process_block_inscriptions(block_height) {
         assert(block_height != null, `block_height should not be null`);
 
-        const { ret, data } = await this.orc_client.get_inscription_by_block(
+        const { ret, data } = await this.ord_client.get_inscription_by_block(
             block_height,
         );
 
@@ -121,34 +133,31 @@ class InscrtionTransferMonitorRunner {
                 `invalid inscription genesis block height: ${inscription.genesis_height} !== ${block_height}`,
             );
 
-            // get creator address
-            const { ret, satpoint } = SatPoint.parse(inscription.satpoint);
-            assert(
-                ret === 0,
-                `failed to parse satpoint: ${inscription.satpoint}`,
+            // get creator address and satpoint
+            const {
+                ret: get_address_ret,
+                satpoint: creator_satpoint,
+                address: creator_address,
+            } = await this.monitor.calc_create_satpoint(
+                inscription_id,
             );
-
-            const { ret: get_address_ret, address: creator_address } =
-                await this.monitor.utxo_cache.get_uxto(
-                    satpoint.outpoint.to_string(),
-                );
             if (get_address_ret !== 0) {
                 console.error(
-                    `failed to get creator address for ${inscription_id} ${satpoint.to_string()}`,
+                    `failed to get creator address for ${inscription_id}`,
                 );
                 return { ret: get_address_ret };
             }
 
-            const { ret: add_ret } = this.monitor.add_new_inscription(
+            const { ret: add_ret } = await this.monitor.add_new_inscription(
                 inscription_id,
                 block_height,
                 inscription.timestamp,
                 creator_address,
-                inscription.satpoint,
+                creator_satpoint,
             );
             if (add_ret !== 0) {
                 console.error(
-                    `failed to add new inscription creator record ${inscription_id} ${satpoint.to_string()}`,
+                    `failed to add new inscription creator record ${inscription_id} ${creator_satpoint.to_string()}, ${creator_address}`,
                 );
                 return { ret: add_ret };
             }
@@ -157,3 +166,37 @@ class InscrtionTransferMonitorRunner {
         return { ret: 0 };
     }
 }
+
+const path = require('path');
+const fs = require('fs');
+
+global._ = require('underscore');
+
+async function test() {
+    const config_path = path.resolve(__dirname, '../../config/formal.js');
+    assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
+    const config = new Config(config_path);
+
+    const runner = new InscrtionTransferMonitorRunner(config.config);
+    const { ret: init_ret } = await runner.init();
+    if (init_ret !== 0) {
+        console.error(`failed to init monitor runner`);
+        return { ret: init_ret };
+    }
+
+    const block_generator = new FixedBlockGenerator([
+        780234, 790355, 790488, 790862, 823382, 823385,
+    ]);
+    const { ret } = await runner.run(block_generator);
+    if (ret !== 0) {
+        console.error(`failed to run monitor`);
+        return { ret };
+    }
+
+    return { ret: 0 };
+}
+
+test().then(({ ret }) => {
+    console.log(`test complete: ${ret}`);
+    process.exit(ret);
+});

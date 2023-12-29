@@ -1,3 +1,5 @@
+const assert = require('assert');
+
 class OutPoint {
     constructor(txid, vout) {
         /// The referenced transaction's txid.
@@ -12,7 +14,7 @@ class OutPoint {
     }
 
     /**
-     * 
+     *
      * @param {string} outpoint_str in format `txid:vout`
      * @returns {ret: number, outpoint: OutPoint}
      */
@@ -23,7 +25,7 @@ class OutPoint {
             return { ret: -1 };
         }
 
-        return { ret: 0, outpoint: new OutPoint(arr[0], arr[1]) };
+        return { ret: 0, outpoint: new OutPoint(arr[0], Number(arr[1])) };
     }
 }
 
@@ -36,13 +38,13 @@ class SatPoint {
         this.outpoint = outpoint;
         this.offset = offset;
     }
-    
+
     to_string() {
         return `${this.outpoint.to_string()}:${this.offset}`;
     }
 
     /**
-     * 
+     *
      * @param {string} satpoint_str in format `txid:vout:offset`
      * @returns {ret: number, satpoint: SatPoint}
      */
@@ -50,10 +52,13 @@ class SatPoint {
         const arr = satpoint_str.split(':');
         if (arr.length !== 3) {
             console.error(`invalid satpoint ${satpoint_str}`);
-            return {ret: -1};
+            return { ret: -1 };
         }
 
-        return {ret: 0, satpoint: new SatPoint(new OutPoint(arr[0], arr[1]), arr[2])};
+        return {
+            ret: 0,
+            satpoint: new SatPoint(new OutPoint(arr[0], Number(arr[1])), Number(arr[2])),
+        };
     }
 }
 

@@ -212,7 +212,7 @@ class InscriptionTransferStorage {
      *
      * @returns {Promise<{ret: number, data: object}>}
      */
-    get_all_inscription_with_last_transfer() {
+    get_all_inscriptions_with_last_transfer() {
         assert(this.db != null, `db should not be null`);
 
         return new Promise((resolve) => {

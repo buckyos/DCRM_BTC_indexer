@@ -14,7 +14,7 @@ class InscriptionIndex {
             config.btc.network,
             config.btc.auth,
         );
-        this.ord_client = new OrdClient(config.ord.server_url);
+        this.ord_client = new OrdClient(config.ord.rpc_url);
 
         const { ret, dir } = Util.get_data_dir(config);
         if (ret !== 0) {

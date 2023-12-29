@@ -1,7 +1,10 @@
 const axios = require('axios');
+const assert = require('assert');
 
 class OrdClient {
     constructor(server_url) {
+        assert(_.isString(server_url), `server_url should be string`);
+
         this.server_url = server_url;
         this.client = axios.create({
             baseURL: this.server_url,
@@ -72,9 +75,7 @@ class OrdClient {
 
     async get_output_by_outpoint(outpoint) {
         try {
-            const response = await this.client.get(
-                `/output/${outpoint}`,
-            );
+            const response = await this.client.get(`/output/${outpoint}`);
             return {
                 ret: 0,
                 data: response.data,
