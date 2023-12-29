@@ -15,6 +15,30 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "test_transfer",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\src\\test\\test_transfer.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "main",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\src\\main.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
         }
     ]
 }

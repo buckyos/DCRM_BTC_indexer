@@ -4,11 +4,18 @@ const fs = require('fs');
 const { ETHIndex } = require('./eth/index');
 const { InscriptionIndex } = require('./index/inscription');
 const { Config } = require('./config');
+const { LogHelper } = require('./log');
 
 global._ = require('underscore');
 
 
 async function main() {
+    // init log
+    const log = new LogHelper();
+    // log.path_console();
+
+    console.info("test log");
+    
     // first load config
     const config_path = path.resolve(__dirname, '../config.js');
     assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
