@@ -20,10 +20,12 @@ class LogHelper {
             file_max_size: 20 * 1024 * 1024,
             file_max_count: 100,
         });
-
-        blog.enableConsoleTarget(true);
     }
 
+    enable_console_target(enable) {
+        blog.enableConsoleTarget(enable);
+    }
+    
     path_console() {
         blog.patch_console();
     }

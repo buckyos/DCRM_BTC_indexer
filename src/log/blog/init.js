@@ -18,6 +18,8 @@ function patch_console(log) {
     console.origin.error = console.error;
 
     console.origin.assert = console.assert;
+    console.origin.time = console.time;
+    console.origin.timeEnd = console.timeEnd;
 
     console.trace = log.trace;
     console.debug = log.debug;

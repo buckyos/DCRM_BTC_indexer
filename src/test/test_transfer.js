@@ -5,7 +5,7 @@ const assert = require('assert');
 const { SatPoint, OutPoint } = require('../btc/point');
 const { Util } = require('../util');
 const { LogHelper } = require('../log/log');
-
+const moment = require('moment');
 
 class BlockGenerator {
     constructor() {
@@ -73,7 +73,8 @@ class InscrtionTransferMonitorRunner {
     async run(block_generator) {
         let block_height;
         while ((block_height = block_generator.next().value) != null) {
-            console.log(`process block ${block_height}`);
+            // calc during time and log
+            console.origin.log(`process block ${block_height}`);
 
             // first process inscriptions in block
             const { ret: process_ret } = await this._process_block_inscriptions(
@@ -93,7 +94,11 @@ class InscrtionTransferMonitorRunner {
                 return { ret: process_tx_ret };
             }
 
-            console.log(`process block ${block_height} success`);
+            // calc during time and log
+            const now = Date.now();
+            const ts = moment(now).format('YYYY-MM-DD HH:mm:ss.SSS');
+
+            console.origin.log(`process block success ${block_height} ${ts}`);
         }
 
         return { ret: 0 };
@@ -102,9 +107,8 @@ class InscrtionTransferMonitorRunner {
     async _process_block_inscriptions(block_height) {
         assert(block_height != null, `block_height should not be null`);
 
-        const { ret, data: inscriptions } = await this.ord_client.get_inscription_by_block(
-            block_height,
-        );
+        const { ret, data: inscriptions } =
+            await this.ord_client.get_inscription_by_block(block_height);
 
         if (ret !== 0) {
             console.error(
@@ -141,9 +145,7 @@ class InscrtionTransferMonitorRunner {
                 satpoint: creator_satpoint,
                 address: creator_address,
                 value: creator_value,
-            } = await this.monitor.calc_create_satpoint(
-                inscription_id,
-            );
+            } = await this.monitor.calc_create_satpoint(inscription_id);
             if (get_address_ret !== 0) {
                 console.error(
                     `failed to get creator address for ${inscription_id}`,
@@ -185,7 +187,7 @@ async function test() {
     // init log
     const log = new LogHelper(config.config);
     log.path_console();
-
+    log.enable_console_target(false);
 
     const runner = new InscrtionTransferMonitorRunner(config.config);
     const { ret: init_ret } = await runner.init();
@@ -197,7 +199,9 @@ async function test() {
     const block_generator = new FixedBlockGenerator([
         780234, 790355, 790488, 790862, 823382, 823385,
     ]);
-    const { ret } = await runner.run(block_generator);
+
+    const large_block_generator = new RangeBlockGenerator([780234, 823573]);
+    const { ret } = await runner.run(large_block_generator);
     if (ret !== 0) {
         console.error(`failed to run monitor`);
         return { ret };
@@ -205,7 +209,6 @@ async function test() {
 
     return { ret: 0 };
 }
-
 
 test().then(({ ret }) => {
     console.log(`test complete: ${ret}`);
