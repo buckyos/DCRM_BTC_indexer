@@ -46,7 +46,8 @@ class InscriptionTransferStorage {
                         block_height INTEGER,
                         timestamp INTEGER,
                         satpoint TEXT,
-                        address TEXT,
+                        from_address TEXT,
+                        to_address TEXT,
                         value INTEGER,
                         PRIMARY KEY(inscription_id, timestamp)
                       );`,
@@ -74,7 +75,8 @@ class InscriptionTransferStorage {
         block_height,
         timestamp,
         satpoint,
-        address,
+        from_address,
+        to_address,
         value,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -95,8 +97,12 @@ class InscriptionTransferStorage {
             `block_height should be number: ${block_height}`,
         );
         assert(
-            typeof address === 'string',
-            `address should be string: ${address}`,
+            from_address == null ||
+            typeof from_address === 'string', `from_address should be string: ${from_address} or null`,
+        );
+        assert(
+            typeof to_address === 'string',
+            `to_address should be string: ${to_address}`,
         );
         assert(
             typeof timestamp === 'number',
@@ -112,10 +118,11 @@ class InscriptionTransferStorage {
                     block_height, 
                     timestamp, 
                     satpoint, 
-                    address, 
+                    from_address,
+                    to_address, 
                     value
                 )
-                VALUES(?, ?, ?, ?, ?, ?, ?)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             this.db.run(
@@ -126,7 +133,8 @@ class InscriptionTransferStorage {
                     block_height,
                     timestamp,
                     satpoint,
-                    address,
+                    from_address,
+                    to_address,
                     value,
                 ],
                 function (err) {
@@ -137,7 +145,7 @@ class InscriptionTransferStorage {
                         resolve({ ret: -1 });
                     } else {
                         console.log(
-                            `inserted inscription transfer: ${inscription_id} ${block_height} ${timestamp} ${satpoint} ${address}`,
+                            `inserted inscription transfer: ${inscription_id} ${block_height} ${timestamp} ${satpoint} ${from_address} -> ${to_address} ${value}`,
                         );
                         resolve({ ret: 0 });
                     }

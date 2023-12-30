@@ -9,20 +9,22 @@ const { OrdClient } = require('../btc/ord');
 
 // inscription transfer record item
 class InscriptionTransferRecordItem {
-    constructor(inscription_id, inscription_number, block_height, timestamp, satpoint, address) {
+    constructor(inscription_id, inscription_number, block_height, timestamp, satpoint, from_address, to_address) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
         assert(_.isString(satpoint), `invalid satpoint`);
-        assert(_.isString(address), `invalid address`);
+        assert(from_address == null || _.isString(from_address), `invalid from_address`);
+        assert(_.isString(to_address), `invalid to_address`);
 
         this.inscription_id = inscription_id;
         this.inscription_number = inscription_number;
         this.block_height = block_height;
         this.timestamp = timestamp;
         this.satpoint = satpoint;
-        this.address = address;
+        this.from_address = from_address;
+        this.to_address = to_address;
     }
 
     static from_db_record(record) {
@@ -34,7 +36,8 @@ class InscriptionTransferRecordItem {
             record.block_height,
             record.timestamp,
             record.satpoint,
-            record.address,
+            record.from_address,
+            record.to_address,
         );
     }
 
@@ -47,7 +50,8 @@ class InscriptionTransferRecordItem {
             this.block_height === other.block_height &&
             this.timestamp === other.timestamp &&
             this.satpoint === other.satpoint &&
-            this.address === other.address
+            this.from_address == other.from_address &&
+            this.to_address === other.to_address
         );
     }
 }
@@ -264,6 +268,7 @@ class InscriptionTransferMonitor {
             block_height,
             timestamp,
             satpoint,
+            null,   // creator transcation's from address is null
             creator_address,
             value,
         );
@@ -400,6 +405,7 @@ class InscriptionTransferMonitor {
                             block_height,
                             block.time,
                             point,
+                            inscription.to_address,
                             address,
                             value,
                         );
@@ -430,7 +436,8 @@ class InscriptionTransferMonitor {
         block_height,
         timestamp,
         satpoint,
-        address,
+        from_address,
+        to_address,
         value,
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
@@ -441,7 +448,8 @@ class InscriptionTransferMonitor {
         );
         assert(_.isNumber(timestamp), `invalid timestamp ${timestamp}`);
         assert(satpoint instanceof SatPoint, `invalid satpoint`);
-        assert(_.isString(address), `invalid address ${address}`);
+        assert(from_address == null || _.isString(from_address), `invalid from_address`);
+        assert(_.isString(to_address), `invalid to_address`);
         assert(_.isNumber(value), `invalid value ${value}`);
 
         // update db
@@ -451,7 +459,8 @@ class InscriptionTransferMonitor {
             block_height,
             timestamp,
             satpoint.to_string(),
-            address,
+            from_address,
+            to_address,
             value,
         );
         if (ret !== 0) {
@@ -468,7 +477,8 @@ class InscriptionTransferMonitor {
             block_height,
             timestamp,
             satpoint.to_string(),
-            address,
+            from_address,
+            to_address,
         );
 
         const outpoint_str = satpoint.outpoint.to_string();
