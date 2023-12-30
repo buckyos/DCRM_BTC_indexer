@@ -1,6 +1,7 @@
 const assert = require('assert');
 const { BTCClient } = require('./btc');
 const { OutPoint } = require('./point');
+const { Util } = require('../util');
 
 class UTXOMemoryCache {
     constructor(btc_client) {
@@ -25,9 +26,12 @@ class UTXOMemoryCache {
             return { ret: 0, value: item.value, address: item.address };
         }
 
-
         // search
-        const { ret, value: search_value, address: search_address } = await this._search_utxo(outpoint);
+        const {
+            ret,
+            value: search_value,
+            address: search_address,
+        } = await this._search_utxo(outpoint);
         if (ret !== 0) {
             console.error(`failed to search utxo ${outpoint}`);
             return { ret };
@@ -58,19 +62,17 @@ class UTXOMemoryCache {
         }
 
         if (outpoint.vout >= tx.vout.length) {
-            console.error(
-                `invalid offset ${outpoint_str} ${tx.vout.length}`,
-            );
+            console.error(`invalid offset ${outpoint_str} ${tx.vout.length}`);
             return { ret: -1 };
         }
 
         const vout = tx.vout[outpoint.vout];
-        const value = vout.value * 100000000;
+        const value = Util.btc_to_satoshi(vout.value);
 
         let address = null;
         if (vout.scriptPubKey && vout.scriptPubKey.address) {
             address = vout.scriptPubKey.address;
-        } else if (vout.type == "nulldata") {
+        } else if (vout.type == 'nulldata') {
             // OP_RETURN, ignore
         } else {
             console.warn(`failed to get address for ${outpoint_str}`);

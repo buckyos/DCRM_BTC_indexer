@@ -3,8 +3,20 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const bs58 = require('bs58');
+const sb = require('satoshi-bitcoin');
 
 class Util {
+    /**
+     * @comment convert satoshi to btc
+     * @param {number | string} btc
+     * @returns {number}
+     */
+    static btc_to_satoshi(btc) {
+        // return Math.round(btc * 100000000);
+
+        return sb.toSatoshi(btc);
+    }
+
     // the last 5 bytes of the address sum to 0x00
     static address_number(address) {
         let sum = 0;
@@ -117,7 +129,7 @@ class Util {
 
     /**
      * try convert hash string to base58 string, maybe hex string
-     * @param {string} hash_str 
+     * @param {string} hash_str
      * @returns {ret: number, hash_str: string}
      */
     static hex_to_base58(hash_str) {
@@ -232,7 +244,7 @@ class Util {
     }
 
     /**
-     * 
+     *
      * @param {string} hash in base58
      * @param {string} txid in hex
      * @returns {boolean}

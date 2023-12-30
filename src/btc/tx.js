@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { SatPoint, OutPoint } = require('./point');
+const {Util} = require('../util');
 
 class TxSimpleItem {
     constructor(tx) {
@@ -36,7 +37,7 @@ class TxSimpleItem {
 
             const item = {
                 outpoint,
-                value: vout.value * 100000000,
+                value: Util.btc_to_satoshi(vout.value),
                 address,
             };
 
