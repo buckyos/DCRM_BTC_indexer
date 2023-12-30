@@ -198,6 +198,12 @@ async function test() {
     return { ret: 0 };
 }
 
+const { LogHelper } = require('../log/log');
+
+// init log
+const log = new LogHelper();
+log.path_console();
+
 test().then(({ ret }) => {
     console.log(`test complete: ${ret}`);
     process.exit(ret);
