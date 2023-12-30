@@ -10,6 +10,12 @@ const { OrdClient } = require('../btc/ord');
 // inscription transfer record item
 class InscriptionTransferRecordItem {
     constructor(inscription_id, block_height, timestamp, satpoint, address) {
+        assert(_.isString(inscription_id), `invalid inscription_id`);
+        assert(_.isNumber(block_height), `invalid block_height`);
+        assert(_.isNumber(timestamp), `invalid timestamp`);
+        assert(_.isString(satpoint), `invalid satpoint`);
+        assert(_.isString(address), `invalid address`);
+
         this.inscription_id = inscription_id;
         this.block_height = block_height;
         this.timestamp = timestamp;
@@ -100,10 +106,6 @@ class InscriptionTransferMonitor {
         for (let i = 0; i < data.length; ++i) {
             const record = data[i];
             const item = InscriptionTransferRecordItem.from_db_record(record);
-            assert(
-                this.inscriptions.get(item.satpoint) == null,
-                `satpoint ${item.satpoint} already exists`,
-            );
 
             const { ret, satpoint } = SatPoint.parse(item.satpoint);
             assert(ret === 0, `invalid satpoint ${item.satpoint}`);
@@ -188,6 +190,12 @@ class InscriptionTransferMonitor {
             return { ret: tx_ret };
         }
 
+        // FIXME there maybe more than one inscription in one tx's input
+        if (index >= tx.vin.length) {
+            console.error(`invalid index ${index} >= ${tx.vin.length} in tx ${txid} ${inscription_id}`);
+            index = tx.vin.length - 1;
+        }
+
         assert(
             index < tx.vin.length,
             `invalid index ${inscription_id} ${index} >= ${tx.vin.length}`,
@@ -236,9 +244,7 @@ class InscriptionTransferMonitor {
 
             // check all input in current tx if match any inscription outpoint
             for (let j = 0; j < tx_item.vin.length; ++j) {
-                const vin = tx_item.vin[j];
-                const outpoint = new OutPoint(vin.txid, vin.vout);
-                const outpoint_str = outpoint.to_string();
+                const outpoint_str = tx_item.vin[j];
 
                 const inscription = this.inscriptions.get(outpoint_str);
                 if (inscription == null) {
@@ -249,17 +255,20 @@ class InscriptionTransferMonitor {
                     `found inscription ${inscription.inscription_id} transfer at block ${block_height} ${outpoint_str}`,
                 );
 
+                const { ret: parse_ret, satpoint } = SatPoint.parse(inscription.satpoint);
+                assert(parse_ret === 0, `invalid satpoint ${inscription.satpoint}`);
+
                 // calc next satpoint
-                const { ret, point, address } =
+                const { ret, point, address, value } =
                     await tx_item.calc_next_satpoint(
-                        inscription.satpoint,
+                        satpoint,
                         this.utxo_cache,
                     );
                 if (ret !== 0) {
                     console.error(
                         `failed to calc inscription next satpoint ${
                             inscription.inscription_id
-                        } ${inscription.satpoint.to_string()}`,
+                        } ${inscription.satpoint}`,
                     );
                     return { ret };
                 }
@@ -274,9 +283,10 @@ class InscriptionTransferMonitor {
                     const { ret } = await this._on_inscription_transfer(
                         inscription.inscription_id,
                         block_height,
-                        block.blocktime,
+                        block.time,
                         point,
                         address,
+                        value,
                     );
                     if (ret !== 0) {
                         console.error(

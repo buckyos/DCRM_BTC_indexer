@@ -10,6 +10,11 @@ class TxSimpleItem {
 
         for (let i = 0; i < tx.vin.length; ++i) {
             const vin = tx.vin[i];
+            if (vin.coinbase != null) {
+                // ignore coinbase tx
+                continue;
+            }
+
             const outpoint = `${vin.txid}:${vin.vout}`;
 
             this.vin.push(outpoint);
@@ -22,6 +27,8 @@ class TxSimpleItem {
             let address = null;
             if (vout.scriptPubKey && vout.scriptPubKey.address) {
                 address = vout.scriptPubKey.address;
+            } else if (vout.type == "nulldata") {
+                // OP_RETURN, ignore
             } else {
                 console.warn(`failed to get address for ${this.txid}:${i}`);
             }

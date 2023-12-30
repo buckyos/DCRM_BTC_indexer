@@ -49,6 +49,8 @@ class SatPoint {
      * @returns {ret: number, satpoint: SatPoint}
      */
     static parse(satpoint_str) {
+        assert(_.isString(satpoint_str), `invalid satpoint_str ${satpoint_str}`);
+        
         const arr = satpoint_str.split(':');
         if (arr.length !== 3) {
             console.error(`invalid satpoint ${satpoint_str}`);

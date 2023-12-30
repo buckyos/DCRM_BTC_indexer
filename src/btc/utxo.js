@@ -70,6 +70,8 @@ class UTXOMemoryCache {
         let address = null;
         if (vout.scriptPubKey && vout.scriptPubKey.address) {
             address = vout.scriptPubKey.address;
+        } else if (vout.type == "nulldata") {
+            // OP_RETURN, ignore
         } else {
             console.warn(`failed to get address for ${outpoint_str}`);
         }
