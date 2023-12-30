@@ -174,7 +174,7 @@ class InscriptionTransferMonitor {
      * @returns {Promise<{ret: number, satpoint: SatPoint, address: string, value: number}>}
      */
     async calc_create_satpoint(inscription_id) {
-        const {
+        let {
             ret: parse_ret,
             txid,
             index,

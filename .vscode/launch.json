@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\src\\test\\test.js",
+            "program": "${workspaceFolder}/src/test/test.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
@@ -23,7 +23,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\src\\test\\test_transfer.js",
+            "program": "${workspaceFolder}/src/test/test_transfer.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
@@ -35,7 +35,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\src\\main.js",
+            "program": "${workspaceFolder}/src/main.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]

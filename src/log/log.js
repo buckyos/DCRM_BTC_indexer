@@ -3,9 +3,13 @@ const path = require('path');
 const fs = require('fs');
 
 class LogHelper {
-    constructor() {
+    constructor(config) {
         const base_dir = process.platform === 'win32' ? 'C:\\logs' : '/var/log';
-        const log_dir = path.join(base_dir, 'dcrm_brc_index');
+        let log_dir = path.join(base_dir, 'dcrm_brc_index');
+        if (config.isolate) {
+            log_dir = path.join(log_dir, config.isolate);
+        }
+
         if (!fs.existsSync(log_dir)) {
             fs.mkdirSync(log_dir, { recursive: true });
         }

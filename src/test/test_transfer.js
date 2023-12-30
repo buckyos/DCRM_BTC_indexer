@@ -4,6 +4,8 @@ const { OrdClient } = require('../btc/ord');
 const assert = require('assert');
 const { SatPoint, OutPoint } = require('../btc/point');
 const { Util } = require('../util');
+const { LogHelper } = require('../log/log');
+
 
 class BlockGenerator {
     constructor() {
@@ -179,6 +181,11 @@ async function test() {
     assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
     const config = new Config(config_path);
 
+    // init log
+    const log = new LogHelper(config.config);
+    log.path_console();
+
+
     const runner = new InscrtionTransferMonitorRunner(config.config);
     const { ret: init_ret } = await runner.init();
     if (init_ret !== 0) {
@@ -198,11 +205,6 @@ async function test() {
     return { ret: 0 };
 }
 
-const { LogHelper } = require('../log/log');
-
-// init log
-const log = new LogHelper();
-log.path_console();
 
 test().then(({ ret }) => {
     console.log(`test complete: ${ret}`);

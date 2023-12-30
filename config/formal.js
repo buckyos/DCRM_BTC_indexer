@@ -1,10 +1,21 @@
+
+
+// data dir is /opt/dcrm on *nix and C:\\dcrm on windows
+let data_dir;
+if (process.platform === 'win32') {
+    data_dir = 'C:\\dcrm\\data';
+} else {
+    data_dir = '/opt/dcrm/data';
+}
+
 const INDEX_CONFIG = {
     // use for data dir and log dir isolate
     isolate: 'formal',
 
     btc: {
         network: 'mainnet',
-        host: '75.4.200.194',
+        // host: '75.4.200.194',
+        host: '127.0.0.1',
         auth: {
             cookie: "dcrm_test:dcrm_test_123456",
         },
@@ -18,11 +29,12 @@ const INDEX_CONFIG = {
     },
 
     ord: {
-        rpc_url: 'http://75.4.200.194:8081',
+        // rpc_url: 'http://75.4.200.194:8081',
+        rpc_url: 'http://127.0.0.1:8081',
     },
 
     db: {
-        data_dir: 'E:\\data\\mainnet',
+        data_dir,
         index_db_file: 'index.sqlite',
         eth_db_file: 'eth_index.sqlite',
         inscription_db_file: 'inscriptions.sqlite',

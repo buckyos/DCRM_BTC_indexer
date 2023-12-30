@@ -1,3 +1,10 @@
+let data_dir;
+if (process.platform === 'win32') {
+    data_dir = 'C:\\dcrm\\data';
+} else {
+    data_dir = '/opt/dcrm/data';
+}
+
 const INDEX_CONFIG = {
     // use for data dir and log dir isolate
     isolate: 'testnet',
@@ -25,7 +32,7 @@ const INDEX_CONFIG = {
     },
 
     db: {
-        data_dir: 'E:\\data\\testnet\\testnet3',
+        data_dir,
         index_db_file: 'index.sqlite',
         eth_db_file: 'eth_index.sqlite',
         inscription_db_file: 'inscriptions.sqlite',

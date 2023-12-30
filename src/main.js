@@ -10,16 +10,16 @@ global._ = require('underscore');
 
 
 async function main() {
-    // init log
-    const log = new LogHelper();
-    log.path_console();
-
-    console.info("test log");
-    
     // first load config
     const config_path = path.resolve(__dirname, '../config.js');
     assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
     const config = new Config(config_path);
+
+    // init log
+    const log = new LogHelper(config.config);
+    log.path_console();
+
+    console.info("test log");
 
     const eth_index = new ETHIndex(config.config);
     const inscription_index = new InscriptionIndex(config.config);
