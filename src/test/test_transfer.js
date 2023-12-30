@@ -153,6 +153,7 @@ class InscrtionTransferMonitorRunner {
 
             const { ret: add_ret } = await this.monitor.add_new_inscription(
                 inscription_id,
+                inscription.inscription_number,
                 block_height,
                 inscription.timestamp,
                 creator_address,

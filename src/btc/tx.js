@@ -30,7 +30,8 @@ class TxSimpleItem {
             } else if (vout.type == "nulldata") {
                 // OP_RETURN, ignore
             } else {
-                console.warn(`failed to get address for ${this.txid}:${i}`);
+                // FIXME should makesure it is OP_RETURN or known invalid case
+                // console.warn(`failed to get address for ${this.txid}:${i}`);
             }
 
             const item = {

@@ -42,6 +42,7 @@ class InscriptionTransferStorage {
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS inscription_transfers (
                         inscription_id TEXT,
+                        inscription_number INTEGER,
                         block_height INTEGER,
                         timestamp INTEGER,
                         satpoint TEXT,
@@ -69,6 +70,7 @@ class InscriptionTransferStorage {
 
     async insert_transfer(
         inscription_id,
+        inscription_number,
         block_height,
         timestamp,
         satpoint,
@@ -79,6 +81,10 @@ class InscriptionTransferStorage {
         assert(
             typeof inscription_id === 'string',
             `inscription_id should be string: ${inscription_id}`,
+        );
+        assert(
+            typeof inscription_number === 'number',
+            `inscription_number should be number: ${inscription_number}`,
         );
         assert(
             typeof satpoint === 'string',
@@ -96,20 +102,33 @@ class InscriptionTransferStorage {
             typeof timestamp === 'number',
             `timestamp should be number: ${timestamp}`,
         );
-        assert(
-            typeof value === 'number',
-            `value should be number: ${value}`,
-        );
+        assert(typeof value === 'number', `value should be number: ${value}`);
 
         return new Promise((resolve, reject) => {
             const sql = `
-                INSERT OR REPLACE INTO inscription_transfers(inscription_id, block_height, timestamp, satpoint, address, value)
-                VALUES(?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO inscription_transfers(
+                    inscription_id, 
+                    inscription_number,
+                    block_height, 
+                    timestamp, 
+                    satpoint, 
+                    address, 
+                    value
+                )
+                VALUES(?, ?, ?, ?, ?, ?, ?)
             `;
 
             this.db.run(
                 sql,
-                [inscription_id, block_height, timestamp, satpoint, address, value],
+                [
+                    inscription_id,
+                    inscription_number,
+                    block_height,
+                    timestamp,
+                    satpoint,
+                    address,
+                    value,
+                ],
                 function (err) {
                     if (err) {
                         console.error(
