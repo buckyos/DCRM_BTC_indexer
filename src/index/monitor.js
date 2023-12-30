@@ -347,15 +347,16 @@ class InscriptionTransferMonitor {
             return { ret };
         }
 
-        const txs = block.tx;
-        for (let i = 0; i < txs.length; ++i) {
-            const txid = txs[i];
-            const { ret, tx } = await this.btc_client.get_transaction(txid);
-            if (ret !== 0) {
-                console.error(`failed to get transaction ${txid}`);
-                return { ret };
-            }
+    
+        // batch get by get_transaction_batch
+        const {ret: batch_get_ret, txs} = await this.btc_client.get_transaction_batch(block.tx);
+        if (batch_get_ret !== 0) {
+            console.error(`failed to get transaction batch`);
+            return { ret: batch_get_ret };
+        }
 
+        for (let i = 0; i < txs.length; ++i) {
+            const tx = txs[i];
             const tx_item = new TxSimpleItem(tx);
 
             // check all input in current tx if match any inscription outpoint
