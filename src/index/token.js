@@ -10,6 +10,11 @@ const { TransferOperator } = require('./ops/transfer');
 const { ChantOperator } = require('./ops/chant');
 const { ResonanceOperator } = require('./ops/resonance');
 const { SetPriceOperator } = require('./ops/set_price');
+const {
+    BlockInscriptonCollector,
+    InscriptionNewItem,
+    InscriptionTransferItem,
+} = require('./item');
 
 class TokenIndex {
     constructor(config) {
@@ -45,13 +50,19 @@ class TokenIndex {
         return { ret: 0 };
     }
 
-    async process_block_inscriptions(block_height, block_inscriptions) {
+    async process_block_inscriptions(block_height, block_collector) {
+        assert(_.isNumber(block_height), `block_height should be number`);
+        assert(
+            block_collector instanceof BlockInscriptonCollector,
+            `block_collector should be BlockInscriptonCollector`,
+        );
+
         const block_indexer = new TokenBlockIndex(
             this.storage,
             this.config,
             this.hash_helper,
             block_height,
-            block_inscriptions,
+            block_collector,
         );
         return await block_indexer.process_inscriptions();
     }
@@ -63,7 +74,7 @@ class TokenBlockIndex {
         config,
         hash_helper,
         block_height,
-        block_inscriptions,
+        block_collector,
     ) {
         assert(
             storage instanceof TokenIndexStorage,
@@ -76,19 +87,16 @@ class TokenBlockIndex {
         );
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(
-            _.isArray(block_inscriptions),
-            `block_inscriptions should be array`,
+            block_collector instanceof BlockInscriptonCollector,
+            `block_collector should be BlockInscriptonCollector`,
         );
-        assert(
-            block_inscriptions.length > 0,
-            `block_inscriptions should not be empty`,
-        );
+        
 
         this.storage = storage;
         this.config = config;
         this.hash_helper = hash_helper;
         this.block_height = block_height;
-        this.block_inscriptions = block_inscriptions;
+        this.block_collector = block_collector;
 
         this.inscribe_operator = new InscribeOperator(
             config,
@@ -131,6 +139,8 @@ class TokenBlockIndex {
                 }
             }
 
+
+            // process pending ops
             const { ret: inscribe_ret } =
                 await this.inscribe_operator.process_pending_inscribe_ops();
             if (inscribe_ret !== 0) {

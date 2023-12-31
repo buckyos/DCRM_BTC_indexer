@@ -6,16 +6,28 @@ const { TxSimpleItem } = require('../btc/tx');
 const { OutPoint, SatPoint } = require('../btc/point');
 const { UTXOMemoryCache } = require('../btc/utxo');
 const { OrdClient } = require('../btc/ord');
+const { InscriptionTransferRecordItem } = require('./item');
 
 // inscription transfer record item
 class InscriptionTransferRecordItem {
-    constructor(inscription_id, inscription_number, block_height, timestamp, satpoint, from_address, to_address) {
+    constructor(
+        inscription_id,
+        inscription_number,
+        block_height,
+        timestamp,
+        satpoint,
+        from_address,
+        to_address,
+    ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
         assert(_.isString(satpoint), `invalid satpoint`);
-        assert(from_address == null || _.isString(from_address), `invalid from_address`);
+        assert(
+            from_address == null || _.isString(from_address),
+            `invalid from_address`,
+        );
         assert(_.isString(to_address), `invalid to_address`);
 
         this.inscription_id = inscription_id;
@@ -87,8 +99,8 @@ class MultiMap {
 
     // return array or single value, should check by caller
     /**
-     * 
-     * @param {string} key 
+     *
+     * @param {string} key
      * @returns {object|Array<object>}
      */
     get(key) {
@@ -96,8 +108,8 @@ class MultiMap {
     }
 
     /**
-     * 
-     * @param {string} key 
+     *
+     * @param {string} key
      * @returns {Array<object>}
      */
     get_array(key) {
@@ -114,8 +126,8 @@ class MultiMap {
     }
 
     /**
-     * 
-     * @param {string} key 
+     *
+     * @param {string} key
      * @returns {boolean}
      */
     has(key) {
@@ -123,9 +135,9 @@ class MultiMap {
     }
 
     /**
-     * 
-     * @param {string} key 
-     * @param {object} value 
+     *
+     * @param {string} key
+     * @param {object} value
      * @returns {boolean}
      */
     delete(key, value) {
@@ -159,18 +171,17 @@ class MultiMap {
 }
 
 class InscriptionTransferMonitor {
-    constructor(config) {
+    constructor(config, transfer_storage) {
         assert(config != null, `config should not be null`);
+        assert(
+            transfer_storage instanceof InscriptionTransferStorage,
+            `invalid transfer_storage`,
+        );
 
         this.config = config;
         this.inscriptions = new MultiMap();
 
-        const { ret, dir } = Util.get_data_dir(config);
-        if (ret !== 0) {
-            throw new Error(`failed to get data dir`);
-        }
-
-        this.storage = new InscriptionTransferStorage(dir);
+        this.storage = transfer_storage;
 
         this.btc_client = new BTCClient(
             config.btc.host,
@@ -217,7 +228,7 @@ class InscriptionTransferMonitor {
         for (let i = 0; i < data.length; ++i) {
             const record = data[i];
             const item = InscriptionTransferRecordItem.from_db_record(record);
-            
+
             // ignore invalid satpoint
             if (item.satpoint === Util.zero_satpoint()) {
                 continue;
@@ -229,7 +240,7 @@ class InscriptionTransferMonitor {
 
             // index by outpoint
             const outpoint_str = satpoint.outpoint.to_string();
-            
+
             // one outpoint may have more than one inscription transfer record
             this.inscriptions.set(outpoint_str, item);
         }
@@ -273,7 +284,7 @@ class InscriptionTransferMonitor {
             block_height,
             timestamp,
             satpoint,
-            null,   // creator transcation's from address is null
+            null, // creator transcation's from address is null
             creator_address,
             value,
         );
@@ -345,6 +356,11 @@ class InscriptionTransferMonitor {
         return { ret: 0, satpoint: point, address, value };
     }
 
+    /**
+     *
+     * @param {number} block_height
+     * @returns {Promise<{ret: number, transfer_items: Array<InscriptionTransferRecordItem>}>}
+     */
     async process_block(block_height) {
         const { ret, block } = await this.btc_client.get_block(block_height);
         if (ret !== 0) {
@@ -352,14 +368,15 @@ class InscriptionTransferMonitor {
             return { ret };
         }
 
-    
         // batch get by get_transaction_batch
-        const {ret: batch_get_ret, txs} = await this.btc_client.get_transaction_batch(block.tx);
+        const { ret: batch_get_ret, txs } =
+            await this.btc_client.get_transaction_batch(block.tx);
         if (batch_get_ret !== 0) {
             console.error(`failed to get transaction batch`);
             return { ret: batch_get_ret };
         }
 
+        const transfer_items = [];
         for (let i = 0; i < txs.length; ++i) {
             const tx = txs[i];
             const tx_item = new TxSimpleItem(tx);
@@ -379,7 +396,7 @@ class InscriptionTransferMonitor {
                     console.log(
                         `found inscription ${inscription.inscription_id} transfer at block ${block_height} ${outpoint_str}`,
                     );
-    
+
                     const { ret: parse_ret, satpoint } = SatPoint.parse(
                         inscription.satpoint,
                     );
@@ -387,24 +404,27 @@ class InscriptionTransferMonitor {
                         parse_ret === 0,
                         `invalid satpoint ${inscription.satpoint}`,
                     );
-    
+
                     // calc next satpoint
                     const { ret, point, address, value } =
-                        await tx_item.calc_next_satpoint(satpoint, this.utxo_cache);
+                        await tx_item.calc_next_satpoint(
+                            satpoint,
+                            this.utxo_cache,
+                        );
                     if (ret !== 0) {
                         console.error(
                             `failed to calc inscription next satpoint ${inscription.inscription_id} ${inscription.satpoint}`,
                         );
                         return { ret };
                     }
-    
+
                     if (point != null) {
                         console.log(
                             `found inscription transfer ${
                                 inscription.inscription_id
                             } ${inscription.satpoint} -> ${point.to_string()}`,
                         );
-    
+
                         const { ret } = await this._on_inscription_transfer(
                             inscription.inscription_id,
                             inscription.inscription_number,
@@ -426,31 +446,43 @@ class InscriptionTransferMonitor {
                     } else {
                         // inscription is spent as fee
                         console.warn(
-                            `inscription ${inscription.inscription_id} is spent as fee on tx ${txid}`,
+                            `inscription ${inscription.inscription_id} is spent as fee on tx ${tx.txid}`,
                         );
 
-                        const { ret } = await this._on_inscription_transfer_as_fee(
-                            inscription.inscription_id,
-                            inscription.inscription_number,
-                            block_height,
-                            block.time,
-                            inscription.to_address,
-                        );
+                        const { ret } =
+                            await this._on_inscription_transfer_as_fee(
+                                inscription.inscription_id,
+                                inscription.inscription_number,
+                                block_height,
+                                block.time,
+                                inscription.to_address,
+                            );
 
                         if (ret !== 0) {
                             console.error(
-                                `failed to process inscription transfer as fee ${
-                                    inscription.inscription_id
-                                } block ${block_height} ${point.to_string()} ${address}`,
+                                `failed to process inscription transfer as fee ${inscription.inscription_id} block ${block_height}`,
                             );
                             return { ret };
                         }
                     }
+
+                    const transfer_item = new InscriptionTransferRecordItem(
+                        inscription.inscription_id,
+                        inscription.inscription_number,
+                        block_height,
+                        block.time,
+                        point == null ? null : point.to_string(),
+                        inscription.to_address,
+                        address,
+                        value == null ? 0 : value,
+                    );
+
+                    transfer_items.push(transfer_item);
                 }
             }
         }
 
-        return { ret: 0 };
+        return { ret: 0, transfer_items };
     }
 
     async _on_inscription_transfer(
@@ -471,7 +503,10 @@ class InscriptionTransferMonitor {
         );
         assert(_.isNumber(timestamp), `invalid timestamp ${timestamp}`);
         assert(satpoint instanceof SatPoint, `invalid satpoint`);
-        assert(from_address == null || _.isString(from_address), `invalid from_address`);
+        assert(
+            from_address == null || _.isString(from_address),
+            `invalid from_address`,
+        );
         assert(_.isString(to_address), `invalid to_address`);
         assert(_.isNumber(value), `invalid value ${value}`);
 
@@ -539,7 +574,10 @@ class InscriptionTransferMonitor {
             `invalid block_height ${block_height}`,
         );
         assert(_.isNumber(timestamp), `invalid timestamp ${timestamp}`);
-        assert(from_address == null || _.isString(from_address), `invalid from_address`);
+        assert(
+            from_address == null || _.isString(from_address),
+            `invalid from_address`,
+        );
 
         // update db
         const { ret } = await this.storage.insert_transfer(
