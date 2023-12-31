@@ -368,6 +368,7 @@ class InscriptionIndex {
                 satpoint: creator_satpoint,
                 address: creator_address,
                 value: creator_value,
+                commit_txid,
             } = await this.monitor.calc_create_satpoint(inscription_id);
             if (get_address_ret !== 0) {
                 console.error(
@@ -386,6 +387,7 @@ class InscriptionIndex {
                 creator_value,
                 content,
                 op,
+                commit_txid,
             );
 
             // process inscription

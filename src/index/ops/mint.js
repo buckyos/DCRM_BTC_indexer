@@ -2,6 +2,7 @@ const assert = require('assert');
 const { Util } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const constants = require('../../constants');
+const { InscriptionNewItem } = require('../item');
 
 class MintOperator {
     constructor(config, storage) {
@@ -10,7 +11,7 @@ class MintOperator {
             storage instanceof TokenIndexStorage,
             `storage should be TokenIndexStorage`,
         );
-        
+
         this.config = config;
         this.storage = storage;
     }
@@ -21,6 +22,8 @@ class MintOperator {
     {"p":"brc-20","op":"mint","tick":"DMC ","amt":"2100","lucky":"dmc-discord"}
     */
     async on_mint(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+
         // check amt is exists and is number
         const content = inscription_item.content;
         assert(content.amt != null, `amt should be exists`);
@@ -113,9 +116,11 @@ class MintOperator {
 
     _is_lucky_block_mint(inscription_item) {
         const { block_height, address } = inscription_item;
+        assert(_.isNumber(block_height), `block_height should be number`);
+        assert(_.isString(address), `address should be string`);
 
         // Get the number of the address
-        const address_num = Util.address_num(address);
+        const address_num = Util.address_number(address);
 
         // Check if the sum of the block height and the ASCII value is divisible by 64
         if ((block_height + address_num) % 64 === 0) {

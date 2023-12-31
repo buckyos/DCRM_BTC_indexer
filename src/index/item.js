@@ -357,19 +357,34 @@ class InscriptionContentLoader {
 
 
 class InscriptionNewItem {
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @param {number} inscription_number 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {string} address // the creator address
+     * @param {string} satpoint 
+     * @param {number} value 
+     * @param {object} content 
+     * @param {object} op 
+     * @param {string} commit_txid 
+     */
     constructor(
         inscription_id,
         inscription_number,
         block_height,
         timestamp,
-        address,
+        address,    // the creator address
         satpoint,
         value,
         content,
         op,
+        commit_txid, // the txid in the inscription commit transaction (two phase commit and reveal)
     ) {
         assert(_.isObject(content), `content should be object`);
         assert(_.isObject(op), `op should be object`);
+        assert(_.isString(commit_txid), `commit_txid should be string`);
 
         this.inscription_id = inscription_id;
         this.inscription_number = inscription_number;
@@ -380,6 +395,7 @@ class InscriptionNewItem {
         this.value = value;
         this.content = content;
         this.op = op;
+        this.commit_txid = commit_txid;
     }
 }
 
@@ -476,7 +492,6 @@ class BlockInscriptonCollector {
 module.exports = {
     InscriptionOp,
     InscriptionContentLoader,
-    InscriptionItem,
     TransferOp,
     MintOp,
     InscribeOp,

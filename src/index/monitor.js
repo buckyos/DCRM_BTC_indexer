@@ -18,7 +18,7 @@ class InscriptionTransferRecordItem {
         satpoint,
         from_address,
         to_address,
-        index,  // index Indicates the number of transfers
+        index, // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
@@ -307,7 +307,7 @@ class InscriptionTransferMonitor {
     /**
      * The inscription content is contained within the input of a reveal transaction, and the inscription is made on the first sat of its input. This sat can then be tracked using the familiar rules of ordinal theory, allowing it to be transferred, bought, sold, lost to fees, and recovered.
      * @param {string} inscription_id
-     * @returns {Promise<{ret: number, satpoint: SatPoint, address: string, value: number}>}
+     * @returns {Promise<{ret: number, satpoint: SatPoint, address: string, value: number, commit_txid: string}>}
      */
     async calc_create_satpoint(inscription_id) {
         let {
@@ -339,6 +339,7 @@ class InscriptionTransferMonitor {
             `invalid index ${inscription_id} ${index} >= ${tx.vin.length}`,
         );
         const vin = tx.vin[index];
+        const commit_txid = vin.txid;
         const satpoint = new SatPoint(new OutPoint(vin.txid, vin.vout), 0);
 
         const tx_item = new TxSimpleItem(tx);
@@ -356,10 +357,10 @@ class InscriptionTransferMonitor {
         }
 
         console.log(
-            `found creator satpoint ${inscription_id} ${point.to_string()}, address: ${address}`,
+            `found creator satpoint ${inscription_id} ${point.to_string()}, address: ${address}, value: ${value}, commit txid: ${commit_txid}`,
         );
 
-        return { ret: 0, satpoint: point, address, value };
+        return { ret: 0, satpoint: point, address, value, commit_txid };
     }
 
     /**
@@ -503,7 +504,7 @@ class InscriptionTransferMonitor {
         from_address,
         to_address,
         value,
-        index,  // index Indicates the number of transfers
+        index, // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
@@ -579,7 +580,7 @@ class InscriptionTransferMonitor {
         block_height,
         timestamp,
         from_address,
-        index,  // index Indicates the number of transfers
+        index, // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);

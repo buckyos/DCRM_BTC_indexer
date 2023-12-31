@@ -2,7 +2,8 @@ const assert = require('assert');
 const { Util } = require('../../util');
 const { TokenIndex } = require('../../storage/token');
 const { HashHelper } = require('./hash');
-const {InscriptionOpState} = require('./state');
+const { InscriptionOpState } = require('./state');
+const { InscriptionNewItem } = require('../item');
 
 class SetPriceOperator {
     constructor(storage, hash_helper) {
@@ -16,7 +17,13 @@ class SetPriceOperator {
         this.hash_helper = hash_helper;
     }
 
+    /**
+     * 
+     * @param {InscriptionNewItem} inscription_item 
+     * @returns {Promise<{ret: number}>}
+     */
     async on_set_price(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
         // do set price
         const { ret, state } = await this._set_price(inscription_item);
@@ -43,6 +50,11 @@ class SetPriceOperator {
         return { ret: 0 };
     }
 
+    /**
+     * 
+     * @param {InscriptionNewItem} inscription_item 
+     * @returns {Promise<{ret: number, state: InscriptionOpState}>}
+     */
     async _set_price(inscription_item) {
         const content = inscription_item.content;
 
@@ -66,7 +78,9 @@ class SetPriceOperator {
         }
 
         // 2. check if hash's owner is the same
-        const {ret: get_ret, data} = await this.storage.get_inscribe_data(hash);
+        const { ret: get_ret, data } = await this.storage.get_inscribe_data(
+            hash,
+        );
         if (get_ret !== 0) {
             console.error(
                 `failed to get inscribe data ${inscription_item.inscription_id} ${hash}`,
@@ -104,12 +118,17 @@ class SetPriceOperator {
 
         // check and try fix price
         if (price > hash_weight * 2) {
-            console.warn(`price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`);
+            console.warn(
+                `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
+            );
             price = hash_weight * 2;
         }
 
         // 3. set price for hash
-        const {ret: set_ret } = await this.storage.set_inscribe_data_price(hash, price);
+        const { ret: set_ret } = await this.storage.set_inscribe_data_price(
+            hash,
+            price,
+        );
         if (set_ret !== 0) {
             console.error(
                 `failed to set price ${inscription_item.inscription_id} ${hash} ${price}`,
@@ -117,7 +136,9 @@ class SetPriceOperator {
             return { ret: set_ret };
         }
 
-        console.log(`set price ${inscription_item.inscription_id} ${hash} ${price}`);
+        console.log(
+            `set price ${inscription_item.inscription_id} ${hash} ${price}`,
+        );
 
         return { ret: 0, state: InscriptionOpState.OK };
     }

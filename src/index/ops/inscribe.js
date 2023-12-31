@@ -3,6 +3,7 @@ const { Util } = require('../../util');
 const { TokenIndex } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
+const { InscriptionNewItem } = require('../item');
 
 class PendingInscribeOp {
     constructor(inscription_item, state, hash_distance) {
@@ -30,6 +31,8 @@ class InscribeOperator {
     }
 
     async on_inscribe(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+
         // first check if hash and amt field is exists
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
@@ -76,11 +79,11 @@ class InscribeOperator {
         }
 
         // 2. chech hash condition if satisfied
-        assert(inscription_item.prev_txid != null);
+        assert(inscription_item.commit_txid != null);
         if (
-            !Util.check_inscribe_hash_and_txid(hash, inscription_item.prev_txid)
+            !Util.check_inscribe_hash_and_txid(hash, inscription_item.commit_txid)
         ) {
-            // not match (hash - prev_txid) % 32 != 0, so this inscription will failed
+            // not match (hash - commit_txid) % 32 != 0, so this inscription will failed
             const op = new PendingInscribeOp(
                 inscription_item,
                 InscriptionOpState.HASH_UNMATCH,

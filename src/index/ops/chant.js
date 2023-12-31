@@ -3,6 +3,7 @@ const { Util } = require('../../util');
 const { TokenIndex } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
+const { InscriptionNewItem } = require('../item');
 
 
 class ChantOperator {
@@ -24,10 +25,12 @@ class ChantOperator {
 
     /**
      * 
-     * @param {object} inscription_item 
+     * @param {InscriptionNewItem} inscription_item 
      * @returns {Promise<{ret: number}>}
      */
     async on_chant(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+
         // first do chant
         const { ret, state } = await this._chant(inscription_item);
         if (ret !== 0) {
@@ -57,10 +60,12 @@ class ChantOperator {
 
     /**
      * 
-     * @param {object} inscription_item 
+     * @param {InscriptionNewItem} inscription_item 
      * @returns {Promise<{ret: number, state: number}>}
      */
     async _chant(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+        
         // first check if hash and amt field is exists
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
