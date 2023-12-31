@@ -393,6 +393,7 @@ class InscriptionTransferItem {
         from_address,
         to_address,
         value,
+        index,  // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `inscription_id should be string`);
         assert(
@@ -411,6 +412,8 @@ class InscriptionTransferItem {
         );
         assert(to_address == null || _.isString(to_address), `to_address should be string or null`);
         assert(_.isNumber(value), `value should be number`);
+        assert(_.isNumber(index), `index should be number`);
+        assert(index >= 0, `index should be >= 0: ${index}`)
 
         this.inscription_id = inscription_id;
         this.inscription_number = inscription_number;
@@ -421,6 +424,8 @@ class InscriptionTransferItem {
         this.from_address = from_address;
         this.to_address = to_address;
         this.value = value;
+
+        this.index = index;
     }
 }
 

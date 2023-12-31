@@ -6,7 +6,7 @@ const { TxSimpleItem } = require('../btc/tx');
 const { OutPoint, SatPoint } = require('../btc/point');
 const { UTXOMemoryCache } = require('../btc/utxo');
 const { OrdClient } = require('../btc/ord');
-const { InscriptionTransferRecordItem } = require('./item');
+const { InscriptionTransferItem } = require('./item');
 
 // inscription transfer record item
 class InscriptionTransferRecordItem {
@@ -18,6 +18,7 @@ class InscriptionTransferRecordItem {
         satpoint,
         from_address,
         to_address,
+        index,  // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
@@ -29,6 +30,7 @@ class InscriptionTransferRecordItem {
             `invalid from_address`,
         );
         assert(_.isString(to_address), `invalid to_address`);
+        assert(_.isNumber(index), `invalid index ${index}`);
 
         this.inscription_id = inscription_id;
         this.inscription_number = inscription_number;
@@ -37,6 +39,7 @@ class InscriptionTransferRecordItem {
         this.satpoint = satpoint;
         this.from_address = from_address;
         this.to_address = to_address;
+        this.index = index;
     }
 
     static from_db_record(record) {
@@ -50,6 +53,7 @@ class InscriptionTransferRecordItem {
             record.satpoint,
             record.from_address,
             record.to_address,
+            record.index,
         );
     }
 
@@ -63,7 +67,8 @@ class InscriptionTransferRecordItem {
             this.timestamp === other.timestamp &&
             this.satpoint === other.satpoint &&
             this.from_address == other.from_address &&
-            this.to_address === other.to_address
+            this.to_address === other.to_address &&
+            this.index === other.index
         );
     }
 }
@@ -287,6 +292,7 @@ class InscriptionTransferMonitor {
             null, // creator transcation's from address is null
             creator_address,
             value,
+            0,
         );
         if (ret !== 0) {
             console.error(
@@ -434,6 +440,7 @@ class InscriptionTransferMonitor {
                             inscription.to_address,
                             address,
                             value,
+                            inscription.index + 1,
                         );
                         if (ret !== 0) {
                             console.error(
@@ -456,6 +463,7 @@ class InscriptionTransferMonitor {
                                 block_height,
                                 block.time,
                                 inscription.to_address,
+                                inscription.index + 1,
                             );
 
                         if (ret !== 0) {
@@ -466,7 +474,7 @@ class InscriptionTransferMonitor {
                         }
                     }
 
-                    const transfer_item = new InscriptionTransferRecordItem(
+                    const transfer_item = new InscriptionTransferItem(
                         inscription.inscription_id,
                         inscription.inscription_number,
                         block_height,
@@ -475,6 +483,7 @@ class InscriptionTransferMonitor {
                         inscription.to_address,
                         address,
                         value == null ? 0 : value,
+                        inscription.index + 1,
                     );
 
                     transfer_items.push(transfer_item);
@@ -494,6 +503,7 @@ class InscriptionTransferMonitor {
         from_address,
         to_address,
         value,
+        index,  // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
@@ -509,6 +519,7 @@ class InscriptionTransferMonitor {
         );
         assert(_.isString(to_address), `invalid to_address`);
         assert(_.isNumber(value), `invalid value ${value}`);
+        assert(_.isNumber(index), `invalid index ${index}`);
 
         // update db
         const { ret } = await this.storage.insert_transfer(
@@ -520,6 +531,7 @@ class InscriptionTransferMonitor {
             from_address,
             to_address,
             value,
+            index,
         );
         if (ret !== 0) {
             console.error(
@@ -537,6 +549,7 @@ class InscriptionTransferMonitor {
             satpoint.to_string(),
             from_address,
             to_address,
+            index,
         );
 
         const outpoint_str = satpoint.outpoint.to_string();
@@ -566,6 +579,7 @@ class InscriptionTransferMonitor {
         block_height,
         timestamp,
         from_address,
+        index,  // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `invalid inscription_id`);
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
@@ -578,6 +592,7 @@ class InscriptionTransferMonitor {
             from_address == null || _.isString(from_address),
             `invalid from_address`,
         );
+        assert(_.isNumber(index), `invalid index ${index}`);
 
         // update db
         const { ret } = await this.storage.insert_transfer(
@@ -589,6 +604,7 @@ class InscriptionTransferMonitor {
             from_address,
             Util.zero_btc_address(),
             0,
+            index,
         );
         if (ret !== 0) {
             console.error(

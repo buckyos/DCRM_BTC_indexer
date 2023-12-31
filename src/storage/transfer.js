@@ -49,6 +49,7 @@ class InscriptionTransferStorage {
                         from_address TEXT,
                         to_address TEXT,
                         value INTEGER,
+                        index INTEGER DEFAULT 0,
                         PRIMARY KEY(inscription_id, timestamp)
                       );`,
                     (err) => {
@@ -78,6 +79,7 @@ class InscriptionTransferStorage {
         from_address,
         to_address,
         value,
+        index,  // index Indicates the number of transfers
     ) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -109,6 +111,8 @@ class InscriptionTransferStorage {
             `timestamp should be number: ${timestamp}`,
         );
         assert(typeof value === 'number', `value should be number: ${value}`);
+        assert(typeof index === 'number', `index should be number: ${index}`);
+        assert(index >= 0, `index should be >= 0: ${index}`)
 
         return new Promise((resolve, reject) => {
             const sql = `
@@ -120,9 +124,10 @@ class InscriptionTransferStorage {
                     satpoint, 
                     from_address,
                     to_address, 
-                    value
+                    value,
+                    index
                 )
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             this.db.run(
@@ -136,6 +141,7 @@ class InscriptionTransferStorage {
                     from_address,
                     to_address,
                     value,
+                    index,
                 ],
                 function (err) {
                     if (err) {
