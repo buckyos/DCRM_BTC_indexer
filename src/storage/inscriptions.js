@@ -55,6 +55,7 @@ class InscriptionsStorage {
 
                     creator TEXT,
                     owner TEXT,
+                    last_block_height INTEGER,  // last block height that this inscription transfered to new owner
 
                     transfer_count INTEGER,
                 )`,
@@ -107,6 +108,7 @@ class InscriptionsStorage {
         content,
         op,
         creator,
+        block_height,
     ) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(inscription_id), `inscription_id should be string`);
@@ -117,6 +119,7 @@ class InscriptionsStorage {
         assert(_.isString(content), `content should be string`);
         assert(_.isString(op), `op should be string`);
         assert(_.isString(creator), `creator should be string`);
+        assert(_.isNumber(block_height), `block_height should be number`);
 
         return new Promise((resolve) => {
             const sql = `
@@ -130,8 +133,10 @@ class InscriptionsStorage {
                     creator,
                     owner,
 
+                    last_block_height,
+
                     transfer_count
-                ) VALUES(?,?,?,?,?,?)
+                ) VALUES(?,?,?,?,?,?,?,?)
             `;
             this.db.run(
                 sql,
@@ -140,8 +145,11 @@ class InscriptionsStorage {
                     inscription_number,
                     content,
                     op,
+
                     creator,
                     creator, // creator is the owner at the beginning
+
+                    block_height,
                     0,
                 ],
                 (err) => {
@@ -165,28 +173,46 @@ class InscriptionsStorage {
      * @param {string} new_owner
      * @returns {ret: number}
      */
-    async transfer_owner(inscription_id, new_owner) {
+    async transfer_owner(inscription_id, block_height, new_owner) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(inscription_id), `inscription_id should be string`);
-        assert(_.isString(new_owner), `new_owner should be string`);
+        assert(_.isNumber(block_height), `block_height should be number`);
+        assert(
+            new_owner == null || _.isString(new_owner),
+            `new_owner should be string or null`,
+        );
 
         return new Promise((resolve) => {
             const sql = `
                 UPDATE inscriptions
-                SET owner = ?, transfer_count = transfer_count + 1
-                WHERE inscription_id = ?
+                SET owner = ?,
+                    last_block_height = ?,
+                    transfer_count = transfer_count + 1
+                WHERE inscription_id = ? AND last_block_height < ?
             `;
-            this.db.run(sql, [new_owner, inscription_id], (err) => {
-                if (err) {
-                    console.error(
-                        `failed to transfer owner of inscription ${inscription_id} to ${new_owner}`,
-                        err,
-                    );
-                    resolve({ ret: -1 });
-                } else {
-                    resolve({ ret: 0 });
-                }
-            });
+            
+            this.db.run(
+                sql,
+                [new_owner, block_height, inscription_id, block_height],
+                function (err) {
+                    if (err) {
+                        console.error(
+                            `failed to transfer owner ${inscription_id} ${new_owner} ${block_height} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else if (this.changes === 0) {
+                        console.error(
+                            `failed to transfer owner ${inscription_id} ${new_owner} ${block_height} no row updated`,
+                        );
+                        resolve({ ret: 0 }); // No rows were updated
+                    } else {
+                        console.log(
+                            `transferred owner ${inscription_id} ${new_owner} ${block_height}`,
+                        );
+                        resolve({ ret: 0 }); // Successfully updated
+                    }
+                },
+            );
         });
     }
 

@@ -253,7 +253,7 @@ class InscriptionIndex {
      * @returns {Promise<{ret: number}>}
      */
     async _scan_block_inscription_transfer(block_height, collector) {
-        assert(block_height != null, `block_height should not be null`);
+        assert(_.isNumber(block_height), `block_height should be number`);
         assert(
             collector instanceof BlockInscriptonCollector,
             `invalid collector`,
@@ -272,6 +272,24 @@ class InscriptionIndex {
             return { ret: 0 };
         }
 
+        // update owners
+        for (let i = 0; i < transfer_items.length; i++) {
+            const transfer_item = transfer_items[i];
+            const { ret: transfer_ret } =
+                await this.inscription_storage.transfer_owner(
+                    transfer_item.inscription_id,
+                    block_height,
+                    transfer_item.to_address,
+                );
+            if (transfer_ret !== 0) {
+                console.error(
+                    `failed to transfer owner of inscription ${transfer_item.inscription_id} to ${transfer_item.to_address}`,
+                );
+                return { ret: transfer_ret };
+            }
+        }
+
+        // add to collector for later use
         collector.add_inscription_transfers(transfer_items);
 
         return { ret: 0 };
@@ -372,6 +390,7 @@ class InscriptionIndex {
 
             // process inscription
             const { ret: process_ret } = await this._on_new_inscription(
+                block_height,
                 new_inscription_item,
             );
             if (process_ret !== 0) {
@@ -394,7 +413,8 @@ class InscriptionIndex {
      * @param {InscriptionNewItem} inscription_new_item
      * @param {object} op_item
      */
-    async _on_new_inscription(inscription_new_item) {
+    async _on_new_inscription(block_height, inscription_new_item) {
+        assert(block_height != null, `block_height should not be null`);
         assert(
             inscription_new_item instanceof InscriptionNewItem,
             `invalid inscription_new_item`,
@@ -410,6 +430,7 @@ class InscriptionIndex {
                 inscription_new_item.content,
                 inscription_new_item.op,
                 inscription_new_item.address,
+                block_height,
             );
         if (add_new_inscription_ret !== 0) {
             console.error(
