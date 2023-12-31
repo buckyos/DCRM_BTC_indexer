@@ -6,6 +6,34 @@ const bs58 = require('bs58');
 const sb = require('satoshi-bitcoin');
 
 class Util {
+
+    /**
+     * @comment return satpoint all of zero
+     * @returns {string}
+     */
+    static zero_satpoint() {
+        return `0000000000000000000000000000000000000000000000000000000000000000:0:0`;
+    }
+
+    /**
+     * 
+     * @param {string} satpoint 
+     * @returns {boolean}
+     */
+    static is_zero_satpoint(satpoint) {
+        assert(_.isString(satpoint), `satpoint should be string ${satpoint}`);
+
+        return satpoint === this.zero_satpoint();
+    }
+
+    /**
+     * @comment return btc address all of zero
+     * @returns {string}
+     */
+    static zero_btc_address() {
+        return '1111111111111111111114oLvT2';
+    }
+
     /**
      * @comment convert satoshi to btc
      * @param {number | string} btc

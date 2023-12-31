@@ -217,6 +217,11 @@ class InscriptionTransferMonitor {
         for (let i = 0; i < data.length; ++i) {
             const record = data[i];
             const item = InscriptionTransferRecordItem.from_db_record(record);
+            
+            // ignore invalid satpoint
+            if (item.satpoint === Util.zero_satpoint()) {
+                continue;
+            }
 
             const { ret, satpoint } = SatPoint.parse(item.satpoint);
             assert(ret === 0, `invalid satpoint ${item.satpoint}`);
@@ -419,10 +424,27 @@ class InscriptionTransferMonitor {
                             return { ret };
                         }
                     } else {
-                        // inscription is lost?
+                        // inscription is spent as fee
                         console.warn(
-                            `inscription ${inscription.inscription_id} is lost on tx ${txid}`,
+                            `inscription ${inscription.inscription_id} is spent as fee on tx ${txid}`,
                         );
+
+                        const { ret } = await this._on_inscription_transfer_as_fee(
+                            inscription.inscription_id,
+                            inscription.inscription_number,
+                            block_height,
+                            block.time,
+                            inscription.to_address,
+                        );
+
+                        if (ret !== 0) {
+                            console.error(
+                                `failed to process inscription transfer as fee ${
+                                    inscription.inscription_id
+                                } block ${block_height} ${point.to_string()} ${address}`,
+                            );
+                            return { ret };
+                        }
                     }
                 }
             }
@@ -498,6 +520,46 @@ class InscriptionTransferMonitor {
         */
 
         this.inscriptions.set(outpoint_str, new_item);
+
+        return { ret: 0 };
+    }
+
+    // the inscription is spent as fee, like this 58a58d5ccbf032c4ec94decf73531de4fb3d9b073ddcbf1abcdbe7c61b5cd587i0
+    async _on_inscription_transfer_as_fee(
+        inscription_id,
+        inscription_number,
+        block_height,
+        timestamp,
+        from_address,
+    ) {
+        assert(_.isString(inscription_id), `invalid inscription_id`);
+        assert(_.isNumber(inscription_number), `invalid inscription_number`);
+        assert(
+            _.isNumber(block_height),
+            `invalid block_height ${block_height}`,
+        );
+        assert(_.isNumber(timestamp), `invalid timestamp ${timestamp}`);
+        assert(from_address == null || _.isString(from_address), `invalid from_address`);
+
+        // update db
+        const { ret } = await this.storage.insert_transfer(
+            inscription_id,
+            inscription_number,
+            block_height,
+            timestamp,
+            Util.zero_satpoint(),
+            from_address,
+            Util.zero_btc_address(),
+            0,
+        );
+        if (ret !== 0) {
+            console.error(
+                `failed to add inscription transfer ${inscription_id} block ${block_height} ${satpoint.to_string()} ${address}`,
+            );
+            return { ret };
+        }
+
+        // TODO do not cache this inscription any more?
 
         return { ret: 0 };
     }
