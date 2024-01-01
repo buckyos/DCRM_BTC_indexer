@@ -14,6 +14,7 @@ const {
     BlockInscriptonCollector,
     InscriptionNewItem,
     InscriptionTransferItem,
+    InscriptionOp,
 } = require('./item');
 
 class TokenIndex {
@@ -69,13 +70,7 @@ class TokenIndex {
 }
 
 class TokenBlockIndex {
-    constructor(
-        storage,
-        config,
-        hash_helper,
-        block_height,
-        block_collector,
-    ) {
+    constructor(storage, config, hash_helper, block_height, block_collector) {
         assert(
             storage instanceof TokenIndexStorage,
             `storage should be TokenIndexStorage`,
@@ -90,7 +85,6 @@ class TokenBlockIndex {
             block_collector instanceof BlockInscriptonCollector,
             `block_collector should be BlockInscriptonCollector`,
         );
-        
 
         this.storage = storage;
         this.config = config;
@@ -125,20 +119,65 @@ class TokenBlockIndex {
 
         let is_failed = false;
         try {
-            for (const inscription_item of this.block_inscriptions) {
-                const { ret } = await this.process_inscription(
-                    this.block_height,
-                    inscription_item,
-                );
-                if (ret !== 0) {
+            // process new inscriptions
+            for (const inscription_item of this.block_collector
+                .new_inscriptions) {
+                if (inscription_item.op.op === InscriptionOp.Mint) {
+                    await this.on_mint(inscription_item);
+                } else if (inscription_item.op.op === InscriptionOp.Inscribe) {
+                    await this.on_inscribe(inscription_item);
+                } else if (inscription_item.op.op === InscriptionOp.SetPrice) {
+                    await this.on_set_resonance_price(inscription_item);
+                } else if (inscription_item.op.op === InscriptionOp.Chant) {
+                    await this.on_chant(inscription_item);
+                } else if (inscription_item.op.op === InscriptionOp.Resonance) {
+                    // await this.on_resonance(inscription_item);
+                } else if (inscription_item.op.op === InscriptionOp.Transfer) {
+                    await this.on_inscribe_transfer(inscription_item);
+                } else {
                     console.error(
-                        `failed to process inscription at block ${this.block_height} ${inscription_item.inscription_id}`,
+                        `unknown inscription op ${inscription_item.op.op}`,
                     );
-                    is_failed = true;
-                    return { ret };
                 }
             }
 
+            // process transfer inscriptions
+            for (const inscription_transfer_item of this.block_collector
+                .inscription_transfers) {
+                if (inscription_transfer_item.op.op === InscriptionOp.Mint) {
+                    console.warn(
+                        `mint op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                    );
+                } else if (
+                    inscription_transfer_item.op.op === InscriptionOp.Inscribe
+                ) {
+                    await this.on_inscribe_hash_transfer(inscription_transfer_item);
+                } else if (
+                    inscription_transfer_item.op.op === InscriptionOp.SetPrice
+                ) {
+                    console.warn(
+                        `set price op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                    );
+                } else if (
+                    inscription_transfer_item.op.op === InscriptionOp.Chant
+                ) {
+                    console.warn(
+                        `chant op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                    );
+                } else if (
+                    inscription_transfer_item.op.op === InscriptionOp.Resonance
+                ) {
+                    await this.on_resonance(inscription_transfer_item);
+                } else if (
+                    inscription_transfer_item.op.op === InscriptionOp.Transfer
+                ) {
+                    await this.on_transfer(inscription_transfer_item);
+                } else {
+                    console.error(
+                        `unknown inscription op ${inscription_item.op.op}`,
+                    );
+                }
+            }
 
             // process pending ops
             const { ret: inscribe_ret } =
@@ -177,65 +216,18 @@ class TokenBlockIndex {
                 );
                 return { ret: commit_ret };
             }
-        }
-    }
 
-    async process_inscription(block_height, inscription_item) {
-        assert(_.isNumber(block_height), `block_height should be number`);
-        assert(
-            _.isObject(inscription_item),
-            `inscription_item should be object`,
-        );
-        assert(
-            _.isObject(inscription_item.content),
-            `inscription content should be object`,
-        );
-
-        const content = inscription_item.content;
-        if (content.p === 'brc-20') {
-            assert(content.tick === this.config.token.token_name);
-
-            if (content.op === 'mint') {
-                await this.on_mint(inscription_item);
-            } else if (content.op === 'transfer') {
-                // {"p":"brc-20","op":"transfer","tick":"DMC ","amt":"1000",to="DMC Mint Pool Address",call:"pdi-res","ph":"$hash"}
-                if (content.call != null) {
-                    if (content.call === 'pdi-inscribe') {
-                        // brc-20 transfer with pdi inscribe
-                        await this.on_transfer_with_inscribe(inscription_item);
-                    } else if (content.call === 'pdi-res') {
-                    }
-                    // brc-20 transfer with pdi resonance
-                    await this.on_transfer_with_resonance(inscription_item);
-                } else {
-                    // normal brc-20 transfer
-                    await this.on_transfer(inscription_item);
-                }
-            } else if (content.op === 'deploy') {
-                await this.on_deploy(inscription_item);
+            if (!is_failed) {
+                console.log(
+                    `processed block ${this.block_height} inscriptions success`,
+                );
+                return { ret: 0 };
             } else {
                 console.error(
-                    `unknown operation ${inscription_item.inscription_id} ${content.op}`,
+                    `processed block ${this.block_height} inscriptions failed`,
                 );
+                return { ret: -1 };
             }
-        } else if (content.p === 'pdi') {
-            if (content.op === 'inscribe') {
-                await this.on_inscribe(inscription_item);
-            } else if (content.op === 'set') {
-                await this.on_set_resonance_price(inscription_item);
-            } else if (content.op === 'res') {
-                await this.on_resonance(inscription_item);
-            } else if (content.op === 'chant') {
-                await this.on_chant(inscription_item);
-            } else {
-                console.error(
-                    `unknown operation ${inscription_item.inscription_id} ${content.op}`,
-                );
-            }
-        } else {
-            console.error(
-                `unknown protocol ${inscription_item.inscription_id} ${content.p}`,
-            );
         }
     }
 
@@ -251,18 +243,23 @@ class TokenBlockIndex {
         return await this.mint_operator.on_mint(inscription_item);
     }
 
-    // inscribe
-    async on_inscribe(inscription_item) {
+    // inscribe hash
+    async on_inscribe_hash(inscription_item) {
         return await this.inscribe_operator.on_inscribe(inscription_item);
     }
 
-    async on_transfer_with_inscribe(inscription_item) {
-        return await this.inscribe_operator.on_transfer_with_inscribe(
-            inscription_item,
+    // inscribe hash's transfer
+    async on_inscribe_hash_transfer(inscription_transfer_item) {
+        return await this.inscribe_operator.on_inscribe_transfer(
+            inscription_transfer_item,
         );
     }
 
     // transfer
+    async on_inscribe_transfer(inscription_item) {
+        return await this.transfer_operator.on_inscribe(inscription_item);
+    }
+
     async on_transfer(inscription_item) {
         return await this.transfer_operator.on_transfer(inscription_item);
     }
@@ -275,12 +272,6 @@ class TokenBlockIndex {
     // resonance
     async on_resonance(inscription_item) {
         return await this.resonance_operator.on_resonance(inscription_item);
-    }
-
-    async on_transfer_with_resonance(inscription_item) {
-        return await this.resonance_operator.on_transfer_with_resonance(
-            inscription_item,
-        );
     }
 
     // chant

@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { OrdClient } = require('../btc/ord');
+const { SatPoint } = require('../btc/point');
 
 const InscriptionOp = {
     Mint: 'mint',
@@ -397,6 +398,18 @@ class InscriptionNewItem {
         this.op = op;
         this.commit_txid = commit_txid;
     }
+
+    /**
+     * @returns {string}
+     */
+    get txid() {
+        assert(_.isString(this.satpoint), `satpoint should be string`);
+
+        const {ret, satpoint} = SatPoint.parse(this.satpoint);
+        assert(ret === 0, `invalid satpoint: ${this.satpoint}`);
+
+        return satpoint.outpoint.txid;
+    }
 }
 
 class InscriptionTransferItem {
@@ -442,6 +455,18 @@ class InscriptionTransferItem {
         this.value = value;
 
         this.index = index;
+    }
+
+    /**
+     * @returns {string}
+     */
+    get txid() {
+        assert(_.isString(this.satpoint), `satpoint should be string`);
+
+        const {ret, satpoint} = SatPoint.parse(this.satpoint);
+        assert(ret === 0, `invalid satpoint: ${this.satpoint}`);
+
+        return satpoint.outpoint.txid;
     }
 }
 

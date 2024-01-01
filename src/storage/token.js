@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
+const { InscriptionStage } = require('../index/ops/state');
 
 class TokenIndexStorage {
     constructor(data_dir) {
@@ -158,8 +159,17 @@ class TokenIndexStorage {
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS transfer_records (
                         inscription_id TEXT PRIMARY KEY,
-                        block_height INTEGER,
+                        stage STRING,
+
+                        genesis_block_height INTEGER,
+                        genesis_timestamp INTEGER,
+                        genesis_txid TEXT,
                         from_address TEXT,
+                        content TEXT,
+
+                        block_height INTEGER,
+                        timestamp INTEGER,
+                        txid TEXT,
                         to_address TEXT,
                         state INTEGER DEFAULT 0
                     )`,
@@ -673,11 +683,24 @@ class TokenIndexStorage {
         });
     }
 
-    async add_transfer_record(
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} from_address
+     * @param {string} content
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_transfer_record_on_inscribed(
         inscription_id,
         block_height,
-        from_address,
-        to_address,
+        timestamp,
+        txid,
+        address,
+        content,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -689,11 +712,127 @@ class TokenIndexStorage {
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
+        assert(typeof address === 'string', `address should be string`);
+        assert(typeof content === 'string', `content should be string`);
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO transfer_records (
+                    inscription_id, 
+                    stage,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    from_address,
+                    content,
+        
+                    block_height, 
+                    timestamp,
+                    txid,
+                    to_address,
+
+                    state
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    inscription_id,
+                    InscriptionStage.Inscribe,
+
+                    block_height,
+                    timestamp,
+                    txid,
+                    address,
+                    content,
+
+                    0,
+                    0,
+                    null,
+                    null,
+
+                    state,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `failed to add transfer record on inscribed ${inscription_id} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} genesis_block_height
+     * @param {number} genesis_timestamp
+     * @param {string} genesis_txid
+     * @param {string} from_address
+     * @param {string} content
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} to_address
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_transfer_record_on_transfered(
+        inscription_id,
+
+        genesis_block_height,
+        genesis_timestamp,
+        genesis_txid,
+        from_address,
+        content,
+
+        block_height,
+        timestamp,
+        txid,
+        to_address,
+
+        state,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
+        assert(
+            Number.isInteger(genesis_block_height) && genesis_block_height >= 0,
+            `genesis_block_height should be non-negative integer`,
+        );
+        assert(
+            Number.isInteger(genesis_timestamp),
+            `genesis_timestamp should be integer`,
+        );
+        assert(
+            typeof genesis_txid === 'string',
+            `genesis_txid should be string`,
+        );
         assert(
             typeof from_address === 'string',
             `from_address should be string`,
         );
+        assert(typeof content === 'string', `content should be string`);
+
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            `block_height should be non-negative integer`,
+        );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
         assert(typeof to_address === 'string', `to_address should be string`);
+
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
@@ -701,8 +840,40 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO transfer_records (inscription_id, block_height, from_address, to_address, state) VALUES (?, ?, ?, ?, ?)`,
-                [inscription_id, block_height, from_address, to_address, state],
+                `INSERT OR REPLACE INTO transfer_records (
+                    inscription_id,
+                    stage,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    from_address,
+                    content,
+
+                    block_height, 
+                    timestamp,
+                    txid,
+                    to_address,
+
+                    state
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    inscription_id,
+                    InscriptionStage.Transfer,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    from_address,
+                    content,
+
+                    block_height,
+                    timestamp,
+                    txid,
+                    to_address,
+
+                    state,
+                ],
                 (err) => {
                     if (err) {
                         console.error('failed to add transfer record', err);
@@ -712,6 +883,38 @@ class TokenIndexStorage {
                     }
                 },
             );
+        });
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {string} stage
+     * @returns {ret: number, data: object}
+     */
+    async query_transfer_record(inscription_id, stage) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof inscription_id === 'string', `should be string`);
+        assert(typeof stage === 'string', `stage should be string: ${stage}`);
+
+        const sql = `
+            SELECT * 
+            FROM transfer_records 
+            WHERE inscription_id = ? AND stage = ?
+            LIMIT 1
+        `;
+
+        return new Promise((resolve) => {
+            this.db.get(sql, [inscription_id, stage], (err, row) => {
+                if (err) {
+                    console.error(
+                        `Could not query transfer record ${inscription_id} ${stage} ${err}`,
+                    );
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, data: row });
+                }
+            });
         });
     }
 

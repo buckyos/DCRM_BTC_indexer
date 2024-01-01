@@ -1,3 +1,8 @@
+// the state of inscription on btc chain
+const InscriptionStage = {
+    Inscribe: 'inscribe',   // commit and reveal on chain
+    Transfer: 'transfer',   // transfer on chain
+};
 
 // inscription op's state
 const InscriptionOpState = {
@@ -36,4 +41,4 @@ const InscriptionOpState = {
 };
 
 
-module.exports = { InscriptionOpState };
+module.exports = { InscriptionOpState, InscriptionStage };
