@@ -6,7 +6,6 @@ const bs58 = require('bs58');
 const sb = require('satoshi-bitcoin');
 
 class Util {
-
     /**
      * @comment return satpoint all of zero
      * @returns {string}
@@ -16,8 +15,8 @@ class Util {
     }
 
     /**
-     * 
-     * @param {string} satpoint 
+     *
+     * @param {string} satpoint
      * @returns {boolean}
      */
     static is_zero_satpoint(satpoint) {
@@ -304,4 +303,80 @@ class Util {
     }
 }
 
-module.exports = { Util };
+const BigNumber = require('bignumber.js');
+const { TOKEN_DECIMAL } = require('./constants');
+
+class BigNumberUtil {
+    constructor() {
+        BigNumber.config({ DECIMAL_PLACES: TOKEN_DECIMAL });
+    }
+
+    static add(a, b) {
+        return new BigNumber(a).plus(new BigNumber(b)).toString();
+    }
+
+    static subtract(a, b) {
+        return new BigNumber(a).minus(new BigNumber(b)).toString();
+    }
+
+    static multiply(a, b) {
+        return new BigNumber(a).times(new BigNumber(b)).toString();
+    }
+
+    static divide(a, b) {
+        return new BigNumber(a).dividedBy(new BigNumber(b)).toString();
+    }
+
+    static compare(a, b) {
+        return new BigNumber(a).comparedTo(new BigNumber(b));
+    }
+
+    /**
+     * @comment check if the string is decimal and precision is less than 18
+     * @param {string} str 
+     * @returns 
+     */
+    static check_decimal_string(str) {
+        const regex = /^\d+(\.\d{1,18})?$/;
+        return regex.test(str);
+    }
+
+    // check if the string is >=0 number string
+    static is_positive_number_string(str) {
+        if (str == null || !_.isString(str)) {
+            return false;
+        }
+
+        // must be valid decimal string
+        if (!BigNumberUtil.check_decimal_string(str)) {
+            return false;
+        }
+
+        if (BigNumberUtil.compare(str, '0') < 0) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+module.exports = { Util, BigNumberUtil };
+
+function test() {
+    const v = "100";
+    assert(BigNumberUtil.check_decimal_string(v));
+    
+    const v1 = "100.000";
+    assert(BigNumberUtil.check_decimal_string(v1));
+    
+    const v2 = "100.000000000000000001";
+    assert(BigNumberUtil.check_decimal_string(v2));
+    
+    const v3 = "100.0000000000000000001";
+    assert(!BigNumberUtil.check_decimal_string(v3));
+
+    const v4 = "100av";
+    assert(!BigNumberUtil.check_decimal_string(v4));
+}
+
+// test();
