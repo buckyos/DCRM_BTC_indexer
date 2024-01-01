@@ -4,7 +4,7 @@ const constants = require('../constants');
 const { Util } = require('../util');
 const { ETHIndex } = require('../eth/index');
 const { HashHelper } = require('./ops/hash');
-const { InscribeOperator } = require('./ops/inscribe');
+const { InscribeDataOperator } = require('./ops/inscribe');
 const { MintManger, MintOperator } = require('./ops/mint');
 const { TransferOperator } = require('./ops/transfer');
 const { ChantOperator } = require('./ops/chant');
@@ -92,7 +92,7 @@ class TokenBlockIndex {
         this.block_height = block_height;
         this.block_collector = block_collector;
 
-        this.inscribe_operator = new InscribeOperator(
+        this.inscribe_operator = new InscribeDataOperator(
             config,
             storage,
             hash_helper,
@@ -123,17 +123,58 @@ class TokenBlockIndex {
             for (const inscription_item of this.block_collector
                 .new_inscriptions) {
                 if (inscription_item.op.op === InscriptionOp.Mint) {
-                    await this.on_mint(inscription_item);
+                    const { ret } = await this.on_mint(inscription_item);
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to mint at block ${this.block_height} ${inscription_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else if (inscription_item.op.op === InscriptionOp.Inscribe) {
-                    await this.on_inscribe(inscription_item);
+                    const { ret } = await this.on_inscribe_data(
+                        inscription_item,
+                    );
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to inscribe data at block ${this.block_height} ${inscription_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else if (inscription_item.op.op === InscriptionOp.SetPrice) {
-                    await this.on_set_resonance_price(inscription_item);
+                    const { ret } = await this.on_set_resonance_price(
+                        inscription_item,
+                    );
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to set price at block ${this.block_height} ${inscription_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else if (inscription_item.op.op === InscriptionOp.Chant) {
-                    await this.on_chant(inscription_item);
+                    const { ret } = await this.on_chant(inscription_item);
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to chant at block ${this.block_height} ${inscription_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else if (inscription_item.op.op === InscriptionOp.Resonance) {
                     // await this.on_resonance(inscription_item);
                 } else if (inscription_item.op.op === InscriptionOp.Transfer) {
-                    await this.on_inscribe_transfer(inscription_item);
+                    const { ret } = await this.on_inscribe_transfer(
+                        inscription_item,
+                    );
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to transfer at block ${this.block_height} ${inscription_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else {
                     console.error(
                         `unknown inscription op ${inscription_item.op.op}`,
@@ -151,7 +192,16 @@ class TokenBlockIndex {
                 } else if (
                     inscription_transfer_item.op.op === InscriptionOp.Inscribe
                 ) {
-                    await this.on_inscribe_hash_transfer(inscription_transfer_item);
+                    const {ret} = await this.on_inscribe_data_transfer(
+                        inscription_transfer_item,
+                    );
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to inscribe data transfer at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else if (
                     inscription_transfer_item.op.op === InscriptionOp.SetPrice
                 ) {
@@ -171,7 +221,14 @@ class TokenBlockIndex {
                 } else if (
                     inscription_transfer_item.op.op === InscriptionOp.Transfer
                 ) {
-                    await this.on_transfer(inscription_transfer_item);
+                    const {ret} = await this.on_transfer(inscription_transfer_item);
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to transfer at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else {
                     console.error(
                         `unknown inscription op ${inscription_item.op.op}`,
@@ -243,14 +300,14 @@ class TokenBlockIndex {
         return await this.mint_operator.on_mint(inscription_item);
     }
 
-    // inscribe hash
-    async on_inscribe_hash(inscription_item) {
+    // inscribe data
+    async on_inscribe_data(inscription_item) {
         return await this.inscribe_operator.on_inscribe(inscription_item);
     }
 
-    // inscribe hash's transfer
-    async on_inscribe_hash_transfer(inscription_transfer_item) {
-        return await this.inscribe_operator.on_inscribe_transfer(
+    // inscribe data's transfer
+    async on_inscribe_data_transfer(inscription_transfer_item) {
+        return await this.inscribe_operator.on_transfer(
             inscription_transfer_item,
         );
     }

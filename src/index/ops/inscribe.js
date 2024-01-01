@@ -3,7 +3,7 @@ const { Util } = require('../../util');
 const { TokenIndex } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
-const { InscriptionNewItem } = require('../item');
+const { InscriptionNewItem, InscriptionTransferItem } = require('../item');
 
 class PendingInscribeOp {
     constructor(inscription_item, state, hash_distance) {
@@ -13,7 +13,7 @@ class PendingInscribeOp {
     }
 }
 
-class InscribeOperator {
+class InscribeDataOperator {
     constructor(config, storage, hash_helper) {
         assert(config, `config should not be null`);
         assert(storage instanceof TokenIndex, `storage should be TokenIndex`);
@@ -30,6 +30,114 @@ class InscribeOperator {
         this.pending_inscribe_ops = [];
     }
 
+    /**
+     * @comment processed on the inscription transfered
+     * @param {InscriptionTransferItem} inscription_transfer_item
+     * @returns {Promise<{ret: number}>}
+     */
+    async on_transfer(inscription_transfer_item) {
+        assert(
+            inscription_transfer_item instanceof InscriptionTransferItem,
+            `invalid inscribe data transfer item`,
+        );
+
+        assert(
+            inscription_transfer_item.index > 0,
+            `invalid transfer index ${inscription_transfer_item.inscription_id}`,
+        );
+
+        // first query the inscribe record
+        const { ret: get_inscribe_record_ret, data: record } =
+            await this.storage.query_inscribe_data_record(
+                inscription_transfer_item.inscription_id,
+            );
+        if (get_inscribe_record_ret !== 0) {
+            console.error(
+                `failed to get inscribe record ${inscription_transfer_item.inscription_id}`,
+            );
+            return { ret: get_inscribe_record_ret };
+        }
+
+        if (record == null) {
+            // FIXME should not reach here
+            console.error(
+                `inscribe record not exists ${inscription_transfer_item.inscription_id}`,
+            );
+            return { ret: 0 };
+        }
+
+        assert(
+            _.isString(record.hash),
+            `invalid inscribe record hash ${inscription_transfer_item.inscription_id}`,
+        );
+        const hash = record.hash;
+
+        // then query current inscribed data
+        const { ret: get_inscribe_data_ret, data } =
+            await this.storage.get_inscribe_data(hash);
+        if (get_inscribe_data_ret !== 0) {
+            console.error(
+                `failed to get inscribe data ${inscription_transfer_item.inscription_id} ${hash}`,
+            );
+            return { ret: get_inscribe_data_ret };
+        }
+
+        if (data == null) {
+            // FIXME should not reach here
+            console.error(
+                `inscribe data not exists ${inscription_transfer_item.inscription_id} ${hash}`,
+            );
+            return { ret: 0 };
+        }
+
+        // check if the block_height is greater than the current block_height
+        assert(
+            _.isNumber(data.block_height),
+            `invalid inscribe data block_height ${inscription_transfer_item.inscription_id} ${hash}`,
+        );
+        if (inscription_transfer_item.block_height <= data.block_height) {
+            console.error(
+                `invalid inscribe data block_height ${inscription_transfer_item.inscription_id} ${hash} ${inscription_transfer_item.block_height} <= ${data.block_height}`,
+            );
+            return { ret: 0 };
+        }
+
+        // update owner with transfer_inscribe_data_owner
+        const { ret: update_owner_ret } =
+            await this.storage.transfer_inscribe_data_owner(
+                hash,
+                data.block_height,
+                inscription_transfer_item.to_address,
+                inscription_transfer_item.block_height,
+                inscription_transfer_item.timestamp,
+            );
+        if (update_owner_ret !== 0) {
+            if (update_owner_ret > 0) {
+                // FIXME should not reach here?
+                console.error(
+                    `transfer inscribe data owner but not matched ${inscription_transfer_item.inscription_id} ${hash}`,
+                );
+                return { ret: 0 };
+            } else {
+                console.error(
+                    `failed to update inscribe data owner ${inscription_transfer_item.inscription_id} ${hash}`,
+                );
+                return { ret: update_owner_ret };
+            }
+        }
+
+        console.log(
+            `transfer inscribe data owner ${inscription_transfer_item.inscription_id} ${hash} ${data.address} -> ${inscription_transfer_item.to_address}`,
+        );
+
+        return { ret: 0 };
+    }
+
+    /**
+     *
+     * @param {InscriptionNewItem} inscription_item
+     * @returns {Promise<{ret: number}>}
+     */
     async on_inscribe(inscription_item) {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
@@ -81,7 +189,10 @@ class InscribeOperator {
         // 2. chech hash condition if satisfied
         assert(inscription_item.commit_txid != null);
         if (
-            !Util.check_inscribe_hash_and_txid(hash, inscription_item.commit_txid)
+            !Util.check_inscribe_hash_and_txid(
+                hash,
+                inscription_item.commit_txid,
+            )
         ) {
             // not match (hash - commit_txid) % 32 != 0, so this inscription will failed
             const op = new PendingInscribeOp(
@@ -189,10 +300,6 @@ class InscribeOperator {
         return { ret: 0 };
     }
 
-    async on_transfer_with_inscribe(inscription_item) {
-        return await this.on_inscribe(inscription_item);
-    }
-
     async process_pending_inscribe_ops() {
         for (const op of this.pending_inscribe_ops) {
             if (
@@ -228,7 +335,7 @@ class InscribeOperator {
         assert(amt > 0, `amt should be positive`);
 
         // 98% of the DMC paid by the user for inscribing a public data inscription goes to the DMC Mint Pool, and the remaining 2% goes to the Foundation's account as a handling fee.
-        const mint_amt = Math.floor(amt * 0.98);
+        const mint_amt = amt * 0.98;
         const service_charge = amt - mint_amt;
 
         assert(
@@ -265,7 +372,7 @@ class InscribeOperator {
         }
 
         // 2. record inscribe op
-        const { ret: record_ret } = await this.storage.add_inscribe_record(
+        const { ret: record_ret } = await this.storage.add_inscribe_data_record(
             op.inscription_item.inscription_id,
             op.inscription_item.block_height,
             op.inscription_item.address,
@@ -308,4 +415,4 @@ class InscribeOperator {
     }
 }
 
-module.exports = { InscribeOperator };
+module.exports = { InscribeDataOperator };

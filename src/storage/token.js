@@ -294,9 +294,11 @@ class TokenIndexStorage {
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS inscribe_data (
                         hash TEXT PRIMARY KEY,
+
                         address TEXT,
                         block_height INTEGER,
                         timestamp INTEGER,
+
                         text TEXT,
                         price TEXT,
                         resonance_count INTEGER
@@ -335,59 +337,6 @@ class TokenIndexStorage {
                         }
 
                         console.log(`created user_ops table`);
-                    },
-                );
-
-                if (has_error) {
-                    return;
-                }
-
-                // Create data_resonance table
-                this.db.run(
-                    `CREATE TABLE IF NOT EXISTS data_resonance (
-                        hash TEXT,
-                        inscription_id TEXT,
-                        address TEXT,
-                        block_height INTEGER,
-                        amount INTEGER,
-                        PRIMARY KEY (hash, inscription_id)
-                    );`,
-                    (err) => {
-                        if (err) {
-                            console.error(
-                                `failed to data_resonance table: ${err}`,
-                            );
-                            has_error = true;
-                            resolve({ ret: -1 });
-                        }
-
-                        console.log(`created data_resonance table`);
-                    },
-                );
-
-                if (has_error) {
-                    return;
-                }
-
-                // Create data_chant table
-                this.db.run(
-                    `CREATE TABLE IF NOT EXISTS data_chant (
-                        hash TEXT,
-                        inscription_id TEXT,
-                        address TEXT,
-                        block_height INTEGER,
-                        amount INTEGER,
-                        PRIMARY KEY (hash, inscription_id)
-                    )`,
-                    (err) => {
-                        if (err) {
-                            console.error(`failed to data_chant table: ${err}`);
-                            has_error = true;
-                            resolve({ ret: -1 });
-                        }
-
-                        console.log(`created data_chant table`);
-
                         resolve({ ret: 0 });
                     },
                 );
@@ -515,7 +464,7 @@ class TokenIndexStorage {
      * @param {number} state
      * @returns
      */
-    async add_inscribe_record(
+    async add_inscribe_data_record(
         inscription_id,
         block_height,
         address,
@@ -589,6 +538,36 @@ class TokenIndexStorage {
                     }
                 },
             );
+        });
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @returns {ret: number, data: object}
+     */
+    async query_inscribe_data_record(inscription_id) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof inscription_id === 'string', `should be string`);
+
+        const sql = `
+            SELECT * 
+            FROM inscribe_records 
+            WHERE inscription_id = ?
+            LIMIT 1
+        `;
+
+        return new Promise((resolve) => {
+            this.db.get(sql, [inscription_id], (err, row) => {
+                if (err) {
+                    console.error(
+                        `Could not query inscribe data ${inscription_id} ${err}`,
+                    );
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, data: row });
+                }
+            });
         });
     }
 
@@ -1232,7 +1211,7 @@ class TokenIndexStorage {
 
         const sql = `
                 INSERT INTO inscribe_data (hash, address, block_height, timestamp, text, price, resonance_count)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
         return new Promise((resolve, reject) => {
@@ -1266,6 +1245,12 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     *
+     * @param {string} hash
+     * @param {number} price
+     * @returns {ret: number}
+     */
     async set_inscribe_data_price(hash, price) {
         const sql = `
                 UPDATE inscribe_data SET price = ? WHERE hash = ?
@@ -1322,6 +1307,73 @@ class TokenIndexStorage {
     }
 
     /**
+     * @comment update inscribe data owner+block_height+timestamp where hash and block_height match
+     * @param {string} hash
+     * @param {number} current_block_height
+     * @param {string} new_owner
+     * @param {number} new_block_height
+     * @param {number} new_timestamp
+     * @returns {ret: number}
+     */
+    async transfer_inscribe_data_owner(
+        hash,
+        current_block_height,
+        new_owner,
+        new_block_height,
+        new_timestamp,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            _.isNumber(current_block_height),
+            `current_block_height should be number`,
+        );
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof new_owner === 'string', `new_owner should be string`);
+        assert(
+            Number.isInteger(new_block_height),
+            `new_block_height should be integer`,
+        );
+        assert(
+            Number.isInteger(new_timestamp),
+            `new_timestamp should be integer`,
+        );
+
+        const sql = `
+                UPDATE inscribe_data SET address = ?, block_height = ?, timestamp = ? WHERE hash = ? AND block_height = ?
+            `;
+
+        return new Promise((resolve) => {
+            this.db.run(
+                sql,
+                [
+                    new_owner,
+                    new_block_height,
+                    new_timestamp,
+                    hash,
+                    current_block_height,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `Could not update inscribe data owner ${hash}`,
+                            err,
+                        );
+                        resolve({ ret: -1 });
+                    } else if (this.changes === 0) {
+                        console.error(
+                            `Could not update inscribe data owner ${hash}, block_height is not match`,
+                        );
+                        resolve({ ret: 1 });
+                    } else {
+                        console.log(`update inscribe data owner ${hash}`);
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
      *
      * @param {string} hash
      * @returns {ret: number, data: object | null}
@@ -1334,7 +1386,7 @@ class TokenIndexStorage {
                 SELECT * FROM inscribe_data WHERE hash = ?
             `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(sql, [hash], (err, row) => {
                 if (err) {
                     console.error(`Could not get inscribe data ${hash}`, err);
@@ -1378,106 +1430,6 @@ class TokenIndexStorage {
                     } else {
                         console.log(
                             `append user op ${address} ${inscription_id} ${block_height} ${op}`,
-                        );
-                        resolve({ ret: 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    async append_data_resonance(
-        hash,
-        inscription_id,
-        address,
-        block_height,
-        amount,
-    ) {
-        assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
-        assert(
-            typeof inscription_id === 'string',
-            `inscription_id should be string`,
-        );
-        assert(typeof address === 'string', `address should be string`);
-        assert(
-            Number.isInteger(block_height) && block_height >= 0,
-            `block_height should be non-negative integer`,
-        );
-        assert(
-            Number.isInteger(amount) && amount >= 0,
-            `amount should be non-negative integer`,
-        );
-
-        const sql = `
-            INSERT OR REPLACE INTO data_resonance (hash, inscription_id, address, block_height, amount)
-            VALUES (?, ?, ?, ?, ?)
-        `;
-
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                sql,
-                [hash, inscription_id, address, block_height, amount],
-                (err) => {
-                    if (err) {
-                        console.error(
-                            `Could not append data resonance ${hash} ${inscription_id} ${address} ${block_height} ${amount}`,
-                            err,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        console.log(
-                            `append data resonance ${hash} ${inscription_id} ${address} ${block_height} ${amount}`,
-                        );
-                        resolve({ ret: 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    async append_data_chant(
-        hash,
-        inscription_id,
-        address,
-        block_height,
-        amount,
-    ) {
-        assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
-        assert(
-            typeof inscription_id === 'string',
-            `inscription_id should be string`,
-        );
-        assert(typeof address === 'string', `address should be string`);
-        assert(
-            Number.isInteger(block_height) && block_height >= 0,
-            `block_height should be non-negative integer`,
-        );
-        assert(
-            Number.isInteger(amount) && amount >= 0,
-            `amount should be non-negative integer`,
-        );
-
-        const sql = `
-            INSERT OR REPLACE INTO data_chant (hash, inscription_id, address, block_height, amount)
-            VALUES (?, ?, ?, ?, ?)
-        `;
-
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                sql,
-                [hash, inscription_id, address, block_height, amount],
-                (err) => {
-                    if (err) {
-                        console.error(
-                            `Could not append data chant ${hash} ${inscription_id} ${address} ${block_height} ${amount}`,
-                            err,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        console.log(
-                            `append data chant ${hash} ${inscription_id} ${address} ${block_height} ${amount}`,
                         );
                         resolve({ ret: 0 });
                     }
