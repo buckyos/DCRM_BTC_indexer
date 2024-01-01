@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const bs58 = require('bs58');
 const sb = require('satoshi-bitcoin');
+const Decimal = require('decimal.js');
 
 class Util {
     /**
@@ -260,6 +261,7 @@ class Util {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    /*
     static calc_point(data_size, point) {
         const baseScore =
             999 /
@@ -268,6 +270,42 @@ class Util {
         const baseRate = 19 / (1 + Math.exp(-0.15 * (point - 90))) + 1;
         const score = baseScore * baseRate * 2;
         return score;
+    }
+    */
+
+    /**
+     *
+     * @param {string | number} data_size
+     * @param {string | number} point
+     * @returns {string}
+     */
+    static calc_point(data_size, point) {
+        const baseScore = new Decimal(999)
+            .dividedBy(
+                Decimal.one.plus(
+                    Decimal.exp(
+                        new Decimal('-0.00000762939453125').times(
+                            new Decimal(data_size).minus(
+                                new Decimal('127999999'),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+            .plus(1);
+
+        const baseRate = new Decimal(19)
+            .dividedBy(
+                Decimal.one.plus(
+                    Decimal.exp(
+                        new Decimal(-0.15).times(new Decimal(point).minus(90)),
+                    ),
+                ),
+            )
+            .plus(1);
+
+        const score = baseScore.times(baseRate).times(2);
+        return score.toString();
     }
 
     /**
@@ -311,30 +349,60 @@ class BigNumberUtil {
         BigNumber.config({ DECIMAL_PLACES: TOKEN_DECIMAL });
     }
 
+    /**
+     *
+     * @param {string | number} a
+     * @param {string | number} b
+     * @returns {string}
+     */
     static add(a, b) {
         return new BigNumber(a).plus(new BigNumber(b)).toString();
     }
 
+    /**
+     *
+     * @param {string | number} a
+     * @param {string | number} b
+     * @returns {string}
+     */
     static subtract(a, b) {
         return new BigNumber(a).minus(new BigNumber(b)).toString();
     }
 
+    /**
+     *
+     * @param {string | number} a
+     * @param {string | number} b
+     * @returns {string}
+     */
     static multiply(a, b) {
         return new BigNumber(a).times(new BigNumber(b)).toString();
     }
 
+     /**
+     * 
+     * @param {string | number} a 
+     * @param {string | number} b 
+     * @returns {string}
+     */
     static divide(a, b) {
         return new BigNumber(a).dividedBy(new BigNumber(b)).toString();
     }
 
+     /**
+     * 
+     * @param {string | number} a 
+     * @param {string | number} b 
+     * @returns {number}
+     */
     static compare(a, b) {
         return new BigNumber(a).comparedTo(new BigNumber(b));
     }
 
     /**
      * @comment check if the string is decimal and precision is less than 18
-     * @param {string} str 
-     * @returns 
+     * @param {string} str
+     * @returns {boolean}
      */
     static check_decimal_string(str) {
         const regex = /^\d+(\.\d{1,18})?$/;
@@ -358,24 +426,38 @@ class BigNumberUtil {
 
         return true;
     }
+
+    // check if the string valid number string
+    static is_number_string(str) {
+        if (str == null || !_.isString(str)) {
+            return false;
+        }
+
+        // must be valid decimal string
+        if (!BigNumberUtil.check_decimal_string(str)) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 module.exports = { Util, BigNumberUtil };
 
 function test() {
-    const v = "100";
+    const v = '100';
     assert(BigNumberUtil.check_decimal_string(v));
-    
-    const v1 = "100.000";
+
+    const v1 = '100.000';
     assert(BigNumberUtil.check_decimal_string(v1));
-    
-    const v2 = "100.000000000000000001";
+
+    const v2 = '100.000000000000000001';
     assert(BigNumberUtil.check_decimal_string(v2));
-    
-    const v3 = "100.0000000000000000001";
+
+    const v3 = '100.0000000000000000001';
     assert(!BigNumberUtil.check_decimal_string(v3));
 
-    const v4 = "100av";
+    const v4 = '100av';
     assert(!BigNumberUtil.check_decimal_string(v4));
 }
 

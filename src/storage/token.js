@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
 const { InscriptionStage } = require('../index/ops/state');
+const { BigNumberUtil } = require('../util');
 
 class TokenIndexStorage {
     constructor(data_dir) {
@@ -53,7 +54,7 @@ class TokenIndexStorage {
                         block_height INTEGER,
                         timestamp INTEGER,
                         address TEXT,
-                        amount INTEGER,
+                        amount TEXT,
                         lucky TEXT DEFAULT NULL
                     )`,
                     (err) => {
@@ -81,10 +82,10 @@ class TokenIndexStorage {
                         address TEXT,
                         timestamp INTEGER,
                         hash TEXT,
-                        mint_amount INTEGER,
-                        service_charge INTEGER,
+                        mint_amount TEXT,
+                        service_charge TEXT,
                         text TEXT,
-                        price INTEGER,
+                        price TEXT,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -112,8 +113,8 @@ class TokenIndexStorage {
                         timestamp INTEGER,
                         address TEXT,
                         hash TEXT,
-                        user_bouns INTEGER,
-                        owner_bouns INTEGER,
+                        user_bouns TEXT,
+                        owner_bouns TEXT,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -198,7 +199,7 @@ class TokenIndexStorage {
                         timestamp INTEGER,
                         hash TEXT,
                         address TEXT,
-                        price INTEGER,
+                        price TEXT,
                         state INTEGER
                     )`,
                     (err) => {
@@ -236,8 +237,8 @@ class TokenIndexStorage {
                         txid TEXT,
                         owner_address TEXT,
 
-                        owner_bouns REAL,
-                        service_charge REAL,
+                        owner_bouns TEXT,
+                        service_charge TEXT,
 
                         state INTEGER DEFAULT 0
                     )`,
@@ -284,7 +285,7 @@ class TokenIndexStorage {
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS balance (
                         address TEXT PRIMARY KEY,
-                        amount INTEGER
+                        amount TEXT
                     );`,
                     (err) => {
                         if (err) {
@@ -414,6 +415,16 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} address
+     * @param {string} amount
+     * @param {string} lucky
+     * @returns {ret: number}
+     */
     async add_mint_record(
         inscription_id,
         block_height,
@@ -434,8 +445,8 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof address === 'string', `address should be string`);
         assert(
-            Number.isInteger(amount) && amount >= 0,
-            `amount should be non-negative integer`,
+            BigNumberUtil.is_positive_number_string(amount),
+            `amount should be positive number string`,
         );
         assert(typeof lucky === 'string', `lucky should be string`);
 
@@ -469,9 +480,10 @@ class TokenIndexStorage {
      * @param {string} address
      * @param {number} timestamp
      * @param {string} hash
-     * @param {number} amount
+     * @param {string} mint_amount
+     * @param {string} service_charge
      * @param {string} text
-     * @param {number} price
+     * @param {string} price
      * @param {number} state
      * @returns
      */
@@ -499,15 +511,18 @@ class TokenIndexStorage {
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
-        assert(typeof mint_amount === 'number', `mint_amount should be number`);
         assert(
-            typeof service_charge === 'number',
-            `service_charge should be number`,
+            BigNumberUtil.is_positive_number_string(mint_amount),
+            `mint_amount should be positive number string ${mint_amount}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(service_charge),
+            `service_charge should be positive number string ${service_charge}`,
         );
         assert(typeof text === 'string', `text should be string`);
         assert(
-            Number.isInteger(price) && price >= 0,
-            `price should be non-negative integer`,
+            BigNumberUtil.is_positive_number_string(price),
+            `price should be positive number string ${price}`,
         );
         assert(
             Number.isInteger(state) && state >= 0,
@@ -582,6 +597,18 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} address
+     * @param {string} hash
+     * @param {string} user_bouns
+     * @param {string} owner_bouns
+     * @param {number} state
+     * @returns
+     */
     async add_chant_record(
         inscription_id,
         block_height,
@@ -605,12 +632,12 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(
-            Number.isInteger(user_bouns) && user_bouns >= 0,
-            `user_bouns should be non-negative integer`,
+            BigNumberUtil.is_positive_number_string(user_bouns),
+            `user_bouns should be positive number string`,
         );
         assert(
-            Number.isInteger(owner_bouns) && owner_bouns >= 0,
-            `owner_bouns should be non-negative integer`,
+            BigNumberUtil.is_positive_number_string(owner_bouns),
+            `owner_bouns should be positive number string`,
         );
         assert(
             Number.isInteger(state) && state >= 0,
@@ -915,7 +942,7 @@ class TokenIndexStorage {
      * @param {number} timestamp
      * @param {string} hash
      * @param {string} address
-     * @param {number} price
+     * @param {string} price
      * @returns {ret: number}
      */
     async add_set_price_record(
@@ -940,8 +967,8 @@ class TokenIndexStorage {
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
         assert(
-            Number.isInteger(price) && price >= 0,
-            `price should be non-negative integer`,
+            BigNumberUtil.is_positive_number_string(price),
+            `price should be positive number string`,
         );
         assert(
             Number.isInteger(state) && state >= 0,
@@ -1086,8 +1113,8 @@ class TokenIndexStorage {
      * @param {number} timestamp
      * @param {string} txid
      * @param {string} owner_address
-     * @param {number} owner_bouns
-     * @param {number} service_charge
+     * @param {string} owner_bouns
+     * @param {string} service_charge
      * @param {number} state
      * @returns {ret: number}
      */
@@ -1144,10 +1171,13 @@ class TokenIndexStorage {
             `owner_address should be string`,
         );
 
-        assert(typeof owner_bouns === 'number', `owner_bouns should be number`);
         assert(
-            typeof service_charge === 'number',
-            `service_charge should be number`,
+            BigNumberUtil.is_positive_number_string(owner_bouns),
+            `owner_bouns should be positive number string ${owner_bouns}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(service_charge),
+            `service_charge should be positive number string ${service_charge}`,
         );
 
         assert(
@@ -1215,9 +1245,9 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} inscription_id 
-     * @param {string} stage 
+     *
+     * @param {string} inscription_id
+     * @param {string} stage
      * @returns {ret: number, data: object | null}
      */
     async query_resonance_record(inscription_id, stage) {
@@ -1274,15 +1304,21 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     *
+     * @param {string} address
+     * @param {string} amount
+     * @returns {ret: number}
+     */
     async add_balance(address, amount) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
         assert(
-            Number.isInteger(amount) && amount >= 0,
-            `amount should be non-negative integer`,
+            BigNumberUtil.is_number_string(str),
+            `amount should be valid number string: ${amount}`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO balance (address, amount) VALUES (?, ?)`,
                 [address, amount],
@@ -1299,34 +1335,67 @@ class TokenIndexStorage {
     }
 
     // balance table methods
-
+    /**
+     *
+     * @param {string} address
+     * @param {string} amount
+     * @returns
+     */
     async update_balance(address, amount) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
-        assert(Number.isInteger(amount), `amount should be integer`);
+        assert(
+            BigNumberUtil.is_number_string(amount),
+            `amount should be valid number string: ${amount}`,
+        );
 
-        const sql = `
-            INSERT INTO balance (address, amount)
-            VALUES (?, ?)
-            ON CONFLICT(address) DO UPDATE SET amount = amount + excluded.amount
-        `;
-
-        return new Promise((resolve, reject) => {
-            this.db.run(sql, [address, amount], (err) => {
-                if (err) {
-                    console.error('Could not update balance', err);
-                    resolve({ ret: -1 });
-                } else {
-                    resolve({ ret: 0 });
-                }
-            });
+        return new Promise((resolve) => {
+            db.get(
+                'SELECT amount FROM balance WHERE address = ?',
+                [address],
+                (err, row) => {
+                    if (err) {
+                        console.error(
+                            `Could not get balance for address ${address}, ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else if (row) {
+                        const new_amount = BigNumberUtil.add(
+                            row.amount,
+                            amount,
+                        );
+                        db.run(
+                            'UPDATE balance SET amount = ? WHERE address = ?',
+                            [new_amount, address],
+                            (err) => {
+                                if (err) {
+                                    console.error(
+                                        `Could not update balance for address ${address}, ${err}`,
+                                    );
+                                    resolve({ ret: -1 });
+                                } else {
+                                    console.log(
+                                        `updated balance for address ${address} to ${new_amount}`,
+                                    );
+                                    resolve({ ret: 0 });
+                                }
+                            },
+                        );
+                    } else {
+                        console.error(
+                            `Could not find balance for address ${address}`,
+                        );
+                        resolve({ ret: -1 });
+                    }
+                },
+            );
         });
     }
 
     /**
      *
      * @param {string} address
-     * @returns {ret: number, amount: number}
+     * @returns {ret: number, amount: string}
      */
     async get_balance(address) {
         const sql = `
@@ -1349,7 +1418,7 @@ class TokenIndexStorage {
      *
      * @param {string} from_address
      * @param {string} to_address
-     * @param {int} amount
+     * @param {string} amount
      * @returns {ret: number}
      */
     async transfer_balance(from_address, to_address, amount) {
@@ -1364,7 +1433,10 @@ class TokenIndexStorage {
             `from_address should be string`,
         );
         assert(typeof to_address === 'string', `to_address should be string`);
-        assert(Number.isInteger(amount), `amount should be integer`);
+        assert(
+            BigNumberUtil.is_positive_number_string(amount),
+            `amount should be valid number string: ${amount}`,
+        );
 
         // should exec in transaction
         assert(this.during_transaction, `should be during transaction`);
@@ -1376,7 +1448,7 @@ class TokenIndexStorage {
             return { ret: -1 };
         }
 
-        if (from_balance < amount) {
+        if (BigNumberUtil.compare(from_balance, amount) < 0) {
             console.error(
                 `Insufficient balance ${from_address} : ${from_balance} < ${amount}`,
             );
@@ -1385,7 +1457,7 @@ class TokenIndexStorage {
 
         const { ret: update_from_balance_ret } = await this.update_balance(
             from_address,
-            -amount,
+            BigNumberUtil.multiply(amount, -1),
         );
         if (update_from_balance_ret != 0) {
             console.error(`Could not update balance ${from_address}`);
@@ -1406,7 +1478,17 @@ class TokenIndexStorage {
     }
 
     // inscribe_data related methods
-
+    /**
+     * 
+     * @param {string} hash 
+     * @param {string} address 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {string} text 
+     * @param {string} price 
+     * @param {number} resonance_count 
+     * @returns 
+     */
     async add_inscribe_data(
         hash,
         address,
@@ -1428,8 +1510,8 @@ class TokenIndexStorage {
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(
-            Number.isInteger(price) && price >= 0,
-            `price should be non-negative integer`,
+            BigNumberUtil.is_positive_number_string(price),
+            `price should be positive number string: ${price}`,
         );
         assert(
             Number.isInteger(resonance_count) && resonance_count >= 0,
@@ -1475,10 +1557,14 @@ class TokenIndexStorage {
     /**
      *
      * @param {string} hash
-     * @param {number} price
+     * @param {string} price
      * @returns {ret: number}
      */
     async set_inscribe_data_price(hash, price) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(BigNumberUtil.is_positive_number_string(price), `price should be positive number string: ${price}`);
+
         const sql = `
                 UPDATE inscribe_data SET price = ? WHERE hash = ?
             `;

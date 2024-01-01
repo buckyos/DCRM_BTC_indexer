@@ -1,6 +1,7 @@
 const assert = require('assert');
 const { OrdClient } = require('../btc/ord');
 const { SatPoint } = require('../btc/point');
+const { BigNumberUtil } = require('../util');
 
 const InscriptionOp = {
     Mint: 'mint',
@@ -13,8 +14,7 @@ const InscriptionOp = {
 
 class MintOp {
     constructor(amt, lucky) {
-        assert(_.isNumber(amt), `amt should be number`);
-        assert(amt >= 0, `amt should be positive number`);
+        assert(_.isString(amt), `amt should be string`);
         assert(_.isBoolean(lucky), `lucky should be boolean`);
 
         this.op = InscriptionOp.Mint;
@@ -27,8 +27,8 @@ class MintOp {
 
         const { amt, lucky } = obj;
 
-        // check amt, must be number
-        if (!_.isNumber(amt)) {
+        // check amt
+        if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(`invalid mint content amt ${amt}`);
             return { ret: 0, valid: false };
         }
@@ -36,6 +36,11 @@ class MintOp {
         // check lucky if exists
         if (lucky != null) {
             if (!_.isString(lucky)) {
+                console.error(`invalid content lucky value: ${lucky}`);
+                return { ret: 0, valid: false };
+            }
+
+            if (lucky.length > 32) {
                 console.error(`invalid content lucky value: ${lucky}`);
                 return { ret: 0, valid: false };
             }
@@ -53,10 +58,9 @@ class InscribeOp {
             text == null || _.isString(text),
             `text should be string or null`,
         );
-        assert(_.isNumber(amt), `amt should be number`);
-        assert(amt >= 0, `amt should be positive number`);
-        assert(_.isNumber(price), `price should be number`);
-        assert(price > 0, `price should be positive number`);
+        assert(_.isString(amt), `amt should be string`);
+
+        assert(_.isString(price), `price should be string`);
 
         this.op = InscriptionOp.Inscribe;
         this.ph = ph;
@@ -85,14 +89,14 @@ class InscribeOp {
         }
 
         // check amt
-        if (!_.isNumber(amt)) {
+        if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(`invalid inscribe content amt ${amt}`);
             return { ret: 0, valid: false };
         }
 
         // check price
         if (price != null) {
-            if (!_.isNumber(price)) {
+            if (!BigNumberUtil.is_positive_number_string(price)) {
                 console.error(`invalid inscribe content price ${price}`);
                 return { ret: 0, valid: false };
             }
@@ -105,8 +109,7 @@ class InscribeOp {
 
 class TransferOp {
     constructor(amt) {
-        assert(_.isNumber(amt), `amt should be number`);
-        assert(amt >= 0, `amt should be positive number`);
+        assert(_.isString(amt), `amt should be string`);
 
         this.op = InscriptionOp.Transfer;
         this.amt = amt;
@@ -118,7 +121,7 @@ class TransferOp {
         const { amt } = content;
 
         // check amt
-        if (!_.isNumber(amt)) {
+        if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(`invalid transfer content amt ${amt}`);
             return { ret: 0, valid: false };
         }
@@ -155,8 +158,7 @@ class ChantOp {
 class SetPriceOp {
     constructor(ph, price) {
         assert(_.isString(ph), `ph should be string`);
-        assert(_.isNumber(price), `price should be number`);
-        assert(price > 0, `price should be positive number`);
+        assert(_.isString(price), `price should be string`);
 
         this.op = InscriptionOp.SetPrice;
         this.ph = ph;
@@ -175,7 +177,7 @@ class SetPriceOp {
         }
 
         // check price
-        if (!_.isNumber(price)) {
+        if (!BigNumberUtil.is_positive_number_string(price)) {
             console.error(`invalid setPrice content price ${price}`);
             return { ret: 0, valid: false };
         }
@@ -188,8 +190,7 @@ class SetPriceOp {
 class ResonanceOp {
     constructor(ph, amt) {
         assert(_.isString(ph), `ph should be string`);
-        assert(_.isNumber(amt), `amt should be number`);
-        assert(amt > 0, `amt should be positive number`);
+        assert(_.isString(amt), `amt should be string`);
 
         this.op = InscriptionOp.Resonance;
         this.ph = ph;
@@ -208,7 +209,7 @@ class ResonanceOp {
         }
 
         // check amt
-        if (!_.isNumber(amt)) {
+        if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(`invalid resonance content amt ${amt}`);
             return { ret: 0, valid: false };
         }
@@ -336,7 +337,9 @@ class InscriptionContentLoader {
             } else if (content.op === 'deploy') {
                 // TODO: check if deployer is matched
             } else {
-                console.error(`unknown brc-20 op ${p.op} ${JSON.stringify(content)}`);
+                console.error(
+                    `unknown brc-20 op ${p.op} ${JSON.stringify(content)}`,
+                );
             }
         } else if (p === 'pdi') {
             if (p.op === 'inscribe') {
@@ -348,7 +351,9 @@ class InscriptionContentLoader {
             } else if (p.op === 'res') {
                 return ResonanceOp.parse_content(content);
             } else {
-                console.error(`unknown pdi op ${p.op} ${JSON.stringify(content)}`);
+                console.error(
+                    `unknown pdi op ${p.op} ${JSON.stringify(content)}`,
+                );
             }
         }
 
@@ -356,27 +361,26 @@ class InscriptionContentLoader {
     }
 }
 
-
 class InscriptionNewItem {
     /**
-     * 
-     * @param {string} inscription_id 
-     * @param {number} inscription_number 
-     * @param {number} block_height 
-     * @param {number} timestamp 
+     *
+     * @param {string} inscription_id
+     * @param {number} inscription_number
+     * @param {number} block_height
+     * @param {number} timestamp
      * @param {string} address // the creator address
-     * @param {string} satpoint 
-     * @param {number} value 
-     * @param {object} content 
-     * @param {object} op 
-     * @param {string} commit_txid 
+     * @param {string} satpoint
+     * @param {number} value
+     * @param {object} content
+     * @param {object} op
+     * @param {string} commit_txid
      */
     constructor(
         inscription_id,
         inscription_number,
         block_height,
         timestamp,
-        address,    // the creator address
+        address, // the creator address
         satpoint,
         value,
         content,
@@ -405,7 +409,7 @@ class InscriptionNewItem {
     get txid() {
         assert(_.isString(this.satpoint), `satpoint should be string`);
 
-        const {ret, satpoint} = SatPoint.parse(this.satpoint);
+        const { ret, satpoint } = SatPoint.parse(this.satpoint);
         assert(ret === 0, `invalid satpoint: ${this.satpoint}`);
 
         return satpoint.outpoint.txid;
@@ -422,27 +426,30 @@ class InscriptionTransferItem {
         from_address,
         to_address,
         value,
-        index,  // index Indicates the number of transfers
+        index, // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `inscription_id should be string`);
         assert(
             _.isNumber(inscription_number),
             `inscription_number should be number`,
         );
-        assert(
-            _.isNumber(block_height),
-            `block_height should be number`,
-        );
+        assert(_.isNumber(block_height), `block_height should be number`);
         assert(_.isNumber(timestamp), `timestamp should be number`);
-        assert(satpoint == null ||  _.isString(satpoint), `satpoint should be string or null`);
+        assert(
+            satpoint == null || _.isString(satpoint),
+            `satpoint should be string or null`,
+        );
         assert(
             from_address == null || _.isString(from_address),
             `from_address should be string or null`,
         );
-        assert(to_address == null || _.isString(to_address), `to_address should be string or null`);
+        assert(
+            to_address == null || _.isString(to_address),
+            `to_address should be string or null`,
+        );
         assert(_.isNumber(value), `value should be number`);
         assert(_.isNumber(index), `index should be number`);
-        assert(index >= 0, `index should be >= 0: ${index}`)
+        assert(index >= 0, `index should be >= 0: ${index}`);
 
         this.inscription_id = inscription_id;
         this.inscription_number = inscription_number;
@@ -463,7 +470,7 @@ class InscriptionTransferItem {
     get txid() {
         assert(_.isString(this.satpoint), `satpoint should be string`);
 
-        const {ret, satpoint} = SatPoint.parse(this.satpoint);
+        const { ret, satpoint } = SatPoint.parse(this.satpoint);
         assert(ret === 0, `invalid satpoint: ${this.satpoint}`);
 
         return satpoint.outpoint.txid;
