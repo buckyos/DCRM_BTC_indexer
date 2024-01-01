@@ -221,6 +221,23 @@ class InscribeDataOperator {
 
         assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
 
+        // try fix price if exists
+        if (inscription_item.content.price != null) {
+            let price = inscription_item.content.price
+            assert(BigNumberUtil.is_positive_number_string(price), `invalid price ${price}`);
+
+            // check and try fix price
+            const max_price = BigNumberUtil.multiply(hash_weight, 2);
+            if (BigNumberUtil.compare(price, max_price) > 0) {
+                console.warn(
+                    `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
+                );
+
+                inscription_item.content.origin_price = price;
+                inscription_item.content.price = max_price;
+            }
+        }
+
         // check if hash weight is less than amt (amt >= hash_weight)
         if (BigNumberUtil.compare(amt, hash_weight) < 0) {
             console.warn(
@@ -381,6 +398,7 @@ class InscribeDataOperator {
             op.inscription_item.address,
             op.inscription_item.timestamp,
             op.inscription_item.content.ph,
+            JSON.stringify(op.inscription_item.content),
             mint_amt,
             service_charge,
             op.inscription_item.content.text,
