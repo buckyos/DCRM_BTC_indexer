@@ -222,12 +222,23 @@ class TokenIndexStorage {
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS resonance_records (
                         inscription_id TEXT PRIMARY KEY,
+                        stage STRING,
+
+                        genesis_block_height INTEGER,
+                        genesis_timestamp INTEGER,
+                        genesis_txid TEXT,
+                        address TEXT,
+                        hash TEXT,
+                        content TEXT,
+
                         block_height INTEGER,
                         timestamp INTEGER,
-                        hash TEXT,
-                        address TEXT,
-                        owner_bouns INTEGER,
-                        service_charge INTEGER,
+                        txid TEXT,
+                        owner_address TEXT,
+
+                        owner_bouns REAL,
+                        service_charge REAL,
+
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -961,14 +972,26 @@ class TokenIndexStorage {
         });
     }
 
-    async add_resonance_record(
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} address
+     * @param {string} hash
+     * @param {string} content
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_resonance_record_on_inscribed(
         inscription_id,
         block_height,
         timestamp,
-        hash,
+        txid,
         address,
-        owner_bouns,
-        service_charge,
+        hash,
+        content,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -981,34 +1004,66 @@ class TokenIndexStorage {
             `block_height should be non-negative integer`,
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof txid === 'string', `txid should be string`);
         assert(typeof address === 'string', `address should be string`);
-        assert(Number.isInteger(owner_bouns), `owner_bouns should be integer`);
-        assert(
-            Number.isInteger(service_charge),
-            `service_charge should be integer`,
-        );
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof content === 'string', `content should be string`);
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
-                `INSERT OR REPLACE INTO resonance_records (inscription_id, block_height, timestamp, hash, address, owner_bouns, service_charge, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    inscription_id,
+                `INSERT OR REPLACE INTO resonance_records 
+                (
+                    inscription_id, 
+                    stage,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    address,
+                    hash,
+                    content,
+                    
                     block_height,
                     timestamp,
-                    hash,
-                    address,
+                    txid,
+                    owner_address,
+
                     owner_bouns,
                     service_charge,
+
+                    state,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    inscription_id,
+                    InscriptionStage.Inscribe,
+
+                    block_height,
+                    timestamp,
+                    txid,
+                    address,
+                    hash,
+                    content,
+
+                    0,
+                    0,
+                    null,
+                    null,
+
+                    0,
+                    0,
+
                     state,
                 ],
                 (err) => {
                     if (err) {
-                        console.error('failed to add resonance record', err);
+                        console.error(
+                            'failed to add resonance inscribed record',
+                            err,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0 });
@@ -1018,6 +1073,178 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} genesis_block_height
+     * @param {number} genesis_timestamp
+     * @param {string} genesis_txid
+     * @param {string} address
+     * @param {string} hash
+     * @param {string} content
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} owner_address
+     * @param {number} owner_bouns
+     * @param {number} service_charge
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_resonance_record_on_transfered(
+        inscription_id,
+
+        genesis_block_height,
+        genesis_timestamp,
+        genesis_txid,
+        address,
+        hash,
+        content,
+
+        block_height,
+        timestamp,
+        txid,
+        owner_address,
+
+        owner_bouns,
+        service_charge,
+
+        state,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
+
+        assert(
+            Number.isInteger(genesis_block_height) && genesis_block_height >= 0,
+            `genesis_block_height should be non-negative integer`,
+        );
+        assert(
+            Number.isInteger(genesis_timestamp),
+            `genesis_timestamp should be integer`,
+        );
+        assert(
+            typeof genesis_txid === 'string',
+            `genesis_txid should be string`,
+        );
+        assert(typeof address === 'string', `address should be string`);
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof content === 'string', `content should be string`);
+
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            `block_height should be non-negative integer`,
+        );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
+        assert(
+            typeof owner_address === 'string',
+            `owner_address should be string`,
+        );
+
+        assert(typeof owner_bouns === 'number', `owner_bouns should be number`);
+        assert(
+            typeof service_charge === 'number',
+            `service_charge should be number`,
+        );
+
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
+
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO resonance_records 
+                (
+                    inscription_id,
+                    stage,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    address,
+                    hash,
+                    content,
+                    
+                    block_height,
+                    timestamp,
+                    txid,
+                    owner_address,
+
+                    owner_bouns,
+                    service_charge,
+
+                    state,
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                [
+                    inscription_id,
+                    InscriptionStage.Transfer,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    address,
+                    hash,
+                    content,
+
+                    block_height,
+                    timestamp,
+                    txid,
+                    owner_address,
+
+                    owner_bouns,
+                    service_charge,
+
+                    state,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `failed to add resonance transfered record: ${inscription_id} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @param {string} stage 
+     * @returns {ret: number, data: object | null}
+     */
+    async query_resonance_record(inscription_id, stage) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof inscription_id === 'string', `should be string`);
+        assert(typeof stage === 'string', `stage should be string: ${stage}`);
+
+        const sql = `
+            SELECT * 
+            FROM resonance_records 
+            WHERE inscription_id = ? AND stage = ?
+            LIMIT 1
+        `;
+
+        return new Promise((resolve) => {
+            this.db.get(sql, [inscription_id, stage], (err, row) => {
+                if (err) {
+                    console.error(
+                        `Could not query resonance ${inscription_id} ${stage} ${err}`,
+                    );
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, data: row });
+                }
+            });
+        });
+    }
     /**
      * check user's last resonance record on a data hash
      * @param {string} address

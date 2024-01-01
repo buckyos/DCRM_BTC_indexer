@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { Util } = require('../../util');
-const { TokenIndex } = require('../../storage/token');
+const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem, InscriptionTransferItem } = require('../item');
@@ -16,7 +16,7 @@ class PendingInscribeOp {
 class InscribeDataOperator {
     constructor(config, storage, hash_helper) {
         assert(config, `config should not be null`);
-        assert(storage instanceof TokenIndex, `storage should be TokenIndex`);
+        assert(storage instanceof TokenIndexStorage, `storage should be TokenIndex`);
         assert(
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,

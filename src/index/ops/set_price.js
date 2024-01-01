@@ -1,13 +1,13 @@
 const assert = require('assert');
 const { Util } = require('../../util');
-const { TokenIndex } = require('../../storage/token');
+const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem } = require('../item');
 
 class SetPriceOperator {
     constructor(storage, hash_helper) {
-        assert(storage instanceof TokenIndex, `storage should be TokenIndex`);
+        assert(storage instanceof TokenIndexStorage, `storage should be TokenIndex`);
         assert(
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,

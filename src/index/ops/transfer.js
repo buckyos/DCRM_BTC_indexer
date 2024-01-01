@@ -88,7 +88,7 @@ class TransferOperator {
                 `query transfer isncribe record but not found: ${inscription_transfer_item.inscription_id}`,
             );
             return { ret: 0 };
-        }
+        }   
 
         assert(
             inscription_item.inscription_id ===

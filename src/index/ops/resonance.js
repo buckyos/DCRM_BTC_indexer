@@ -1,21 +1,35 @@
 const assert = require('assert');
 const { Util } = require('../../util');
-const { TokenIndex } = require('../../storage/token');
+const { TokenIndex, TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
+const { InscriptionTransferItem, InscriptionNewItem } = require('../item');
 
 class PendingResonanceOp {
-    constructor(inscription_item, hash, hash_distance) {
+    constructor(inscription_item, content, hash, hash_distance, state) {
+        assert(_.isObject(inscription_item), `invalid item`);
+        assert(_.isObject(content), `content should be string`);
+
+        assert(_.isString(hash), `hash should be string`);
+        assert(_.isNumber(hash_distance), `hash_distance should be number`);
+        assert(_.isNumber(state), `state should be number`);
+
         this.inscription_item = inscription_item;
+        this.content = content;
+
         this.hash = hash;
         this.hash_distance = hash_distance;
+        this.state = state;
     }
 }
 
 class ResonanceOperator {
     constructor(config, storage, hash_helper) {
         assert(_.isObject(config), `config should be object`);
-        assert(storage instanceof TokenIndex, `storage should be TokenIndex`);
+        assert(
+            storage instanceof TokenIndexStorage,
+            `storage should be TokenIndex`,
+        );
         assert(
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,
@@ -30,30 +44,134 @@ class ResonanceOperator {
     }
 
     /**
-     *
-     * @param {object} inscription_item
+     * @comment processed on the resonance inscription is inscribed
+     * @param {InscriptionNewItem} inscription_item
      * @returns {Promise<{ret: number}>}
      */
-    async on_resonance(inscription_item) {
-        // first do resonance
+    async on_inscribe(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+
+        const hash = inscription_item.content.ph;
+        assert(_.isString(hash), `hash should be string`);
+
+        const { ret } = await this.storage.add_resonance_record_on_inscribed(
+            inscription_item.inscription_id,
+
+            inscription_item.block_height,
+            inscription_item.timestamp,
+            inscription_item.txid,
+            inscription_item.address,
+
+            hash,
+            JSON.stringify(inscription_item.content),
+            InscriptionOpState.OK,
+        );
+        if (ret !== 0) {
+            console.error(
+                `failed to record resonance on inscribed ${inscription_item.inscription_id} ${inscription_item.address}`,
+            );
+            return { ret };
+        }
+
+        console.log(
+            `record resonance inscribe ${inscription_item.inscription_id} ${
+                inscription_item.address
+            } ${JSON.stringify(inscription_item.content)}`,
+        );
+
+        return { ret: 0 };
+    }
+    /**
+     *
+     * @param {InscriptionTransferItem} inscription_transfer_item
+     * @returns {Promise<{ret: number}>}
+     */
+    async on_transfer(inscription_transfer_item) {
+        assert(
+            inscription_transfer_item instanceof InscriptionTransferItem,
+            `invalid item`,
+        );
+
+        assert(
+            inscription_transfer_item.index > 0,
+            `invalid resonance transfer index ${inscription_transfer_item.inscription_id}`,
+        );
+
+        // only process on first transfer
+        if (inscription_transfer_item.index > 1) {
+            console.log(
+                `ignore resonance transfer ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.from_address} -> ${inscription_transfer_item.to_address}, ${inscription_transfer_item.index}`,
+            );
+            return { ret: 0 };
+        }
+
+        // first query the inscription at the inscribed stage
+        const { ret: get_inscribed_ret, date: inscription_item } =
+            await this.storage.query_resonance_record(
+                inscription_transfer_item.inscription_id,
+                InscriptionStage.Inscribe,
+            );
+        if (get_inscribed_ret !== 0) {
+            console.error(
+                `failed to query resonance record ${inscription_transfer_item.inscription_id}`,
+            );
+            return { ret: get_inscribed_ret };
+        }
+
+        if (inscription_item == null) {
+            console.error(
+                `query resonance isncribe record but not found: ${inscription_transfer_item.inscription_id}`,
+            );
+            return { ret: 0 };
+        }
+
+        assert(
+            inscription_item.inscription_id ===
+                inscription_transfer_item.inscription_id,
+            `inscription_id should be the same: ${inscription_item.inscription_id} !== ${inscription_transfer_item.inscription_id}`,
+        );
+        assert(
+            inscription_item.address === inscription_transfer_item.from_address,
+            `inscription creator address should be the same: ${inscription_item.address} !== ${inscription_transfer_item.from_address}`,
+        );
+
+        // parse content in JSON format
+        const content = JSON.parse(inscription_item.content);
+        assert(content.amt != null, `amt should be set`);
+        assert(content.ph != null, `ph should be set`);
+        assert(
+            content.ph === inscription_item.hash,
+            `ph should be the same: ${content.ph} !== ${inscription_item.hash}`,
+        );
+
+        // init some transfer fields from inscription item
+        inscription_item.block_height = inscription_transfer_item.block_height;
+        inscription_item.timestamp = inscription_transfer_item.timestamp;
+        inscription_item.txid = inscription_transfer_item.txid;
+        inscription_item.owner_address = inscription_transfer_item.to_address;
+
+        // then do resonance
         const { ret, state, hash_distance } = await this._pre_process_resonance(
             inscription_item,
+            content,
         );
         if (ret !== 0) {
             return { ret };
         }
 
         // add to pending list for further process
-        const hash = inscription_item.content.ph;
+        const hash = content.ph;
         this.pending_resonance_ops.push(
-            new PendingResonanceOp(inscription_item, hash, hash_distance),
+            new PendingResonanceOp(
+                inscription_item,
+                content,
+                hash,
+                hash_distance,
+                state,
+            ),
         );
 
         return { ret: 0 };
-    }
-
-    async on_transfer_with_resonance(inscription_item) {
-        return await this.on_resonance(inscription_item);
     }
 
     async process_pending_resonance_ops() {
@@ -64,7 +182,11 @@ class ResonanceOperator {
                 continue;
             }
 
-            const { ret } = await this._resonance(pending_op.inscription_item, pending_op.state);
+            const { ret } = await this._resonance(
+                pending_op.inscription_item,
+                pending_op.content,
+                pending_op.state,
+            );
             if (ret !== 0) {
                 return { ret };
             }
@@ -73,9 +195,11 @@ class ResonanceOperator {
         return { ret: 0 };
     }
 
-    async _pre_process_resonance(inscription_item) {
+    async _pre_process_resonance(inscription_item, content) {
+        assert(content instanceof Object, `content should be object`);
+
         // first check if hash and amt field is exists
-        const hash = inscription_item.content.ph;
+        const hash = content.ph;
         if (hash == null || !_.isString(hash)) {
             console.warn(
                 `invalid inscription ph ${inscription_item.inscription_id} ${hash}`,
@@ -85,7 +209,7 @@ class ResonanceOperator {
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
-        const amt = inscription_item.content.amt;
+        const amt = content.amt;
         if (amt == null || !_.isNumber(amt)) {
             console.error(
                 `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
@@ -108,8 +232,8 @@ class ResonanceOperator {
 
         // 2. check the price of the hash, a hash can be resnoanced only if the price is greater than zero
         const price = data.price;
-        if (price <= 0) {
-            console.warn(`hash ${hash} price is zero`);
+        if (price == null || price <= 0) {
+            console.warn(`hash ${hash} price is zero or not set yet`);
             return { ret: 0, state: InscriptionOpState.INVALID_PRICE };
         }
 
@@ -137,9 +261,9 @@ class ResonanceOperator {
         }
 
         // 5. check if output address is the hash's owner
-        if (inscription_item.output_address !== data.owner) {
+        if (inscription_item.owner_address !== data.owner) {
             console.warn(
-                `output address ${inscription_item.output_address} is not the hash ${hash} owner ${data.owner}, ${inscription_item.inscription_id}`,
+                `output address ${inscription_item.owner_address} is not the hash ${hash} owner ${data.owner}, ${inscription_item.inscription_id}`,
             );
             return {
                 ret: 0,
@@ -147,7 +271,7 @@ class ResonanceOperator {
             };
         }
 
-        // 6. check resnoance count of the hash, max is 15
+        // 6. check resonance count of the hash, max is 15
         assert(
             _.isNumber(data.resonance_count),
             `resonance_count should be number`,
@@ -214,14 +338,14 @@ class ResonanceOperator {
         return { ret: 0, state: InscriptionOpState.OK, hash_distance };
     }
 
-    async _resonance(inscription_item, state) {
+    async _resonance(inscription_item, content, state) {
         assert(_.isNumber(state), `state should be number`);
 
         // 1. first transfer balance for bouns and service charge
-        const amt = inscription_item.content.amt;
+        const amt = content.amt;
         assert(_.isNumber(amt), `amt should be number`);
 
-        const service_charge = Math.floor(amt * 0.2);
+        const service_charge = amt * 0.2;
         const owner_bouns = amt - service_charge;
 
         if (service_charge > 0) {
@@ -256,7 +380,9 @@ class ResonanceOperator {
         }
 
         // 2. then update inscription data for resonance count
-        const hash = inscription_item.content.ph;
+        const hash = content.ph;
+        assert(_.isString(hash), `hash should be string`);
+
         const { ret: update_inscribe_data_ret } =
             await this.storage.update_resonance_count(hash);
         if (update_inscribe_data_ret !== 0) {
@@ -266,14 +392,24 @@ class ResonanceOperator {
 
         // 3. record the resnoance op
         const { ret: add_resonance_op_ret } =
-            await this.storage.add_resonance_record(
+            await this.storage.add_resonance_record_on_transfered(
                 inscription_item.inscription_id,
+
+                inscription_item.genesis_block_height,
+                inscription_item.genesis_timestamp,
+                inscription_item.genesis_txid,
+                inscription_item.address,
+                inscription_item.hash,
+                inscription_item.content,
+
                 inscription_item.block_height,
                 inscription_item.timestamp,
-                hash,
-                inscription_item.address,
+                inscription_item.txid,
+                inscription_item.owner_address,
+
                 owner_bouns,
                 service_charge,
+
                 state,
             );
         if (add_resonance_op_ret !== 0) {

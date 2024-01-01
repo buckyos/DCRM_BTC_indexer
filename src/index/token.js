@@ -163,7 +163,16 @@ class TokenBlockIndex {
                         return { ret };
                     }
                 } else if (inscription_item.op.op === InscriptionOp.Resonance) {
-                    // await this.on_resonance(inscription_item);
+                    const { ret } = await this.on_inscribe_resonance(
+                        inscription_item,
+                    );
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to inscribe resonance at block ${this.block_height} ${inscription_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else if (inscription_item.op.op === InscriptionOp.Transfer) {
                     const { ret } = await this.on_inscribe_transfer(
                         inscription_item,
@@ -192,7 +201,7 @@ class TokenBlockIndex {
                 } else if (
                     inscription_transfer_item.op.op === InscriptionOp.Inscribe
                 ) {
-                    const {ret} = await this.on_inscribe_data_transfer(
+                    const { ret } = await this.on_inscribe_data_transfer(
                         inscription_transfer_item,
                     );
                     if (ret !== 0) {
@@ -217,11 +226,22 @@ class TokenBlockIndex {
                 } else if (
                     inscription_transfer_item.op.op === InscriptionOp.Resonance
                 ) {
-                    await this.on_resonance(inscription_transfer_item);
+                    const { ret } = await this.on_transfer_resonance(
+                        inscription_transfer_item,
+                    );
+                    if (ret !== 0) {
+                        console.error(
+                            `failed to transfer resonance at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
+                        );
+                        is_failed = true;
+                        return { ret };
+                    }
                 } else if (
                     inscription_transfer_item.op.op === InscriptionOp.Transfer
                 ) {
-                    const {ret} = await this.on_transfer(inscription_transfer_item);
+                    const { ret } = await this.on_transfer(
+                        inscription_transfer_item,
+                    );
                     if (ret !== 0) {
                         console.error(
                             `failed to transfer at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
@@ -327,8 +347,14 @@ class TokenBlockIndex {
     }
 
     // resonance
-    async on_resonance(inscription_item) {
-        return await this.resonance_operator.on_resonance(inscription_item);
+    async on_inscribe_resonance(inscription_item) {
+        return await this.resonance_operator.on_inscrib(inscription_item);
+    }
+
+    async on_transfer_resonance(inscription_transfer_item) {
+        return await this.resonance_operator.on_transfer(
+            inscription_transfer_item,
+        );
     }
 
     // chant
