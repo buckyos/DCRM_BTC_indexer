@@ -1,4 +1,4 @@
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const assert = require('assert');
 const { InscriptionOpState, InscriptionStage } = require('./state');
@@ -146,7 +146,7 @@ class TransferOperator {
 
     async _transfer(inscription_item, content) {
         assert(_.isObject(content), `content should be object`);
-        assert(_.isNumber(content.amt), `amt should be number`);
+        assert(BigNumberUtil.is_positive_number_string(content.amt), `amt should be valid number string ${content.amt}`);
         assert(
             _.isString(inscription_item.from_address),
             `from_address should be string`,
@@ -174,7 +174,9 @@ class TransferOperator {
             return { get_balance_ret };
         }
 
-        if (balance < content.amt) {
+        assert(_.isString(balance), `balance should be string ${balance}`);
+
+        if (BigNumberUtil.compare(balance, content.amt) < 0) {
             console.error(
                 `not enough balance ${inscription_item.inscription_id} ${inscription_item.from_address} ${balance} < ${content.amt}`,
             );

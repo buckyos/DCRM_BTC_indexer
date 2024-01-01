@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -7,7 +7,10 @@ const { InscriptionNewItem } = require('../item');
 
 class SetPriceOperator {
     constructor(storage, hash_helper) {
-        assert(storage instanceof TokenIndexStorage, `storage should be TokenIndex`);
+        assert(
+            storage instanceof TokenIndexStorage,
+            `storage should be TokenIndex`,
+        );
         assert(
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,
@@ -18,8 +21,8 @@ class SetPriceOperator {
     }
 
     /**
-     * 
-     * @param {InscriptionNewItem} inscription_item 
+     *
+     * @param {InscriptionNewItem} inscription_item
      * @returns {Promise<{ret: number}>}
      */
     async on_set_price(inscription_item) {
@@ -51,8 +54,8 @@ class SetPriceOperator {
     }
 
     /**
-     * 
-     * @param {InscriptionNewItem} inscription_item 
+     *
+     * @param {InscriptionNewItem} inscription_item
      * @returns {Promise<{ret: number, state: InscriptionOpState}>}
      */
     async _set_price(inscription_item) {
@@ -70,7 +73,7 @@ class SetPriceOperator {
         }
 
         let price = content.price;
-        if (price == null || !_.isNumber(price)) {
+        if (!BigNumberUtil.is_positive_number_string(price)) {
             console.error(
                 `invalid set_price price ${inscription_item.inscription_id} ${price}`,
             );
@@ -116,12 +119,15 @@ class SetPriceOperator {
             return { ret: calc_ret };
         }
 
+        assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
+
         // check and try fix price
-        if (price > hash_weight * 2) {
+        const max_price = BigNumberUtil.multiply(hash_weight, 2);
+        if (BigNumberUtil.compare(price, max_price) > 0) {
             console.warn(
                 `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
             );
-            price = hash_weight * 2;
+            price = max_price;
         }
 
         // 3. set price for hash

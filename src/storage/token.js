@@ -1408,7 +1408,7 @@ class TokenIndexStorage {
                     console.error('Could not get balance', err);
                     resolve({ ret: -1 });
                 } else {
-                    resolve({ ret: 0, amount: row ? row.amount : 0 });
+                    resolve({ ret: 0, amount: row ? row.amount : '0' });
                 }
             });
         });

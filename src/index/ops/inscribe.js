@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -153,7 +153,7 @@ class InscribeDataOperator {
         }
 
         const amt = inscription_item.content.amt;
-        if (amt == null || !_.isNumber(amt)) {
+        if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(
                 `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
             );
@@ -219,10 +219,12 @@ class InscribeDataOperator {
             return { ret: calc_ret };
         }
 
-        // check if hash weight is less than amt
-        if (hash_weight > amt) {
+        assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
+
+        // check if hash weight is less than amt (amt >= hash_weight)
+        if (BigNumberUtil.compare(amt, hash_weight) < 0) {
             console.warn(
-                `hash weight is less than amt ${inscription_item.inscription_id} ${hash_weight} < ${amt}`,
+                `hash weight is less than amt ${inscription_item.inscription_id} ${amt} < ${hash_weight}`,
             );
 
             // hash weight is less than amt, so this inscription will failed
@@ -246,7 +248,8 @@ class InscribeDataOperator {
             return { ret: get_balance_ret };
         }
 
-        if (balance < amt) {
+        assert(_.isString(balance), `invalid balance ${balance}`);
+        if (BigNumberUtil.compare(balance, amt) < 0) {
             console.warn(
                 `balance is not enough ${inscription_item.inscription_id} ${inscription_item.address} ${balance} < ${amt}`,
             );
@@ -332,11 +335,11 @@ class InscribeDataOperator {
 
         // 1. transfer amt to mint pool and foundation address
         const amt = op.inscription_item.content.amt;
-        assert(amt > 0, `amt should be positive`);
+        assert(BigNumberUtil.is_positive_number_string(amt), `invalid amt ${amt}`);
 
         // 98% of the DMC paid by the user for inscribing a public data inscription goes to the DMC Mint Pool, and the remaining 2% goes to the Foundation's account as a handling fee.
-        const mint_amt = amt * 0.98;
-        const service_charge = amt - mint_amt;
+        const mint_amt = BigNumberUtil.multiply(amy, 0.98); // amt * 0.98;
+        const service_charge = BigNumberUtil.subtract(amt, mint_amt) // amt - mint_amt;
 
         assert(
             _.isString(this.config.token.account.mint_pool_address),

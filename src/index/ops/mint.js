@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const constants = require('../../constants');
 const { InscriptionNewItem } = require('../item');
@@ -26,8 +26,6 @@ class MintOperator {
 
         // check amt is exists and is number
         const content = inscription_item.content;
-        assert(content.amt != null, `amt should be exists`);
-        assert(_.isNumber(content.amt), `amt should be number`);
 
         if (content.lucky != null) {
             if (!_.isString(content.lucky)) {
@@ -41,7 +39,7 @@ class MintOperator {
             }
         }
 
-        if (!_.isNumber(content.amt)) {
+        if (!BigNumberUtil.is_positive_number_string(content.amt)) {
             console.error(
                 `amt should be number ${inscription_item.inscription_id} ${content.amt}`,
             );
@@ -60,7 +58,13 @@ class MintOperator {
                 `lucky mint ${inscription_item.inscription_id} ${address} ${content.lucky}`,
             );
 
-            if (content.amt > constants.LUCKY_MINT_MAX_AMOUNT) {
+            // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT
+            if (
+                BigNumberUtil.compare(
+                    content.amt,
+                    constants.LUCKY_MINT_MAX_AMOUNT,
+                ) > 0
+            ) {
                 console.warn(
                     `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
                 );
@@ -73,7 +77,13 @@ class MintOperator {
                 `mint ${inscription_item.inscription_id} ${address} ${content.amount}`,
             );
 
-            if (content.amt > constants.NORMAL_MINT_MAX_AMOUNT) {
+            // if content.amt > constants.NORMAL_MINT_MAX_AMOUNT
+            if (
+                BigNumberUtil.compare(
+                    content.amt,
+                    constants.NORMAL_MINT_MAX_AMOUNT,
+                ) > 0
+            ) {
                 console.warn(
                     `mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
                 );

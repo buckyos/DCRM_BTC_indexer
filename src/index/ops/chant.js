@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -66,7 +66,7 @@ class ChantOperator {
     async _chant(inscription_item) {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
-        // first check if hash and amt field is exists
+        // first check if hash field is exists
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
             console.warn(
@@ -148,8 +148,10 @@ class ChantOperator {
             return { ret: calc_ret };
         }
 
+        assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
         const bouns = hash_weight;
-        const stamina = Math.ceil(hash_weight / 4);
+        // const stamina = hash_weight / 4;
+        const stamina = BigNumberUtil.divide(hash_weight, 4);
 
         const { ret: get_balance_ret, amount } = await this.storage.get_balance(
             inscription_item.address,
@@ -161,7 +163,8 @@ class ChantOperator {
             return { ret: get_balance_ret };
         }
 
-        if (amount < stamina) {
+        assert(_.isString(amount), `invalid balance ${amount}`);
+        if (BigNumberUtil.compare(amount, stamina) < 0) {
             console.error(
                 `not enough balance ${inscription_item.inscription_id} ${inscription_item.address} ${amount} < ${stamina}`,
             );
@@ -183,8 +186,18 @@ class ChantOperator {
             await this.storage.get_balance(
                 this.config.token.account.mint_pool_address,
             );
+        
+        if (get_mint_pool_ret !== 0) {
+            console.error(
+                `failed to get mint pool balance ${inscription_item.inscription_id} ${this.config.token.account.mint_pool_address}`,
+            );
+            return { ret: get_mint_pool_ret };
+        }
 
-        if (bouns > mint_pool_balance) {
+        assert(BigNumberUtil.is_positive_number_string(mint_pool_balance), `invalid mint pool balance ${mint_pool_balance}`);
+
+        // if bouns > mint_pool_balance
+        if (BigNumberUtil.compare(bouns, mint_pool_balance) > 0) {
             console.error(
                 `not enough mint pool balance ${inscription_item.inscription_id} ${mint_pool_balance} < ${bouns}`,
             );
@@ -193,14 +206,18 @@ class ChantOperator {
 
         // 6. trans bouns to user and owner
         if (data.address !== inscription_item.address) {
-            user_bonus = Math.floor(bouns * 0.8);
-            owner_bonus = bouns - user_bonus;
+            // user_bonus = bouns * 0.8;
+            user_bonus =  BigNumberUtil.multiply(bouns, 0.8)   
+
+            // owner_bouns = bouns - user_bonus;
+            owner_bonus = BigNumberUtil.subtract(bouns, user_bonus);    
         } else {
             user_bonus = bouns;
-            owner_bonus = 0;
+            owner_bonus = '0';
         }
 
-        if (user_bonus > 0) {
+        // if user_bonus > 0
+        if (BigNumberUtil.compare(user_bonus, 0) > 0) {
             const { ret } = await this.storage.transfer_balance(
                 this.config.token.account.mint_pool_address,
                 inscription_item.address,
@@ -218,7 +235,8 @@ class ChantOperator {
             );
         }
 
-        if (owner_bonus > 0) {
+        // if owner_bonus > 0
+        if (BigNumberUtil.compare(owner_bonus, 0) > 0) {
             const { ret } = await this.storage.transfer_balance(
                 this.config.token.account.mint_pool_address,
                 data.address,
@@ -241,8 +259,6 @@ class ChantOperator {
 
         return { ret: 0, state: InscriptionOpState.OK };
     }
-
-    _chant(inscription_item) {}
 }
 
 module.exports = { ChantOperator };

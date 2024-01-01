@@ -1,5 +1,5 @@
-const LUCKY_MINT_MAX_AMOUNT = 2100;
-const NORMAL_MINT_MAX_AMOUNT = 210;
+const LUCKY_MINT_MAX_AMOUNT = '2100';
+const NORMAL_MINT_MAX_AMOUNT = '210';
 
 // the virtual address of mint pool and unmint pool
 const TOKEN_MINT_POOL_VIRTUAL_ADDRESS = '0x0';

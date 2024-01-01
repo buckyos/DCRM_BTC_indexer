@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndex, TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -210,7 +210,7 @@ class ResonanceOperator {
         }
 
         const amt = content.amt;
-        if (amt == null || !_.isNumber(amt)) {
+        if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(
                 `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
             );
@@ -232,13 +232,13 @@ class ResonanceOperator {
 
         // 2. check the price of the hash, a hash can be resnoanced only if the price is greater than zero
         const price = data.price;
-        if (price == null || price <= 0) {
+        if (price == null || BigNumberUtil.compare(price, 0) <= 0) {
             console.warn(`hash ${hash} price is zero or not set yet`);
             return { ret: 0, state: InscriptionOpState.INVALID_PRICE };
         }
 
         // 3. check if the amt is enough
-        if (amt < price) {
+        if (BigNumberUtil.compare(amt, price) < 0) {
             console.warn(
                 `amt ${amt} is not enough for hash ${hash} price ${price} ${inscription_item.inscription_id}`,
             );
@@ -252,8 +252,9 @@ class ResonanceOperator {
             console.error(`get_balance failed ${inscription_item.address}`);
             return { ret: get_balance_ret };
         }
-
-        if (balance < amt) {
+        
+        assert(_.isString(balance), `balance should be string ${balance}`);
+        if (BigNumberUtil.compare(balance, amt) < 0) {
             console.warn(
                 `user ${inscription_item.address} balance ${balance} is not enough for amt ${amt} ${inscription_item.inscription_id}`,
             );
@@ -343,12 +344,12 @@ class ResonanceOperator {
 
         // 1. first transfer balance for bouns and service charge
         const amt = content.amt;
-        assert(_.isNumber(amt), `amt should be number`);
+        assert(BigNumberUtil.is_positive_number_string(amt), `invalid amt ${amt}`);
 
-        const service_charge = amt * 0.2;
-        const owner_bouns = amt - service_charge;
+        const service_charge = BigNumberUtil.multiply(amt, 0.2) // amt * 0.2;
+        const owner_bouns = BigNumberUtil.subtract(amt, service_charge); // amt - service_charge;
 
-        if (service_charge > 0) {
+        if (BigNumberUtil.compare(service_charge, 0) > 0) {
             const { ret } = await this.storage.transfer_balance(
                 inscription_item.address,
                 this.config.token.account.foundation_address,
@@ -363,7 +364,7 @@ class ResonanceOperator {
         }
 
         if (
-            owner_bouns > 0 &&
+            BigNumberUtil.compare(owner_bouns, 0) > 0 &&
             inscription_item.address !== inscription_item.output_address
         ) {
             const { ret } = await this.storage.transfer_balance(
