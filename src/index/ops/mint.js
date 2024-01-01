@@ -68,6 +68,7 @@ class MintOperator {
                 console.warn(
                     `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
                 );
+                content.origin_amt = amt;
                 amt = constants.LUCKY_MINT_MAX_AMOUNT;
             } else {
                 amt = content.amt;
@@ -87,6 +88,7 @@ class MintOperator {
                 console.warn(
                     `mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
                 );
+                content.origin_amt = amt;
                 amt = constants.NORMAL_MINT_MAX_AMOUNT;
             } else {
                 amt = content.amt;
@@ -99,6 +101,7 @@ class MintOperator {
             inscription_item.block_height,
             inscription_item.timestamp,
             inscription_item.address,
+            JSON.stringify(content),
             amt,
             content.lucky,
         );

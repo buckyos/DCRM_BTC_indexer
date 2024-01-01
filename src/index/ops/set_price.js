@@ -39,6 +39,7 @@ class SetPriceOperator {
             inscription_item.inscription_id,
             inscription_item.block_height,
             inscription_item.timestamp,
+            JSON.stringify(inscription_item.content),
             inscription_item.content.ph,
             inscription_item.address,
             state,

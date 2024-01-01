@@ -54,6 +54,7 @@ class TokenIndexStorage {
                         block_height INTEGER,
                         timestamp INTEGER,
                         address TEXT,
+                        content TEXT,   
                         amount TEXT,
                         lucky TEXT DEFAULT NULL
                     )`,
@@ -81,6 +82,7 @@ class TokenIndexStorage {
                         block_height INTEGER,
                         address TEXT,
                         timestamp INTEGER,
+                        content TEXT,
                         hash TEXT,
                         mint_amount TEXT,
                         service_charge TEXT,
@@ -112,6 +114,7 @@ class TokenIndexStorage {
                         block_height INTEGER,
                         timestamp INTEGER,
                         address TEXT,
+                        content TEXT,
                         hash TEXT,
                         user_bouns TEXT,
                         owner_bouns TEXT,
@@ -197,6 +200,7 @@ class TokenIndexStorage {
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
                         timestamp INTEGER,
+                        content TEXT,
                         hash TEXT,
                         address TEXT,
                         price TEXT,
@@ -421,6 +425,7 @@ class TokenIndexStorage {
      * @param {number} block_height
      * @param {number} timestamp
      * @param {string} address
+     * @param {string} content
      * @param {string} amount
      * @param {string} lucky
      * @returns {ret: number}
@@ -430,6 +435,7 @@ class TokenIndexStorage {
         block_height,
         timestamp,
         address,
+        content,
         amount,
         lucky,
     ) {
@@ -444,6 +450,7 @@ class TokenIndexStorage {
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof address === 'string', `address should be string`);
+        assert(typeof content === 'string', `content should be string`);
         assert(
             BigNumberUtil.is_positive_number_string(amount),
             `amount should be positive number string`,
@@ -452,18 +459,30 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO mint_records (inscription_id, block_height, timestamp, address, amount, lucky) VALUES (?, ?, ?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO mint_records (
+                    inscription_id, 
+                    block_height, 
+                    timestamp, 
+                    address, 
+                    content, 
+                    amount, 
+                    lucky
+                ) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     timestamp,
                     address,
+                    content,
                     amount,
                     lucky,
                 ],
                 (err) => {
                     if (err) {
-                        console.error('failed to add mint record', err);
+                        console.error(
+                            `failed to add mint record ${inscription_id}, ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0 });
@@ -480,6 +499,7 @@ class TokenIndexStorage {
      * @param {string} address
      * @param {number} timestamp
      * @param {string} hash
+     * @param {string} content
      * @param {string} mint_amount
      * @param {string} service_charge
      * @param {string} text
@@ -493,6 +513,7 @@ class TokenIndexStorage {
         address,
         timestamp,
         hash,
+        content,
         mint_amount,
         service_charge,
         text,
@@ -511,6 +532,7 @@ class TokenIndexStorage {
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof content === 'string', `content should be string`);
         assert(
             BigNumberUtil.is_positive_number_string(mint_amount),
             `mint_amount should be positive number string ${mint_amount}`,
@@ -537,18 +559,20 @@ class TokenIndexStorage {
                     address, 
                     timestamp, 
                     hash, 
+                    content,
                     mint_amount, 
                     service_charge, 
                     text, 
                     price, 
                     state) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     address,
                     timestamp,
                     hash,
+                    content,
                     mint_amount,
                     service_charge,
                     text,
@@ -603,6 +627,7 @@ class TokenIndexStorage {
      * @param {number} block_height
      * @param {number} timestamp
      * @param {string} address
+     * @param {string} content
      * @param {string} hash
      * @param {string} user_bouns
      * @param {string} owner_bouns
@@ -614,6 +639,7 @@ class TokenIndexStorage {
         block_height,
         timestamp,
         address,
+        content,
         hash,
         user_bouns,
         owner_bouns,
@@ -630,6 +656,7 @@ class TokenIndexStorage {
         );
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof content === 'string', `content should be string`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(
             BigNumberUtil.is_positive_number_string(user_bouns),
@@ -646,12 +673,24 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO chant_records (inscription_id, block_height, timestamp, address, hash, user_bouns, owner_bouns, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO chant_records (
+                    inscription_id, 
+                    block_height, 
+                    timestamp, 
+                    address,
+                    content,
+                    hash, 
+                    user_bouns, 
+                    owner_bouns, 
+                    state
+                ) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     timestamp,
                     address,
+                    content,
                     hash,
                     user_bouns,
                     owner_bouns,
@@ -940,6 +979,7 @@ class TokenIndexStorage {
      * @param {string} inscription_id
      * @param {number} block_height
      * @param {number} timestamp
+     * @param {string} content
      * @param {string} hash
      * @param {string} address
      * @param {string} price
@@ -949,6 +989,7 @@ class TokenIndexStorage {
         inscription_id,
         block_height,
         timestamp,
+        content,
         hash,
         address,
         price,
@@ -964,6 +1005,7 @@ class TokenIndexStorage {
             `block_height should be non-negative integer`,
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof content === 'string', `content should be string`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
         assert(
@@ -977,11 +1019,22 @@ class TokenIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO set_price_records (inscription_id, block_height, timestamp, hash, address, price, state) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO set_price_records (
+                    inscription_id, 
+                    block_height, 
+                    timestamp, 
+                    content,
+                    hash, 
+                    address, 
+                    price, 
+                    state
+                ) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     timestamp,
+                    content,
                     hash,
                     address,
                     price,
@@ -1479,15 +1532,15 @@ class TokenIndexStorage {
 
     // inscribe_data related methods
     /**
-     * 
-     * @param {string} hash 
-     * @param {string} address 
-     * @param {number} block_height 
-     * @param {number} timestamp 
-     * @param {string} text 
-     * @param {string} price 
-     * @param {number} resonance_count 
-     * @returns 
+     *
+     * @param {string} hash
+     * @param {string} address
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} text
+     * @param {string} price
+     * @param {number} resonance_count
+     * @returns
      */
     async add_inscribe_data(
         hash,
@@ -1563,7 +1616,10 @@ class TokenIndexStorage {
     async set_inscribe_data_price(hash, price) {
         assert(this.db != null, `db should not be null`);
         assert(typeof hash === 'string', `hash should be string`);
-        assert(BigNumberUtil.is_positive_number_string(price), `price should be positive number string: ${price}`);
+        assert(
+            BigNumberUtil.is_positive_number_string(price),
+            `price should be positive number string: ${price}`,
+        );
 
         const sql = `
                 UPDATE inscribe_data SET price = ? WHERE hash = ?
