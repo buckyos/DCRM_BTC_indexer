@@ -380,22 +380,22 @@ class BigNumberUtil {
         return new BigNumber(a).times(new BigNumber(b)).toString();
     }
 
-     /**
-     * 
-     * @param {string | number} a 
-     * @param {string | number} b 
-     * @returns {string}
-     */
+    /**
+    * 
+    * @param {string | number} a 
+    * @param {string | number} b 
+    * @returns {string}
+    */
     static divide(a, b) {
         return new BigNumber(a).dividedBy(new BigNumber(b)).toString();
     }
 
-     /**
-     * 
-     * @param {string | number} a 
-     * @param {string | number} b 
-     * @returns {number}
-     */
+    /**
+    * 
+    * @param {string | number} a 
+    * @param {string | number} b 
+    * @returns {number}
+    */
     static compare(a, b) {
         return new BigNumber(a).comparedTo(new BigNumber(b));
     }

@@ -1,7 +1,7 @@
 const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../index/ops/state');
-const { BigNumberUtil } = require('../../util');
+const { BigNumberUtil, Util } = require('../../util');
 
 class MintStore {
     constructor() {
@@ -78,6 +78,15 @@ class MintStore {
                     LIMIT ? OFFSET ?`
                 );
                 list = pageStmt.all(limit, offset);
+            }
+            for (const item of list) {
+                if (item.inscription_id) {
+                    const { ret, txid, index } = Util.parse_inscription_id(item.inscription_id);
+                    if (ret == 0) {
+                        item.txid = txid;
+                        item.index = index;
+                    }
+                }
             }
 
             logger.debug('queryLuckyMintRecord:', offset, limit, "ret:", count, list);
