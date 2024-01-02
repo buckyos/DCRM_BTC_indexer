@@ -38,9 +38,11 @@ class TransferOperator {
         }
 
         console.log(
-            `record transfer inscribe ${inscription_item.inscription_id} ${
-                inscription_item.address
-            } ${JSON.stringify(inscription_item.content)}`,
+            `record transfer inscribe ${inscription_item.block_height} ${
+                inscription_item.inscription_id
+            } ${inscription_item.address} ${JSON.stringify(
+                inscription_item.content,
+            )}`,
         );
 
         return { ret: 0 };
@@ -65,13 +67,14 @@ class TransferOperator {
         // only process on first transfer
         if (inscription_transfer_item.index > 1) {
             console.log(
-                `ignore transfer ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.from_address} -> ${inscription_transfer_item.to_address}, ${inscription_transfer_item.index}`,
+                `ignore transfer ${inscription_transfer_item.block_height} ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.from_address} -> ${inscription_transfer_item.to_address}, ${inscription_transfer_item.index}`,
             );
             return { ret: 0 };
         }
 
+
         // first query the inscription at the inscribed stage
-        const { ret: get_inscribed_ret, date: inscription_item } =
+        const { ret: get_inscribed_ret, data: inscription_item } =
             await this.storage.query_transfer_record(
                 inscription_transfer_item.inscription_id,
                 InscriptionStage.Inscribe,
@@ -88,7 +91,7 @@ class TransferOperator {
                 `query transfer inscribe record but not found: ${inscription_transfer_item.inscription_id}`,
             );
             return { ret: 0 };
-        }   
+        }
 
         assert(
             inscription_item.inscription_id ===
@@ -103,7 +106,7 @@ class TransferOperator {
 
         // parse content in JSON format
         const content = JSON.parse(inscription_item.content);
-        assert(content.amt != null, `amt should be set`);
+        assert(_.isString(content.amt), `amt should be set as string`);
 
         inscription_item.to_address = inscription_transfer_item.to_address;
         inscription_item.block_height = inscription_transfer_item.block_height;
@@ -111,7 +114,10 @@ class TransferOperator {
         inscription_item.txid = inscription_transfer_item.txid;
 
         // do transfer
-        const { ret, state } = await this._transfer(inscription_item);
+        const { ret, state } = await this._transfer(
+            inscription_item,
+            inscription_transfer_item.content,
+        );
         if (ret !== 0) {
             return { ret };
         }
@@ -146,7 +152,10 @@ class TransferOperator {
 
     async _transfer(inscription_item, content) {
         assert(_.isObject(content), `content should be object`);
-        assert(BigNumberUtil.is_positive_number_string(content.amt), `amt should be valid number string ${content.amt}`);
+        assert(
+            BigNumberUtil.is_positive_number_string(content.amt),
+            `amt should be valid number string ${content.amt}`,
+        );
         assert(
             _.isString(inscription_item.from_address),
             `from_address should be string`,
@@ -165,7 +174,7 @@ class TransferOperator {
         }
 
         // 2. check if has enough balance
-        const { ret: get_balance_ret, balance } =
+        const { ret: get_balance_ret, amount: balance } =
             await this.storage.get_balance(inscription_item.from_address);
         if (get_balance_ret !== 0) {
             console.error(

@@ -19,6 +19,7 @@ async function main() {
     const log = new LogHelper(config.config);
     log.path_console();
     log.enable_console_target(true);
+    log.set_level('info');
 
     console.info("test log");
 

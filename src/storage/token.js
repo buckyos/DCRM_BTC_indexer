@@ -455,7 +455,10 @@ class TokenIndexStorage {
             BigNumberUtil.is_positive_number_string(amount),
             `amount should be positive number string`,
         );
-        assert(lucky == null || typeof lucky === 'string', `lucky should be string or null`);
+        assert(
+            lucky == null || typeof lucky === 'string',
+            `lucky should be string or null`,
+        );
 
         return new Promise((resolve, reject) => {
             this.db.run(
@@ -950,7 +953,10 @@ class TokenIndexStorage {
      */
     async query_transfer_record(inscription_id, stage) {
         assert(this.db != null, `db should not be null`);
-        assert(typeof inscription_id === 'string', `should be string`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
         assert(typeof stage === 'string', `stage should be string: ${stage}`);
 
         const sql = `
@@ -1413,28 +1419,49 @@ class TokenIndexStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
-                        const current_amount = row == null? '0': row.amount;
-                        const new_amount = BigNumberUtil.add(
-                            current_amount,
-                            amount,
-                        );
-                        this.db.run(
-                            'UPDATE balance SET amount = ? WHERE address = ?',
-                            [new_amount, address],
-                            (err) => {
-                                if (err) {
-                                    console.error(
-                                        `Could not update balance for address ${address}, ${err}`,
-                                    );
-                                    resolve({ ret: -1 });
-                                } else {
-                                    console.log(
-                                        `updated balance for address ${address} ${current_amount} -> ${new_amount}`,
-                                    );
-                                    resolve({ ret: 0 });
-                                }
-                            },
-                        );
+                        if (row == null) {
+                            this.db.run(
+                                'INSERT INTO balance (address, amount) VALUES (?, ?)',
+                                [address, amount],
+                                (err) => {
+                                    if (err) {
+                                        console.error(
+                                            `Could not insert balance for address ${address}, ${err}`,
+                                        );
+                                        resolve({ ret: -1 });
+                                    } else {
+                                        console.log(
+                                            `first inserted balance for address ${address} ${amount}`,
+                                        );
+                                        resolve({ ret: 0 });
+                                    }
+                                },
+                            );
+                        } else {
+                            const current_amount =
+                                row == null ? '0' : row.amount;
+                            const new_amount = BigNumberUtil.add(
+                                current_amount,
+                                amount,
+                            );
+                            this.db.run(
+                                'UPDATE balance SET amount = ? WHERE address = ?',
+                                [new_amount, address],
+                                (err) => {
+                                    if (err) {
+                                        console.error(
+                                            `Could not update balance for address ${address}, ${err}`,
+                                        );
+                                        resolve({ ret: -1 });
+                                    } else {
+                                        console.log(
+                                            `updated balance for address ${address} ${current_amount} -> ${new_amount}`,
+                                        );
+                                        resolve({ ret: 0 });
+                                    }
+                                },
+                            );
+                        }
                     }
                 },
             );

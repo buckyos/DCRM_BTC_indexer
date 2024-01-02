@@ -226,7 +226,7 @@ class InscriptionIndex {
 
         if (collector.is_empty()) {
             console.info(
-                `no inscriptions and transfers in block ${block_height}`,
+                `no known inscriptions and transfers in block ${block_height}`,
             );
             return { ret: 0 };
         }

@@ -29,6 +29,10 @@ class LogHelper {
     path_console() {
         blog.patch_console();
     }
+
+    set_level(level) {
+        blog.setLevel(level);
+    }
 }
 
 

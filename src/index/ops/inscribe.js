@@ -256,7 +256,7 @@ class InscribeDataOperator {
         }
 
         // 4. check if address balance is enough
-        const { ret: get_balance_ret, balance } =
+        const { ret: get_balance_ret, amount: balance } =
             await this.storage.get_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
             console.error(

@@ -406,7 +406,7 @@ class BigNumberUtil {
      * @returns {boolean}
      */
     static check_decimal_string(str) {
-        const regex = /^\d+(\.\d{1,18})?$/;
+        const regex = /^-?\d+(\.\d{1,18})?$/;
         return regex.test(str);
     }
 

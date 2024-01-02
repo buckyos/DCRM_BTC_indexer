@@ -106,7 +106,7 @@ class ResonanceOperator {
         }
 
         // first query the inscription at the inscribed stage
-        const { ret: get_inscribed_ret, date: inscription_item } =
+        const { ret: get_inscribed_ret, data: inscription_item } =
             await this.storage.query_resonance_record(
                 inscription_transfer_item.inscription_id,
                 InscriptionStage.Inscribe,
@@ -246,7 +246,7 @@ class ResonanceOperator {
         }
 
         // 4. check user's balance
-        const { ret: get_balance_ret, balance } =
+        const { ret: get_balance_ret, amount: balance } =
             await this.storage.get_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
             console.error(`get_balance failed ${inscription_item.address}`);
