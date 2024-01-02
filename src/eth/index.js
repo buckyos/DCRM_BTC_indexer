@@ -129,11 +129,11 @@ class ETHIndex {
 
             const { ret } = await this.sync_once();
             if (ret !== 0) {
-                console.error(`failed to sync once`);
-                await Util.sleep(1000 * 5);
+                console.error(`failed to sync eth once`);
+                await Util.sleep(1000 * 3);
                 continue;
             } else {
-                await Util.sleep(1000 * 10);
+                await Util.sleep(1000 * 5);
             }
         }
     }
@@ -217,7 +217,7 @@ class ETHIndex {
         let events;
         try {
             events = await this.contract.getPastEvents(
-                'allEvents', // the point change event name
+                'SupplierReward', // the point change event name
                 {
                     fromBlock: begin,
                     toBlock: end - 1,
