@@ -258,7 +258,7 @@ class InscriptionContentLoader {
             `ord_client should be OrdClient`,
         );
         assert(_.isString(inscription_id), `inscription_id should be string`);
-        assert(_.isString(content_type), `content_type should be string`);
+        assert(content_type == null ||  _.isString(content_type), `content_type should be string or null: ${content_type}`);
         assert(_.isObject(config), `config should be object`);
 
         // check content type at first

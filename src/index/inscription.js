@@ -91,7 +91,7 @@ class InscriptionIndex {
             if (this.current_block_height === 0) {
                 // get latest block height already synced
                 const { ret, height } =
-                    await this.state_storage.get_latest_block_height();
+                    await this.state_storage.get_btc_latest_block_height();
                 if (ret !== 0) {
                     console.error(`failed to get latest block height`);
                     await this.sleep(1000 * 5);
@@ -186,7 +186,7 @@ class InscriptionIndex {
             // update latest block height
             {
                 const { ret } =
-                    await this.state_storage.update_latest_block_height(i);
+                    await this.state_storage.update_btc_latest_block_height(i);
                 if (ret !== 0) {
                     console.error(`failed to update latest block height ${i}`);
                     return { ret };

@@ -54,6 +54,6 @@ main()
         process.exit(ret);
     })
     .catch((err) => {
-        console.error(`run failed: ${err}`);
+        console.error(`run failed: ${err}, ${err.stack}`);
         process.exit(1);
     });

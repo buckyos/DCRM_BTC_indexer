@@ -45,29 +45,6 @@ class ETHIndexStorage {
             this.db.serialize(() => {
                 let has_error = false;
 
-                // Create state table
-                this.db.run(
-                    `CREATE TABLE IF NOT EXISTS state (
-                    name TEXT PRIMARY KEY,
-                    value INTEGER
-                )`,
-                    (err) => {
-                        if (err) {
-                            console.error(
-                                `failed to create state table: ${err}`,
-                            );
-                            has_error = true;
-                            resolve({ ret: -1 });
-                            return;
-                        }
-                        console.log(`created eth state table`);
-                    },
-                );
-
-                if (has_error) {
-                    return;
-                }
-
                 // Create points table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS points (
@@ -119,28 +96,6 @@ class ETHIndexStorage {
     }
 
     /**
-     *
-     * @returns {ret: number, height: number}
-     */
-    async get_latest_block_height() {
-        assert(this.db != null, `db should not be null`);
-
-        return new Promise((resolve, reject) => {
-            this.db.get(
-                "SELECT value FROM state WHERE name = 'latest_block_height'",
-                (err, row) => {
-                    if (err) {
-                        console.error('failed to get latest block height', err);
-                        resolve({ ret: -1 });
-                    } else {
-                        resolve({ ret: 0, height: row ? row.value : 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    /**
      * 
      * @param {number} block_height 
      * @returns {ret: number, timestamp: number}
@@ -165,32 +120,6 @@ class ETHIndexStorage {
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, timestamp: row ? row.timestamp : 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    async update_latest_block_height(block_height) {
-        assert(this.db != null, `db should not be null`);
-        assert(
-            Number.isInteger(block_height) && block_height >= 0,
-            'block_height must be a non-negative integer',
-        );
-
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                `INSERT OR REPLACE INTO state (name, value) VALUES ('latest_block_height', ?)`,
-                block_height,
-                (err) => {
-                    if (err) {
-                        console.error(
-                            'failed to update latest block height',
-                            err,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        resolve({ ret: 0 });
                     }
                 },
             );

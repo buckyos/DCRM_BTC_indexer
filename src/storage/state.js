@@ -73,15 +73,15 @@ class StateStorage {
      *
      * @returns {ret: number, height: number}
      */
-    async get_latest_block_height() {
+    async get_btc_latest_block_height() {
         assert(this.db != null, `db should not be null`);
 
         return new Promise((resolve, reject) => {
             this.db.get(
-                "SELECT value FROM state WHERE name = 'latest_block_height'",
+                "SELECT value FROM state WHERE name = 'btc_latest_block_height'",
                 (err, row) => {
                     if (err) {
-                        console.error('failed to get latest block height', err);
+                        console.error('failed to get btc latest block height', err);
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, height: row ? row.value : 0 });
@@ -91,7 +91,7 @@ class StateStorage {
         });
     }
 
-    async update_latest_block_height(block_height) {
+    async update_btc_latest_block_height(block_height) {
         assert(this.db != null, `db should not be null`);
         assert(
             Number.isInteger(block_height) && block_height >= 0,
@@ -100,12 +100,60 @@ class StateStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO state (name, value) VALUES ('latest_block_height', ?)`,
+                `INSERT OR REPLACE INTO state (name, value) VALUES ('btc_latest_block_height', ?)`,
                 block_height,
                 (err) => {
                     if (err) {
                         console.error(
-                            'failed to update latest block height',
+                            'failed to update btc latest block height',
+                            err,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     *
+     * @returns {ret: number, height: number}
+     */
+    async get_eth_latest_block_height() {
+        assert(this.db != null, `db should not be null`);
+
+        return new Promise((resolve, reject) => {
+            this.db.get(
+                "SELECT value FROM state WHERE name = 'eth_latest_block_height'",
+                (err, row) => {
+                    if (err) {
+                        console.error('failed to get eth latest block height', err);
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0, height: row ? row.value : 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    async update_eth_latest_block_height(block_height) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            'block_height must be a non-negative integer',
+        );
+
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO state (name, value) VALUES ('eth_latest_block_height', ?)`,
+                block_height,
+                (err) => {
+                    if (err) {
+                        console.error(
+                            'failed to update eth latest block height',
                             err,
                         );
                         resolve({ ret: -1 });

@@ -2,6 +2,7 @@ const assert = require('assert');
 const { Web3 } = require('web3');
 const { ETHIndexStorage } = require('../storage/eth');
 const { Util } = require('../util');
+const {StateStorage} = require('../storage/state');
 
 class ETHIndex {
     constructor(config) {
@@ -12,7 +13,10 @@ class ETHIndex {
             throw new Error(`failed to get data dir`);
         }
         this.storage = new ETHIndexStorage(dir);
+        this.state_storage = new StateStorage(dir);
+
         this.current_block_height = 0;
+        this.eth_blocks_process_step = 64;
     }
 
     /**
@@ -20,12 +24,21 @@ class ETHIndex {
      * @returns {Promise<{ret: number}>}
      */
     async init() {
+        // first init state storage
+        const { ret: init_state_storage_ret } = await this.state_storage.init();
+        if (init_state_storage_ret !== 0) {
+            console.error(`failed to init inscription index state storage`);
+            return { ret: init_state_storage_ret };
+        }
+
+        // then init eth storage
         const { ret } = await this.storage.init();
         if (ret !== 0) {
             console.error(`failed to init eth storage`);
             return { ret };
         }
 
+        // then init web3
         const { ret: init_web3_ret } = await this.init_web3();
         if (init_web3_ret !== 0) {
             console.error(`failed to init web3`);
@@ -86,7 +99,7 @@ class ETHIndex {
  
                 // get latest block height already synced
                 const { ret, height } =
-                    await this.storage.get_latest_block_height();
+                    await this.state_storage.get_eth_latest_block_height();
                 if (ret !== 0) {
                     console.error(`failed to get latest block height`);
                     await this.sleep(1000 * 5);
@@ -140,7 +153,9 @@ class ETHIndex {
         latest_block_number += 1;
 
         // sync block in chunk of 100
-        const chunk_size = 100;
+        const chunk_size = this.eth_blocks_process_step;
+        assert(chunk_size > 0, `chunk size should be positive`);
+
         while (true) {
             let end = this.current_block_height + chunk_size;
             if (end > latest_block_number) {
@@ -235,7 +250,7 @@ class ETHIndex {
 
         // update latest block height
         {
-            const { ret } = await this.storage.update_latest_block_height(end);
+            const { ret } = await this.state_storage.update_eth_latest_block_height(end);
             if (ret !== 0) {
                 console.error(
                     `failed to update latest block height ${end - 1}`,
