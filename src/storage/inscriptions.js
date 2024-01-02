@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
+const { INSCRIPTION_DB_FILE } = require('../constants');
 
 class InscriptionsStorage {
     constructor(data_dir) {
@@ -9,7 +10,7 @@ class InscriptionsStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
-        this.db_file_path = path.join(data_dir, 'inscriptions.sqlite');
+        this.db_file_path = path.join(data_dir, INSCRIPTION_DB_FILE);
         this.db = null;
     }
 

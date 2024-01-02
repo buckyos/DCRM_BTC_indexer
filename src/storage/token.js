@@ -3,6 +3,7 @@ const assert = require('assert');
 const path = require('path');
 const { InscriptionStage } = require('../index/ops/state');
 const { BigNumberUtil } = require('../util');
+const { TOKEN_INDEX_DB_FILE } = require('../constants');
 
 class TokenIndexStorage {
     constructor(data_dir) {
@@ -11,7 +12,7 @@ class TokenIndexStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
-        this.db_file_path = path.join(data_dir, 'index.sqlite');
+        this.db_file_path = path.join(data_dir, TOKEN_INDEX_DB_FILE);
         this.db = null;
         this.during_transaction = false;
     }

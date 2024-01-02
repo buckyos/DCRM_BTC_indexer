@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
 const { Util } = require('../util');
+const { ETH_INDEX_DB_FILE } = require('../constants');
 
 class ETHIndexStorage {
     constructor(data_dir) {
@@ -10,7 +11,7 @@ class ETHIndexStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
-        this.db_file_path = path.join(data_dir, 'eth_index.sqlite');
+        this.db_file_path = path.join(data_dir, ETH_INDEX_DB_FILE);
         this.db = null;
     }
 
@@ -96,8 +97,8 @@ class ETHIndexStorage {
     }
 
     /**
-     * 
-     * @param {number} block_height 
+     *
+     * @param {number} block_height
      * @returns {ret: number, timestamp: number}
      */
     async get_timestamp(block_height) {
@@ -128,8 +129,8 @@ class ETHIndexStorage {
 
     /**
      * get point for hash before block_height(include block_height)
-     * @param {number} block_height 
-     * @param {string} hash 
+     * @param {number} block_height
+     * @param {string} hash
      * @returns {ret: number, point: number}
      */
     async get_history_point(block_height, hash) {
@@ -163,7 +164,7 @@ class ETHIndexStorage {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof block_height === 'number',
-            `block_height should be number`,
+            `block_height should be number: ${block_height}`,
         );
         assert(block_height > 0, `block_height should be greater than 0`);
         assert(typeof hash === 'string', `hash should be string`);

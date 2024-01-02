@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
+const { TRANSFER_DB_FILE } = require('../constants');
 
 class InscriptionTransferStorage {
     constructor(data_dir) {
@@ -9,7 +10,7 @@ class InscriptionTransferStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
-        this.db_file_path = path.join(data_dir, 'transfer.sqlite');
+        this.db_file_path = path.join(data_dir, TRANSFER_DB_FILE);
         this.db = null;
     }
 
@@ -17,10 +18,15 @@ class InscriptionTransferStorage {
         assert(this.db == null, `InscriptionTransferStorage db should be null`);
 
         return new Promise((resolve, reject) => {
-            assert(this.db == null, `InscriptionTransferStorage db should be null`);
+            assert(
+                this.db == null,
+                `InscriptionTransferStorage db should be null`,
+            );
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
-                    console.error(`failed to connect to InscriptionTransferStorage sqlite: ${err}`);
+                    console.error(
+                        `failed to connect to InscriptionTransferStorage sqlite: ${err}`,
+                    );
                     resolve({ ret: -1 });
                     return;
                 }
@@ -79,7 +85,7 @@ class InscriptionTransferStorage {
         from_address,
         to_address,
         value,
-        index,  // index Indicates the number of transfers
+        index, // index Indicates the number of transfers
     ) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -99,8 +105,8 @@ class InscriptionTransferStorage {
             `block_height should be number: ${block_height}`,
         );
         assert(
-            from_address == null ||
-            typeof from_address === 'string', `from_address should be string: ${from_address} or null`,
+            from_address == null || typeof from_address === 'string',
+            `from_address should be string: ${from_address} or null`,
         );
         assert(
             typeof to_address === 'string',
@@ -112,7 +118,7 @@ class InscriptionTransferStorage {
         );
         assert(typeof value === 'number', `value should be number: ${value}`);
         assert(typeof index === 'number', `index should be number: ${index}`);
-        assert(index >= 0, `index should be >= 0: ${index}`)
+        assert(index >= 0, `index should be >= 0: ${index}`);
 
         return new Promise((resolve, reject) => {
             const sql = `

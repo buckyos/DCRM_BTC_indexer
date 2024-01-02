@@ -23,7 +23,7 @@ const INDEX_CONFIG = {
 
     eth: {
         rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
-        genesis_block_height: 100000,
+        genesis_block_height: 16757234,
         contract_address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
         contract_abi: 'contract.json',
     },
@@ -35,9 +35,6 @@ const INDEX_CONFIG = {
 
     db: {
         data_dir,
-        index_db_file: 'index.sqlite',
-        eth_db_file: 'eth_index.sqlite',
-        inscription_db_file: 'inscriptions.sqlite',
     },
 
     service: {

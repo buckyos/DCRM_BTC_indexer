@@ -1,3 +1,11 @@
+// sqlite db file name
+const STATE_DB_FILE = 'state.db';
+const TOKEN_INDEX_DB_FILE = 'index.db';
+const ETH_INDEX_DB_FILE = 'eth_index.db';
+const INSCRIPTION_DB_FILE = 'inscriptions.db';
+const TRANSFER_DB_FILE = 'transfer.db';
+
+
 const LUCKY_MINT_MAX_AMOUNT = '2100';
 const NORMAL_MINT_MAX_AMOUNT = '210';
 
@@ -10,6 +18,12 @@ const TOKEN_MINT_POOL_CHANGED_VIRTUAL_ADDRESS = '0x1';
 const TOKEN_DECIMAL = 18;
 
 module.exports = {
+    STATE_DB_FILE,
+    TOKEN_INDEX_DB_FILE,
+    ETH_INDEX_DB_FILE,
+    INSCRIPTION_DB_FILE,
+    TRANSFER_DB_FILE,
+
     LUCKY_MINT_MAX_AMOUNT,
     NORMAL_MINT_MAX_AMOUNT,
 

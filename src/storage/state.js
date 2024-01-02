@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
+const {STATE_DB_FILE} = require('../constants');
 
 // db to store global state
 class StateStorage {
@@ -10,7 +11,7 @@ class StateStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
-        this.db_file_path = path.join(data_dir, 'state.sqlite');
+        this.db_file_path = path.join(data_dir, STATE_DB_FILE);
         this.db = null;
     }
 
