@@ -15,7 +15,10 @@ const InscriptionOp = {
 class MintOp {
     constructor(amt, lucky) {
         assert(_.isString(amt), `amt should be string`);
-        assert(lucky == null || _.isString(lucky), `lucky should be string or null`);
+        assert(
+            lucky == null || _.isString(lucky),
+            `lucky should be string or null`,
+        );
 
         this.op = InscriptionOp.Mint;
         this.amt = amt;
@@ -51,7 +54,7 @@ class MintOp {
     }
 }
 
-class InscribeOp {
+class InscribeDataOp {
     constructor(ph, text, amt, price) {
         assert(_.isString(ph), `ph should be string`);
         assert(
@@ -68,6 +71,11 @@ class InscribeOp {
         this.price = price;
     }
 
+    /**
+     *
+     * @param {object} content
+     * @returns {{ret: number, valid: boolean, item: InscribeDataOp}}
+     */
     static parse_content(content) {
         assert(_.isObject(content), `inscribe content should be object`);
 
@@ -103,7 +111,7 @@ class InscribeOp {
             price = '0';
         }
 
-        const item = new InscribeOp(ph, text, amt, price);
+        const item = new InscribeDataOp(ph, text, amt, price);
         return { ret: 0, valid: true, item };
     }
 }
@@ -166,6 +174,11 @@ class SetPriceOp {
         this.price = price;
     }
 
+    /**
+     * 
+     * @param {object} content
+     * @returns {ret: number, valid: boolean, item: SetPriceOp}
+     */
     static parse_content(content) {
         assert(_.isObject(content), `setPrice content should be object`);
 
@@ -198,6 +211,11 @@ class ResonanceOp {
         this.amt = amt;
     }
 
+    /**
+     * 
+     * @param {object} content 
+     * @returns {ret: number, valid: boolean, item: ResonanceOp}
+     */
     static parse_content(content) {
         assert(_.isObject(content), `resonance content should be object`);
 
@@ -227,7 +245,7 @@ class InscriptionContentLoader {
      * @param {string} inscription_id
      * @param {string} content_type
      * @param {object} config
-     * @returns {Promise<{ret: number, valid: boolean, content: object, op: InscriptionOp}>}
+     * @returns {Promise<{ret: number, valid: boolean, content: object, op: object}>}
      */
     static async load_content(
         ord_client,
@@ -277,9 +295,9 @@ class InscriptionContentLoader {
         if (typeof data === 'string') {
             try {
                 content = JSON.parse(data);
-            } catch (e) {
+            } catch (err) {
                 console.debug(
-                    `invalid json format inscription content ${data}`,
+                    `invalid json format inscription content ${data}, ${err}`,
                 );
                 return {
                     ret: 0,
@@ -317,6 +335,13 @@ class InscriptionContentLoader {
         return { ret: 0, valid, content, op: item };
     }
 
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @param {object} content 
+     * @param {object} config 
+     * @returns {{ret: number, valid: boolean, item: object}}
+     */
     static _parse_content(inscription_id, content, config) {
         if (content.p == null) {
             return { ret: 0, valid: false };
@@ -336,12 +361,26 @@ class InscriptionContentLoader {
             if (content.tick !== config.token.token_name) {
                 return { ret: 0, valid: false };
             }
+        }
 
+        return this.parse_content_without_check(inscription_id, content);
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {object} content
+     * @returns {Promise<{ret: number, valid: boolean, item: object}>}
+     */
+    static parse_content_without_check(inscription_id, content) {
+        const p = content.p.toLowerCase();
+
+        if (p === 'brc-20') {
             if (content.op === 'mint') {
                 return MintOp.parse_content(content);
             } else if (content.op === 'transfer') {
                 if (content.call === 'pdi-inscribe') {
-                    return InscribeOp.parse_content(content);
+                    return InscribeDataOp.parse_content(content);
                 } else if (content.call === 'pdi-res') {
                     return ResonanceOp.parse_content(content);
                 }
@@ -358,7 +397,7 @@ class InscriptionContentLoader {
             }
         } else if (p === 'pdi') {
             if (p.op === 'inscribe') {
-                return InscribeOp.parse_content(content);
+                return InscribeDataOp.parse_content(content);
             } else if (p.op === 'chant') {
                 return ChantOp.parse_content(content);
             } else if (p.op === 'set') {
@@ -432,6 +471,20 @@ class InscriptionNewItem {
 }
 
 class InscriptionTransferItem {
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @param {number} inscription_number 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {SatPoint} satpoint 
+     * @param {string} from_address 
+     * @param {string} to_address 
+     * @param {number} value 
+     * @param {object} content 
+     * @param {object} op 
+     * @param {number} index
+     */
     constructor(
         inscription_id,
         inscription_number,
@@ -441,6 +494,8 @@ class InscriptionTransferItem {
         from_address,
         to_address,
         value,
+        content,
+        op,
         index, // index Indicates the number of transfers
     ) {
         assert(_.isString(inscription_id), `inscription_id should be string`);
@@ -451,8 +506,7 @@ class InscriptionTransferItem {
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(_.isNumber(timestamp), `timestamp should be number`);
         assert(
-            satpoint == null || _.isString(satpoint),
-            `satpoint should be string or null`,
+            satpoint instanceof SatPoint, `satpoint should be SatPoint`,
         );
         assert(
             from_address == null || _.isString(from_address),
@@ -463,6 +517,8 @@ class InscriptionTransferItem {
             `to_address should be string or null`,
         );
         assert(_.isNumber(value), `value should be number`);
+        assert(_.isObject(content), `content should be object`);
+        assert(_.isObject(op), `op should be object`);
         assert(_.isNumber(index), `index should be number`);
         assert(index >= 0, `index should be >= 0: ${index}`);
 
@@ -476,6 +532,9 @@ class InscriptionTransferItem {
         this.to_address = to_address;
         this.value = value;
 
+        this.content = content;
+        this.op = op;
+
         this.index = index;
     }
 
@@ -483,12 +542,9 @@ class InscriptionTransferItem {
      * @returns {string}
      */
     get txid() {
-        assert(_.isString(this.satpoint), `satpoint should be string`);
+        assert(this.satpoint instanceof SatPoint, `invalid satpoint`);
 
-        const { ret, satpoint } = SatPoint.parse(this.satpoint);
-        assert(ret === 0, `invalid satpoint: ${this.satpoint} on InscriptionTransferItem.txid`);
-
-        return satpoint.outpoint.txid;
+        return this.satpoint.outpoint.txid;
     }
 }
 
@@ -541,7 +597,7 @@ module.exports = {
     InscriptionContentLoader,
     TransferOp,
     MintOp,
-    InscribeOp,
+    InscribeDataOp,
     ChantOp,
     SetPriceOp,
     ResonanceOp,

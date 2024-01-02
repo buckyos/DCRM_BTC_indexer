@@ -85,7 +85,7 @@ class TransferOperator {
 
         if (inscription_item == null) {
             console.error(
-                `query transfer isncribe record but not found: ${inscription_transfer_item.inscription_id}`,
+                `query transfer inscribe record but not found: ${inscription_transfer_item.inscription_id}`,
             );
             return { ret: 0 };
         }   

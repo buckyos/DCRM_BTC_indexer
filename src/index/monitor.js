@@ -6,7 +6,8 @@ const { TxSimpleItem } = require('../btc/tx');
 const { OutPoint, SatPoint } = require('../btc/point');
 const { UTXOMemoryCache } = require('../btc/utxo');
 const { OrdClient } = require('../btc/ord');
-const { InscriptionTransferItem } = require('./item');
+const { InscriptionTransferItem, InscriptionContentLoader } = require('./item');
+const { InscriptionsStorage } = require('../storage/inscriptions');
 
 // inscription transfer record item
 class InscriptionTransferRecordItem {
@@ -24,7 +25,10 @@ class InscriptionTransferRecordItem {
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
-        assert(_.isString(satpoint), `invalid satpoint on InscriptionTransferRecordItem constructor`);
+        assert(
+            _.isString(satpoint),
+            `invalid satpoint on InscriptionTransferRecordItem constructor`,
+        );
         assert(
             from_address == null || _.isString(from_address),
             `invalid from_address`,
@@ -234,8 +238,14 @@ class InscriptionTransferMonitor {
             }
 
             const { ret, satpoint } = SatPoint.parse(item.satpoint);
-            assert(ret === 0, `invalid satpoint ${item.satpoint} on monitor.load_all`);
-            assert(satpoint != null, `invalid satpoint ${item.satpoint} on monitor.load_all`);
+            assert(
+                ret === 0,
+                `invalid satpoint ${item.satpoint} on monitor.load_all`,
+            );
+            assert(
+                satpoint != null,
+                `invalid satpoint ${item.satpoint} on monitor.load_all`,
+            );
 
             // index by outpoint
             const outpoint_str = satpoint.outpoint.to_string();
@@ -274,7 +284,10 @@ class InscriptionTransferMonitor {
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
         assert(_.isString(creator_address), `invalid creator address`);
-        assert(satpoint instanceof SatPoint, `invalid satpoint on add_new_inscription`);
+        assert(
+            satpoint instanceof SatPoint,
+            `invalid satpoint on add_new_inscription`,
+        );
         assert(_.isNumber(value), `invalid value`);
 
         const { ret } = await this._on_inscription_transfer(
@@ -360,9 +373,16 @@ class InscriptionTransferMonitor {
     /**
      *
      * @param {number} block_height
+     * @param {InscriptionsStorage} inscription_storage
      * @returns {Promise<{ret: number, transfer_items: Array<InscriptionTransferRecordItem>}>}
      */
-    async process_block(block_height) {
+    async process_block(block_height, inscription_storage) {
+        assert(_.isNumber(block_height), `invalid block_height`);
+        assert(
+            inscription_storage instanceof InscriptionsStorage,
+            `invalid inscription_storage`,
+        );
+
         const { ret, block } = await this.btc_client.get_block(block_height);
         if (ret !== 0) {
             console.error(`failed to get block ${block_height}`);
@@ -419,6 +439,42 @@ class InscriptionTransferMonitor {
                         return { ret };
                     }
 
+                    // load content from inscription storage
+                    const { ret: load_ret, data: inscription_data } =
+                        await inscription_storage.get_inscription(
+                            inscription.inscription_id,
+                        );
+                    if (load_ret !== 0) {
+                        console.error(
+                            `failed to load content ${inscription.inscription_id}`,
+                        );
+                        return { ret: load_ret };
+                    }
+
+                    // parse content without check, the content stored in db must be valid!
+                    assert(
+                        _.isString(inscription_data.content),
+                        `invalid content from inscription storage`,
+                    );
+                    const content = JSON.parse(inscription_data.content);
+                    const {
+                        ret: parse_content_ret,
+                        valid,
+                        item: op,
+                    } = InscriptionContentLoader.parse_content_without_check(
+                        inscription.inscription_id,
+                        content,
+                    );
+                    if (parse_content_ret !== 0) {
+                        console.error(
+                            `failed to parse content ${inscription.inscription_id} ${JSON.stringify(content)}`,
+                        );
+                        return { ret: parse_content_ret };
+                    }
+                    
+                    assert(valid);
+                    assert(_.isObject(op));
+
                     if (point != null) {
                         console.log(
                             `found inscription transfer ${
@@ -474,10 +530,12 @@ class InscriptionTransferMonitor {
                         inscription.inscription_number,
                         block_height,
                         block.time,
-                        point == null ? null : point.to_string(),
+                        point,
                         inscription.to_address,
                         address,
                         value == null ? 0 : value,
+                        content,
+                        op,
                         inscription.index + 1,
                     );
 
@@ -507,7 +565,10 @@ class InscriptionTransferMonitor {
             `invalid block_height ${block_height}`,
         );
         assert(_.isNumber(timestamp), `invalid timestamp ${timestamp}`);
-        assert(satpoint instanceof SatPoint, `invalid satpoint on monitor._on_inscription_transfer`);
+        assert(
+            satpoint instanceof SatPoint,
+            `invalid satpoint on monitor._on_inscription_transfer`,
+        );
         assert(
             from_address == null || _.isString(from_address),
             `invalid from_address`,

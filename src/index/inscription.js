@@ -263,6 +263,7 @@ class InscriptionIndex {
 
         const { ret, transfer_items } = await this.monitor.process_block(
             block_height,
+            this.inscription_storage,
         );
         if (ret !== 0) {
             console.error(`failed to process block transfers ${block_height}`);
