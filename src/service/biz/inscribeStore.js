@@ -1,5 +1,6 @@
 const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
+const { InscriptionOpState, InscriptionStage } = require('../../index/ops/state');
 
 class InscribeStore {
     constructor() {
@@ -118,18 +119,18 @@ class InscribeStore {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.RESONANCE} 
-                WHERE hash = ? AND state = 1`
+                WHERE hash = ? AND state = ?`
             );
-            const countResult = countStmt.get(hash);
+            const countResult = countStmt.get(hash, InscriptionOpState.OK);
             const count = countResult.count;
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.RESONANCE} 
-                    WHERE hash = ? AND state = 1
+                    WHERE hash = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
                 );
-                list = pageStmt.all(hash, limit, offset);
+                list = pageStmt.all(hash, InscriptionOpState.OK, limit, offset);
             }
 
             logger.debug('queryResonanceByHash:', hash, offset, limit, "ret:", count, list);
@@ -155,19 +156,19 @@ class InscribeStore {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.RESONANCE} 
-                WHERE address = ? AND state = 1`
+                WHERE address = ? AND state = ?`
             );
-            const countResult = countStmt.get(address);
+            const countResult = countStmt.get(address, InscriptionOpState.OK);
             const count = countResult.count;
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.RESONANCE} 
-                    WHERE address = ? AND state = 1
+                    WHERE address = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
                 );
-                list = pageStmt.all(address, limit, offset);
+                list = pageStmt.all(address, InscriptionOpState.OK, limit, offset);
             }
 
             logger.debug('queryResonanceByAddress:', address, offset, limit, "ret:", count, list);
@@ -194,19 +195,19 @@ class InscribeStore {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.CHANT} 
-                WHERE hash = ? AND state = 1`
+                WHERE hash = ? AND state = ?`
             );
-            const countResult = countStmt.get(hash);
+            const countResult = countStmt.get(hash, InscriptionOpState.OK);
             const count = countResult.count;
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.CHANT} 
-                    WHERE hash = ? AND state = 1 
+                    WHERE hash = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
                 );
-                list = pageStmt.all(hash, limit, offset);
+                list = pageStmt.all(hash, InscriptionOpState.OK, limit, offset);
             }
 
             logger.debug('queryChantByHash:', hash, offset, limit, "ret:", count, list);
@@ -233,19 +234,19 @@ class InscribeStore {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.CHANT} 
-                WHERE address = ? AND state = 1`
+                WHERE address = ? AND state = ?`
             );
-            const countResult = countStmt.get(address);
+            const countResult = countStmt.get(address, InscriptionOpState.OK);
             const count = countResult.count;
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.CHANT} 
-                    WHERE address = ? AND state = 1 
+                    WHERE address = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
                 );
-                list = pageStmt.all(address, limit, offset);
+                list = pageStmt.all(address, InscriptionOpState.OK, limit, offset);
             }
 
             logger.debug('queryChantByAddress:', address, offset, limit, "ret:", count, list);

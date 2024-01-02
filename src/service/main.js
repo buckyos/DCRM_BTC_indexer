@@ -7,7 +7,11 @@ const bodyParser = require('koa-bodyparser');
 const { InscribeService } = require('./biz/inscribeService');
 const { MintService } = require('./biz/mintService');
 const { ChainService } = require('./biz/chainService');
-const INDEX_CONFIG = require('../../config');
+const { config } = require('./config/config');
+const { store } = require('./biz/store');
+const path = require('path');
+const assert = require('assert');
+const fs = require('fs');
 
 class Service {
     constructor() {
@@ -30,7 +34,7 @@ class Service {
     }
 
     async start() {
-        const listenPort = INDEX_CONFIG.service.port;
+        const listenPort = config.servicePort;
 
         this._register();
 
@@ -53,6 +57,17 @@ class Service {
 }
 
 function main() {
+    const argv = process.argv;
+    let configPath = path.resolve(__dirname, '../../config/formal.js');
+    if (argv.length == 3 && argv[2] == '-test') {
+        configPath = path.resolve(__dirname, '../../config/test.js');
+    }
+
+    assert(fs.existsSync(configPath), `config file not found: ${configPath}`);
+
+    config.init(configPath);
+    store.init(config);
+
     const service = new Service();
     service.start();
 }

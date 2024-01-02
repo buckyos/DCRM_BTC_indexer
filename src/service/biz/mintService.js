@@ -66,6 +66,16 @@ class MintService {
         return this.m_store.queryTotalMintByTime(beginTime, endTime);
     }
 
+    async _getTotalMintByTime(ctx) {
+        const beginTime = ctx.params.begin_time;
+        const endTime = ctx.params.end_time;
+
+        return this.m_store.queryTotalMintByTime(
+            beginTime,
+            endTime == 0 || endTime == null ? Number.MAX_SAFE_INTEGER : endTime
+        );
+    }
+
     async _getBalanceByAddress(ctx) {
         const address = ctx.params.address;
 
@@ -109,6 +119,10 @@ class MintService {
 
         router.get("/mint_last_24", async (ctx) => {
             ctx.response.body = await this._getTotalMintLast24(ctx);
+        });
+
+        router.get("/total_mint/:begin_time/:end_time?", async (ctx) => {
+            ctx.response.body = await this._getTotalMintByTime(ctx);
         });
 
         router.get("/balance/:address", async (ctx) => {
