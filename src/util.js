@@ -218,6 +218,27 @@ class Util {
             `Hash is neither a hex string nor a base58 string ${hash_str}`,
         );
     }
+
+    /**
+     * 
+     * @param {string} mixhash 
+     * @returns {boolean}
+     */
+    static is_valid_mixhash(mixhash) {
+        assert(_.isString(mixhash), `mixhash should be string ${mixhash}`);
+
+        try {
+            const decoded = this.parse_hash_str(mixhash);
+            if (decoded.length !== 32) {
+                return false;
+            }
+
+        } catch (error) {
+            return false;
+        }
+        
+        return true;
+    }
     /**
      *
      * @param {string} mixhash
@@ -227,6 +248,11 @@ class Util {
         assert(_.isString(mixhash), `mixhash should be string ${mixhash}`);
 
         const decoded = this.parse_hash_str(mixhash);
+        if (decoded.length !== 32) {
+            throw new Error(
+                `Hash length is not 32 bytes long ${mixhash} ${decoded.length}`,
+            );
+        }
 
         // Create a DataView for the decoded hash
         const dataView = new DataView(decoded.buffer);

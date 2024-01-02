@@ -31,6 +31,18 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "test_token_index",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/test/test_token_index.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "main",
             "skipFiles": [
                 "<node_internals>/**"

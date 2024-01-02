@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { OrdClient } = require('../btc/ord');
 const { SatPoint } = require('../btc/point');
-const { BigNumberUtil } = require('../util');
+const { BigNumberUtil, Util } = require('../util');
 
 const InscriptionOp = {
     Mint: 'mint',
@@ -113,6 +113,11 @@ class InscribeDataOp {
             return { ret: 0, valid: false };
         }
 
+        if (!Util.is_valid_mixhash(ph)) {
+            console.error(`invalid inscribe content ph ${ph}`);
+            return { ret: 0, valid: false };
+        }
+
         // check text
         if (text != null) {
             if (!_.isString(text)) {
@@ -185,6 +190,11 @@ class ChantOp {
             return { ret: 0, valid: false };
         }
 
+        if (!Util.is_valid_mixhash(ph)) {
+            console.error(`invalid chant content ph ${ph}`);
+            return { ret: 0, valid: false };
+        }
+
         const item = new ChantOp(ph);
         return { ret: 0, valid: true, item };
     }
@@ -212,6 +222,11 @@ class SetPriceOp {
 
         // check ph
         if (!_.isString(ph)) {
+            console.error(`invalid setPrice content ph ${ph}`);
+            return { ret: 0, valid: false };
+        }
+
+        if (!Util.is_valid_mixhash(ph)) {
             console.error(`invalid setPrice content ph ${ph}`);
             return { ret: 0, valid: false };
         }
@@ -253,6 +268,11 @@ class ResonanceOp {
             return { ret: 0, valid: false };
         }
 
+        if (!Util.is_valid_mixhash(ph)) {
+            console.error(`invalid resonance content ph ${ph}`);
+            return { ret: 0, valid: false };
+        }
+        
         // check amt
         if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(`invalid resonance content amt ${amt}`);
@@ -350,7 +370,7 @@ class InscriptionContentLoader {
             ret: parse_ret,
             valid,
             item,
-        } = this._parse_content(inscription_id, content, config);
+        } = this.parse_content(inscription_id, content, config);
         if (parse_ret !== 0) {
             console.error(
                 `failed to parse content ${inscription_id} ${content}`,
@@ -368,7 +388,7 @@ class InscriptionContentLoader {
      * @param {object} config 
      * @returns {{ret: number, valid: boolean, item: object}}
      */
-    static _parse_content(inscription_id, content, config) {
+    static parse_content(inscription_id, content, config) {
         if (content.p == null) {
             return { ret: 0, valid: false };
         }
@@ -422,17 +442,17 @@ class InscriptionContentLoader {
                 );
             }
         } else if (p === 'pdi') {
-            if (p.op === 'inscribe') {
+            if (content.op === 'inscribe') {
                 return InscribeDataOp.parse_content(content);
-            } else if (p.op === 'chant') {
+            } else if (content.op === 'chant') {
                 return ChantOp.parse_content(content);
-            } else if (p.op === 'set') {
+            } else if (content.op === 'set') {
                 return SetPriceOp.parse_content(content);
-            } else if (p.op === 'res') {
+            } else if (content.op === 'res') {
                 return ResonanceOp.parse_content(content);
             } else {
                 console.warn(
-                    `unknown pdi op ${inscription_id} ${p.op} ${JSON.stringify(
+                    `unknown pdi op ${inscription_id} ${content.op} ${JSON.stringify(
                         content,
                     )}`,
                 );

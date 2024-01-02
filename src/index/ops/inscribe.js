@@ -139,7 +139,7 @@ class InscribeDataOperator {
      * @returns {Promise<{ret: number}>}
      */
     async on_inscribe(inscription_item) {
-        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+        assert(inscription_item instanceof InscriptionNewItem, `invalid inscription_item`);
 
         // first check if hash and amt field is exists
         const hash = inscription_item.content.ph;
@@ -194,6 +194,8 @@ class InscribeDataOperator {
                 inscription_item.commit_txid,
             )
         ) {
+            console.info(`hash and txid not match ${inscription_item.inscription_id} ${hash} ${inscription_item.commit_txid}`);
+
             // not match (hash - commit_txid) % 32 != 0, so this inscription will failed
             const op = new PendingInscribeOp(
                 inscription_item,
@@ -329,7 +331,7 @@ class InscribeDataOperator {
                 const { ret } = await this._inscribe(op);
                 if (ret !== 0) {
                     console.error(
-                        `failed to process pending inscribe op ${op.inscription_item.inscription_id}`,
+                        `failed to process pending inscribe data op ${op.inscription_item.inscription_id}`,
                     );
                     return { ret };
                 }
