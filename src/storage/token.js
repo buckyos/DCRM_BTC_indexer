@@ -21,10 +21,10 @@ class TokenIndexStorage {
      * @returns {ret: number}
      */
     async init() {
-        assert(this.db == null, `db should be null`);
+        assert(this.db == null, `TokenIndexStorage db should be null`);
 
         return new Promise((resolve, reject) => {
-            assert(this.db == null, `db should be null`);
+            assert(this.db == null, `TokenIndexStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
                     console.error(`failed to connect to sqlite: ${err}`);
@@ -455,7 +455,7 @@ class TokenIndexStorage {
             BigNumberUtil.is_positive_number_string(amount),
             `amount should be positive number string`,
         );
-        assert(typeof lucky === 'string', `lucky should be string`);
+        assert(lucky == null || typeof lucky === 'string', `lucky should be string or null`);
 
         return new Promise((resolve, reject) => {
             this.db.run(
@@ -1403,7 +1403,7 @@ class TokenIndexStorage {
         );
 
         return new Promise((resolve) => {
-            db.get(
+            this.db.get(
                 'SELECT amount FROM balance WHERE address = ?',
                 [address],
                 (err, row) => {
@@ -1412,12 +1412,13 @@ class TokenIndexStorage {
                             `Could not get balance for address ${address}, ${err}`,
                         );
                         resolve({ ret: -1 });
-                    } else if (row) {
+                    } else {
+                        const current_amount = row == null? '0': row.amount;
                         const new_amount = BigNumberUtil.add(
-                            row.amount,
+                            current_amount,
                             amount,
                         );
-                        db.run(
+                        this.db.run(
                             'UPDATE balance SET amount = ? WHERE address = ?',
                             [new_amount, address],
                             (err) => {
@@ -1428,17 +1429,12 @@ class TokenIndexStorage {
                                     resolve({ ret: -1 });
                                 } else {
                                     console.log(
-                                        `updated balance for address ${address} to ${new_amount}`,
+                                        `updated balance for address ${address} ${current_amount} -> ${new_amount}`,
                                     );
                                     resolve({ ret: 0 });
                                 }
                             },
                         );
-                    } else {
-                        console.error(
-                            `Could not find balance for address ${address}`,
-                        );
-                        resolve({ ret: -1 });
                     }
                 },
             );

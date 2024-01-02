@@ -18,13 +18,13 @@ class InscriptionsStorage {
      * @returns {ret: number}
      */
     async init() {
-        assert(this.db == null, `db should be null`);
+        assert(this.db == null, `InscriptionsStorage db should be null`);
 
         return new Promise((resolve, reject) => {
-            assert(this.db == null, `db should be null`);
+            assert(this.db == null, `InscriptionsStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
-                    console.error(`failed to connect to sqlite: ${err}`);
+                    console.error(`failed to connect to InscriptionsStorage sqlite: ${err}`);
                     resolve({ ret: -1 });
                     return;
                 }
@@ -55,9 +55,9 @@ class InscriptionsStorage {
 
                     creator TEXT,
                     owner TEXT,
-                    last_block_height INTEGER,  // last block height that this inscription transfered to new owner
+                    last_block_height INTEGER,  /* last block height that this inscription transfered to new owner */
 
-                    transfer_count INTEGER,
+                    transfer_count INTEGER
                 )`,
                     (err) => {
                         if (err) {
@@ -98,8 +98,13 @@ class InscriptionsStorage {
     }
 
     /**
-     *
-     * @param {InscriptionItem} item
+     * 
+     * @param {string} inscription_id 
+     * @param {string} inscription_number 
+     * @param {string} content 
+     * @param {string} op 
+     * @param {string} creator 
+     * @param {number} block_height 
      * @returns {ret: number}
      */
     async add_new_inscription(
@@ -190,7 +195,7 @@ class InscriptionsStorage {
                     transfer_count = transfer_count + 1
                 WHERE inscription_id = ? AND last_block_height < ?
             `;
-            
+
             this.db.run(
                 sql,
                 [new_owner, block_height, inscription_id, block_height],

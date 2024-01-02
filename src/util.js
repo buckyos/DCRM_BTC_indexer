@@ -346,6 +346,7 @@ const { TOKEN_DECIMAL } = require('./constants');
 
 class BigNumberUtil {
     constructor() {
+        console.log(`BigNumberUtil global init`);
         BigNumber.config({ DECIMAL_PLACES: TOKEN_DECIMAL });
     }
 
@@ -441,6 +442,8 @@ class BigNumberUtil {
         return true;
     }
 }
+
+new BigNumberUtil();
 
 module.exports = { Util, BigNumberUtil };
 

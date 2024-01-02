@@ -53,7 +53,7 @@ class SatPoint {
         
         const arr = satpoint_str.split(':');
         if (arr.length !== 3) {
-            console.error(`invalid satpoint ${satpoint_str}`);
+            console.error(`invalid satpoint ${satpoint_str} on parse`);
             return { ret: -1 };
         }
 

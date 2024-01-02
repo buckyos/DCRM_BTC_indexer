@@ -14,13 +14,13 @@ class InscriptionTransferStorage {
     }
 
     async init() {
-        assert(this.db == null, `db should be null`);
+        assert(this.db == null, `InscriptionTransferStorage db should be null`);
 
         return new Promise((resolve, reject) => {
-            assert(this.db == null, `db should be null`);
+            assert(this.db == null, `InscriptionTransferStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
-                    console.error(`failed to connect to sqlite: ${err}`);
+                    console.error(`failed to connect to InscriptionTransferStorage sqlite: ${err}`);
                     resolve({ ret: -1 });
                     return;
                 }
@@ -49,7 +49,7 @@ class InscriptionTransferStorage {
                         from_address TEXT,
                         to_address TEXT,
                         value INTEGER,
-                        index INTEGER DEFAULT 0,
+                        idx INTEGER DEFAULT 0,
                         PRIMARY KEY(inscription_id, timestamp)
                       );`,
                     (err) => {
@@ -125,7 +125,7 @@ class InscriptionTransferStorage {
                     from_address,
                     to_address, 
                     value,
-                    index
+                    idx
                 )
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;

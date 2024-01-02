@@ -24,7 +24,7 @@ class InscriptionTransferRecordItem {
         assert(_.isNumber(inscription_number), `invalid inscription_number`);
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
-        assert(_.isString(satpoint), `invalid satpoint`);
+        assert(_.isString(satpoint), `invalid satpoint on InscriptionTransferRecordItem constructor`);
         assert(
             from_address == null || _.isString(from_address),
             `invalid from_address`,
@@ -53,7 +53,7 @@ class InscriptionTransferRecordItem {
             record.satpoint,
             record.from_address,
             record.to_address,
-            record.index,
+            record.idx,
         );
     }
 
@@ -201,12 +201,6 @@ class InscriptionTransferMonitor {
      * @returns {Promise<{ret: number}>}
      */
     async init() {
-        const { ret } = await this.storage.init();
-        if (ret !== 0) {
-            console.error(`failed to init inscription transfer storage`);
-            return { ret };
-        }
-
         const { ret: load_ret } = await this.load_all();
         if (load_ret !== 0) {
             console.error(`failed to load all inscriptions`);
@@ -240,8 +234,8 @@ class InscriptionTransferMonitor {
             }
 
             const { ret, satpoint } = SatPoint.parse(item.satpoint);
-            assert(ret === 0, `invalid satpoint ${item.satpoint}`);
-            assert(satpoint != null, `invalid satpoint ${item.satpoint}`);
+            assert(ret === 0, `invalid satpoint ${item.satpoint} on monitor.load_all`);
+            assert(satpoint != null, `invalid satpoint ${item.satpoint} on monitor.load_all`);
 
             // index by outpoint
             const outpoint_str = satpoint.outpoint.to_string();
@@ -280,7 +274,7 @@ class InscriptionTransferMonitor {
         assert(_.isNumber(block_height), `invalid block_height`);
         assert(_.isNumber(timestamp), `invalid timestamp`);
         assert(_.isString(creator_address), `invalid creator address`);
-        assert(satpoint instanceof SatPoint, `invalid satpoint`);
+        assert(satpoint instanceof SatPoint, `invalid satpoint on add_new_inscription`);
         assert(_.isNumber(value), `invalid value`);
 
         const { ret } = await this._on_inscription_transfer(
@@ -409,7 +403,7 @@ class InscriptionTransferMonitor {
                     );
                     assert(
                         parse_ret === 0,
-                        `invalid satpoint ${inscription.satpoint}`,
+                        `invalid satpoint ${inscription.satpoint} on monitor.process_block`,
                     );
 
                     // calc next satpoint
@@ -513,7 +507,7 @@ class InscriptionTransferMonitor {
             `invalid block_height ${block_height}`,
         );
         assert(_.isNumber(timestamp), `invalid timestamp ${timestamp}`);
-        assert(satpoint instanceof SatPoint, `invalid satpoint`);
+        assert(satpoint instanceof SatPoint, `invalid satpoint on monitor._on_inscription_transfer`);
         assert(
             from_address == null || _.isString(from_address),
             `invalid from_address`,

@@ -1,18 +1,18 @@
 const assert = require('assert');
 const { BTCClient } = require('../btc/btc');
 const { OrdClient } = require('../btc/ord');
-const { InscriptionsStorage } = require('../storage/log');
 const { Util } = require('../util');
 const { TokenIndex } = require('./token');
 const { ETHIndex } = require('../eth/index');
-const { Util } = require('../util');
 const { InscriptionTransferMonitor } = require('./monitor');
+const { InscriptionsManager } = require('../storage/manager');
 const {
     InscriptionContentLoader,
     InscriptionNewItem,
     BlockInscriptonCollector,
 } = require('./item');
-
+const { StateStorage } = require('../storage/state');
+const { InscriptionStateStorage } = require('../storage/state');
 
 class InscriptionIndex {
     constructor(config) {
@@ -29,7 +29,7 @@ class InscriptionIndex {
         if (ret !== 0) {
             throw new Error(`failed to get data dir`);
         }
-        this.state_storage = new InscriptionStateStorage(dir);
+        this.state_storage = new StateStorage(dir);
 
         this.inscription_manager = new InscriptionsManager(config);
         this.inscription_storage = this.inscription_manager.inscription_storage;
@@ -144,10 +144,12 @@ class InscriptionIndex {
         );
 
         if (this.current_block_height >= height) {
-            console.assert(
-                this.current_block_height === height,
-                `invalid block height ${this.current_block_height} ${height}`,
-            );
+            if (
+                this.current_block_height > height
+            ) {
+                console.warn(`current block height ${this.current_block_height} > latest block height ${height}`);
+            }
+
             return { ret: 0 };
         }
 
@@ -345,6 +347,7 @@ class InscriptionIndex {
                 this.ord_client,
                 inscription_id,
                 inscription.content_type,
+                this.config,
             );
             if (load_ret !== 0) {
                 console.error(
@@ -359,8 +362,8 @@ class InscriptionIndex {
                 continue;
             }
 
-            assert(content != null, `invalid inscription content`);
-            assert(op != null, `invalid inscription op`);
+            assert(_.isObject(content), `invalid inscription content`);
+            assert(_.isObject(op), `invalid inscription op item`);
 
             // get creator address and satpoint info
             const {
@@ -411,9 +414,8 @@ class InscriptionIndex {
 
     // new inscription event
     /**
-     *
+     * @param {number} block_height
      * @param {InscriptionNewItem} inscription_new_item
-     * @param {object} op_item
      */
     async _on_new_inscription(block_height, inscription_new_item) {
         assert(block_height != null, `block_height should not be null`);
@@ -421,16 +423,16 @@ class InscriptionIndex {
             inscription_new_item instanceof InscriptionNewItem,
             `invalid inscription_new_item`,
         );
-        assert(_.isObject(op_item), `invalid op_item`);
-        assert(_.isString(op_item.op), `invalid op_item.op`);
+        assert(_.isObject(inscription_new_item), `invalid inscription_new_item`);
+        assert(_.isObject(inscription_new_item.op), `invalid inscription_new_item.op`);
 
         // first record new inscription
         const { ret: add_new_inscription_ret } =
             await this.inscription_storage.add_new_inscription(
                 inscription_new_item.inscription_id,
                 inscription_new_item.inscription_number,
-                inscription_new_item.content,
-                inscription_new_item.op,
+                JSON.stringify(inscription_new_item.content),
+                inscription_new_item.op.op,
                 inscription_new_item.address,
                 block_height,
             );
@@ -443,13 +445,13 @@ class InscriptionIndex {
 
         // then record inscription transfer and monitor it
         const { ret: add_ret } = await this.monitor.add_new_inscription(
-            inscription_id,
-            inscription.inscription_number,
+            inscription_new_item.inscription_id,
+            inscription_new_item.inscription_number,
             block_height,
-            inscription.timestamp,
-            creator_address,
-            creator_satpoint,
-            creator_value,
+            inscription_new_item.timestamp,
+            inscription_new_item.address,
+            inscription_new_item.satpoint,
+            inscription_new_item.value,
         );
         if (add_ret !== 0) {
             console.error(
@@ -469,7 +471,7 @@ class InscriptionIndex {
      */
     async _on_block_inscriptions_and_transfers(block_height, collector) {
         console.info(
-            `indexing inscriptions and transfers at block ${block_height} inscriptions count ${collector.new_inscriptions.length} transfers count ${collector.inscription_transfers.length}`,
+            `indexing inscriptions and transfers at block ${block_height} inscriptions count ${collector.new_inscriptions.length}, transfers count ${collector.inscription_transfers.length}`,
         );
 
         return await this.token_index.process_block_inscriptions(

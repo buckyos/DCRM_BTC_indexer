@@ -1,5 +1,6 @@
 const { InscriptionTransferStorage } = require('./transfer');
 const { InscriptionsStorage } = require('./inscriptions');
+const { Util } = require('../util');
 
 // inscriptions manager, manager all inscriptions and their transfers
 class InscriptionsManager {

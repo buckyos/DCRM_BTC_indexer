@@ -50,8 +50,8 @@ const INDEX_CONFIG = {
             foundation_address: '0x0',
         },
 
-        genesis_block_height: 2543000,
-        token_name: 'TTTT',
+        genesis_block_height: 779832,
+        token_name: 'ordi',
     }
 };
 

@@ -251,7 +251,7 @@ class TokenBlockIndex {
                     }
                 } else {
                     console.error(
-                        `unknown inscription op ${inscription_item.op.op}`,
+                        `unknown inscription op ${inscription_transfer_item.op.op}`,
                     );
                 }
             }
@@ -279,7 +279,7 @@ class TokenBlockIndex {
         } catch (error) {
             console.error(
                 `failed to process inscription at block ${this.block_height}`,
-                error,
+                error, error.stack,
             );
             is_failed = true;
             return { ret: -1 };

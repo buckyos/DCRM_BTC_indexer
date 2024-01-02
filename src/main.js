@@ -11,13 +11,14 @@ global._ = require('underscore');
 
 async function main() {
     // first load config
-    const config_path = path.resolve(__dirname, '../config.js');
+    const config_path = path.resolve(__dirname, '../config/formal.js');
     assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
     const config = new Config(config_path);
 
     // init log
     const log = new LogHelper(config.config);
     log.path_console();
+    log.enable_console_target(true);
 
     console.info("test log");
 

@@ -15,7 +15,7 @@ const InscriptionOp = {
 class MintOp {
     constructor(amt, lucky) {
         assert(_.isString(amt), `amt should be string`);
-        assert(_.isBoolean(lucky), `lucky should be boolean`);
+        assert(lucky == null || _.isString(lucky), `lucky should be string or null`);
 
         this.op = InscriptionOp.Mint;
         this.amt = amt;
@@ -25,7 +25,7 @@ class MintOp {
     static parse_content(content) {
         assert(_.isObject(content), `mint content should be object`);
 
-        const { amt, lucky } = obj;
+        const { amt, lucky } = content;
 
         // check amt
         if (!BigNumberUtil.is_positive_number_string(amt)) {
@@ -59,7 +59,6 @@ class InscribeOp {
             `text should be string or null`,
         );
         assert(_.isString(amt), `amt should be string`);
-
         assert(_.isString(price), `price should be string`);
 
         this.op = InscriptionOp.Inscribe;
@@ -100,6 +99,8 @@ class InscribeOp {
                 console.error(`invalid inscribe content price ${price}`);
                 return { ret: 0, valid: false };
             }
+        } else {
+            price = '0';
         }
 
         const item = new InscribeOp(ph, text, amt, price);
@@ -126,7 +127,7 @@ class TransferOp {
             return { ret: 0, valid: false };
         }
 
-        const item = new TransferOp(to, amt);
+        const item = new TransferOp(amt);
         return { ret: 0, valid: true, item };
     }
 }
@@ -225,15 +226,22 @@ class InscriptionContentLoader {
      * @param {OrdClient} ord_client
      * @param {string} inscription_id
      * @param {string} content_type
+     * @param {object} config
      * @returns {Promise<{ret: number, valid: boolean, content: object, op: InscriptionOp}>}
      */
-    static async load_content(ord_client, inscription_id, content_type) {
+    static async load_content(
+        ord_client,
+        inscription_id,
+        content_type,
+        config,
+    ) {
         assert(
             ord_client instanceof OrdClient,
             `ord_client should be OrdClient`,
         );
         assert(_.isString(inscription_id), `inscription_id should be string`);
         assert(_.isString(content_type), `content_type should be string`);
+        assert(_.isObject(config), `config should be object`);
 
         // check content type at first
         const valid_content_types = [
@@ -241,6 +249,7 @@ class InscriptionContentLoader {
             'text/plain',
             'application/json',
         ];
+
         if (
             content_type == null ||
             !valid_content_types.includes(content_type.toLowerCase())
@@ -255,7 +264,7 @@ class InscriptionContentLoader {
         }
 
         // fetch inscription content
-        const { ret, data } = await this.ord_client.get_content_by_inscription(
+        const { ret, data } = await ord_client.get_content_by_inscription(
             inscription_id,
         );
         if (ret !== 0) {
@@ -297,7 +306,7 @@ class InscriptionContentLoader {
             ret: parse_ret,
             valid,
             item,
-        } = this.parse_content(inscription_id, content);
+        } = this._parse_content(inscription_id, content, config);
         if (parse_ret !== 0) {
             console.error(
                 `failed to parse content ${inscription_id} ${content}`,
@@ -308,7 +317,7 @@ class InscriptionContentLoader {
         return { ret: 0, valid, content, op: item };
     }
 
-    parse_content(inscription_id, content) {
+    static _parse_content(inscription_id, content, config) {
         if (content.p == null) {
             return { ret: 0, valid: false };
         }
@@ -320,7 +329,11 @@ class InscriptionContentLoader {
         const p = content.p.toLowerCase();
         if (p === 'brc-20') {
             // first should check if token name is matched
-            if (content.tick !== this.config.token.token_name) {
+            assert(
+                _.isString(config.token.token_name),
+                `invalid config token name`,
+            );
+            if (content.tick !== config.token.token_name) {
                 return { ret: 0, valid: false };
             }
 
@@ -335,10 +348,12 @@ class InscriptionContentLoader {
 
                 return TransferOp.parse_content(content);
             } else if (content.op === 'deploy') {
-                // TODO: check if deployer is matched
+                // TODO: check if deploy inscription is matched
             } else {
                 console.error(
-                    `unknown brc-20 op ${p.op} ${JSON.stringify(content)}`,
+                    `unknown brc-20 op ${inscription_id} ${
+                        p.op
+                    } ${JSON.stringify(content)}`,
                 );
             }
         } else if (p === 'pdi') {
@@ -352,7 +367,9 @@ class InscriptionContentLoader {
                 return ResonanceOp.parse_content(content);
             } else {
                 console.error(
-                    `unknown pdi op ${p.op} ${JSON.stringify(content)}`,
+                    `unknown pdi op ${inscription_id} ${p.op} ${JSON.stringify(
+                        content,
+                    )}`,
                 );
             }
         }
@@ -369,7 +386,7 @@ class InscriptionNewItem {
      * @param {number} block_height
      * @param {number} timestamp
      * @param {string} address // the creator address
-     * @param {string} satpoint
+     * @param {SatPoint} satpoint
      * @param {number} value
      * @param {object} content
      * @param {object} op
@@ -389,6 +406,7 @@ class InscriptionNewItem {
     ) {
         assert(_.isObject(content), `content should be object`);
         assert(_.isObject(op), `op should be object`);
+        assert(satpoint instanceof SatPoint, `satpoint should be SatPoint`);
         assert(_.isString(commit_txid), `commit_txid should be string`);
 
         this.inscription_id = inscription_id;
@@ -407,12 +425,9 @@ class InscriptionNewItem {
      * @returns {string}
      */
     get txid() {
-        assert(_.isString(this.satpoint), `satpoint should be string`);
+        assert(_.isObject(this.satpoint), `satpoint should be string`);
 
-        const { ret, satpoint } = SatPoint.parse(this.satpoint);
-        assert(ret === 0, `invalid satpoint: ${this.satpoint}`);
-
-        return satpoint.outpoint.txid;
+        return this.satpoint.outpoint.txid;
     }
 }
 
@@ -471,7 +486,7 @@ class InscriptionTransferItem {
         assert(_.isString(this.satpoint), `satpoint should be string`);
 
         const { ret, satpoint } = SatPoint.parse(this.satpoint);
-        assert(ret === 0, `invalid satpoint: ${this.satpoint}`);
+        assert(ret === 0, `invalid satpoint: ${this.satpoint} on InscriptionTransferItem.txid`);
 
         return satpoint.outpoint.txid;
     }

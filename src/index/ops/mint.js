@@ -22,7 +22,7 @@ class MintOperator {
     {"p":"brc-20","op":"mint","tick":"DMC ","amt":"2100","lucky":"dmc-discord"}
     */
     async on_mint(inscription_item) {
-        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+        assert(inscription_item instanceof InscriptionNewItem, `invalid inscription_item on_mint`);
 
         // check amt is exists and is number
         const content = inscription_item.content;
@@ -55,7 +55,7 @@ class MintOperator {
             this._is_lucky_block_mint(inscription_item)
         ) {
             console.log(
-                `lucky mint ${inscription_item.inscription_id} ${address} ${content.lucky}`,
+                `lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.lucky}`,
             );
 
             // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT
@@ -75,7 +75,7 @@ class MintOperator {
             }
         } else {
             console.log(
-                `mint ${inscription_item.inscription_id} ${address} ${content.amount}`,
+                `mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.amount}`,
             );
 
             // if content.amt > constants.NORMAL_MINT_MAX_AMOUNT
@@ -86,9 +86,9 @@ class MintOperator {
                 ) > 0
             ) {
                 console.warn(
-                    `mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
+                    `mint amount is too large ${inscription_item.inscription_id} ${inscription_item.address} ${content.amt}`,
                 );
-                content.origin_amt = amt;
+                
                 amt = constants.NORMAL_MINT_MAX_AMOUNT;
             } else {
                 amt = content.amt;

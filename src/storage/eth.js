@@ -19,10 +19,10 @@ class ETHIndexStorage {
      * @returns {ret: number}
      */
     async init() {
-        assert(this.db == null, `db should be null`);
+        assert(this.db == null, `ETHIndexStorage db should be null`);
 
         return new Promise((resolve, reject) => {
-            assert(this.db == null, `db should be null`);
+            assert(this.db == null, `ETHIndexStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
                     console.error(`failed to connect to sqlite: ${err}`);

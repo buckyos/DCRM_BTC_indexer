@@ -53,7 +53,7 @@ class TxSimpleItem {
      * point is SatPoint, is null if not found
      */
     async calc_next_satpoint(satpoint, utxo_cache) {
-        assert(satpoint instanceof SatPoint, `invalid satpoint`);
+        assert(satpoint instanceof SatPoint, `invalid satpoint on calc_next_satpoint`);
 
         const index = this.vin.indexOf(satpoint.outpoint.to_string());
         if (index < 0) {

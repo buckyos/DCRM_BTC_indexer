@@ -8,7 +8,7 @@ const { assert } = require('console');
 class TxCache {
     constructor() {
         this.cache = new LRUCache({
-            max: 1024 * 512,
+            max: 1024 * 10,
             maxAge: 1000 * 60 * 60 * 24,
         });
     }
