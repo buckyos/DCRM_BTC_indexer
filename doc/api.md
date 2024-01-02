@@ -20,7 +20,7 @@
             block_height,       // 创建区块高度
             timestamp,          // 创建时间
             text,               // 创建时写入的text
-            price,              // 当前共鸣价格
+            price,              // 当前共鸣价格 string
             resonance_count     // 当前共鸣次数
         }
     }
@@ -131,10 +131,16 @@
                     hash,               // 数据hash
                     inscription_id,     // 铭文id
                     address,            // 共鸣地址
-                    owner_bouns,        // 数据owner奖励
-                    service_charge,     // 手续费
+                    content,            // 铭文内容
+                    owner_bouns,        // 数据owner奖励 string
+                    service_charge,     // 手续费 string
                     block_height,       // 共鸣区块
                     timestamp,          // 共鸣时间
+                    txid,               // transfer txid
+                    stage,              // 共鸣处于哪个阶段 'inscribe' or 'transfer'
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
                 }
             ]
         }
@@ -198,11 +204,12 @@
                 {
                     hash,               // 数据hash
                     inscription_id,     // 铭文id
+                    content,            // 铭文内容
                     address,            // 吟唱发起人地址
                     block_height,       // 吟唱区块
                     timestamp,
-                    user_bouns,         // 吟唱人奖励
-                    owner_bouns,        // 数据owner奖励
+                    user_bouns,         // 吟唱人奖励 string
+                    owner_bouns,        // 数据owner奖励 string
                 }
             ]
         }
@@ -265,10 +272,11 @@
             list: [
                 {
                     inscription_id,     // mint id
+                    content,            // 铭文内容
                     block_height,       // mint区块
                     timestamp,          // 时间
                     address,            // mint地址
-                    amount,             // mint金额
+                    amount,             // mint金额 string
                     lucky               // 幸运字串
                 }
             ]
@@ -298,7 +306,7 @@
         msg: "错误信息",
         result: {
             count,              // 总数
-            list                // 列表，item数据格式同上
+            list                // 列表，item数据格式同上，再加上 txid
         }
     }
     ```
@@ -315,7 +323,7 @@
     {
         err: 0,
         msg: "错误信息",
-        result: totalAmount
+        result: totalAmount     // string
     }
     ```
     
@@ -335,7 +343,7 @@
     {
         err: 0,
         msg: "错误信息",
-        result: balance
+        result: balance     // string
     }
     ```
 
@@ -352,8 +360,8 @@
         err: 0,
         msg: "错误信息",
         result: {
-            eth_height,         // 已处理的eth的高度
-            btc_height          // 已处理的btc的高度
+            eth_height,         // 已处理的eth的高度 int
+            btc_height          // 已处理的btc的高度 int
         }
     }
     ```
@@ -392,10 +400,10 @@
         err: 0,
         msg: "错误信息",
         result: {
-            mint,               // mint部分
-            chant_bouns,        // 吟唱奖励
-            chanted_bouns,      // 被他人吟唱的奖励
-            resonance_bouns     // 数据被共鸣的奖励
+            mint,               // mint部分 string
+            chant_bouns,        // 吟唱奖励 string
+            chanted_bouns,      // 被他人吟唱的奖励 string
+            resonance_bouns     // 数据被共鸣的奖励 string
         }
     }
     ```
