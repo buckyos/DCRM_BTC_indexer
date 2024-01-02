@@ -1,13 +1,13 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const { STATE_DB_FILE, TOKEN_INDEX_DB_FILE } = require('../../constants');
 
 class Store {
     constructor() {
         this.m_dataDir = null;
 
         this.m_indexDB = null;
-        this.m_ethDB = null;
-        this.m_inscriptionDB = null;
+        this.m_stateDB = null;
 
         this.m_inited = false;
     }
@@ -26,16 +26,11 @@ class Store {
             //fileMustExist: true,
         }
 
-        const dbConfig = config.dbConfig;
-
-        const indexDBPath = path.join(this.m_dataDir, dbConfig.index_db_file);
+        const indexDBPath = path.join(this.m_dataDir, TOKEN_INDEX_DB_FILE);
         this.m_indexDB = new Database(indexDBPath, option);
 
-        const ethDBPath = path.join(this.m_dataDir, dbConfig.eth_db_file);
-        this.m_ethDB = new Database(ethDBPath, option);
-
-        const inscriptionDBPath = path.join(this.m_dataDir, dbConfig.inscription_db_file);
-        this.m_inscriptionDB = new Database(inscriptionDBPath, option);
+        const stateDBPath = path.join(this.m_dataDir, STATE_DB_FILE);
+        this.m_stateDB = new Database(stateDBPath, option);
 
         logger.info('init db success');
 
@@ -46,12 +41,8 @@ class Store {
         return this.m_indexDB;
     }
 
-    get ethDB() {
-        return this.m_ethDB;
-    }
-
-    get inscriptionDB() {
-        return this.m_inscriptionDB;
+    get stateDB() {
+        return this.m_stateDB;
     }
 }
 

@@ -160,16 +160,16 @@ class MintStore {
 
     queryIndexerState() {
         try {
-            const ethStmt = store.ethDB.prepare(
+            const ethStmt = store.stateDB.prepare(
                 `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`
             );
-            const ethRet = ethStmt.get('latest_block_height');
+            const ethRet = ethStmt.get('eth_latest_block_height');
             const ethHeight = ethRet.value;
 
-            const btcStmt = store.inscriptionDB.prepare(
+            const btcStmt = store.stateDB.prepare(
                 `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`
             );
-            const btcRet = btcStmt.get('latest_block_height');
+            const btcRet = btcStmt.get('btc_latest_block_height');
             const btcHeight = btcRet.value;
 
             const ret = {
