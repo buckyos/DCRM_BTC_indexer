@@ -167,7 +167,7 @@ class TransferOperator {
 
         // 1. check if the address is the same as the output address
         if (inscription_item.from_address === inscription_item.to_address) {
-            console.log(
+            console.warn(
                 `ignore transfer to self ${inscription_item.inscription_id} ${inscription_item.to_address}`,
             );
             return { ret: 0, state: 0 };
@@ -186,8 +186,8 @@ class TransferOperator {
         assert(_.isString(balance), `balance should be string ${balance}`);
 
         if (BigNumberUtil.compare(balance, content.amt) < 0) {
-            console.error(
-                `not enough balance ${inscription_item.inscription_id} ${inscription_item.from_address} ${balance} < ${content.amt}`,
+            console.warn(
+                `not enough balance ${inscription_item.inscription_id} ${inscription_item.from_address} -> ${inscription_item.to_address} ${balance} < ${content.amt}`,
             );
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
@@ -205,8 +205,8 @@ class TransferOperator {
             return { ret };
         }
 
-        console.log(
-            `transfer ${inscription_item.inscription_id} ${inscription_item.from_address} -> ${inscription_item.to_address} ${content.amt}}`,
+        console.info(
+            `transfer ${inscription_item.inscription_id} ${inscription_item.from_address} -> ${inscription_item.to_address} ${content.amt}`,
         );
 
         return { ret: 0, state: InscriptionOpState.OK };

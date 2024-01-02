@@ -194,7 +194,7 @@ class InscriptionsStorage {
                 SET owner = ?,
                     last_block_height = ?,
                     transfer_count = transfer_count + 1
-                WHERE inscription_id = ? AND last_block_height < ?
+                WHERE inscription_id = ? AND last_block_height <= ?
             `;
 
             this.db.run(

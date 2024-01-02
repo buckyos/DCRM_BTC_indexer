@@ -453,6 +453,7 @@ class InscriptionIndex {
             inscription_new_item.address,
             inscription_new_item.satpoint,
             inscription_new_item.value,
+            inscription_new_item.op.op,
         );
         if (add_ret !== 0) {
             console.error(

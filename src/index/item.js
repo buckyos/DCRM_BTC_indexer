@@ -10,7 +10,33 @@ const InscriptionOp = {
     Chant: 'chant',
     SetPrice: 'setPrice',
     Resonance: 'resonance',
+
+    /**
+     * 
+     * @param {string} op 
+     * @returns {boolean}
+     */
+    contains: (op) => {
+        return Object.values(InscriptionOp).includes(op);
+    },
+
+    /**
+     * 
+     * @param {string} op 
+     * @returns {boolean}
+     */
+    need_track_transfer: (op) => {
+        switch (op) {
+            case InscriptionOp.Transfer:
+            case InscriptionOp.Inscribe:
+            case InscriptionOp.Resonance:
+                return true;
+            default:
+                return false;
+        }
+    },
 };
+
 
 class MintOp {
     constructor(amt, lucky) {
@@ -389,7 +415,7 @@ class InscriptionContentLoader {
             } else if (content.op === 'deploy') {
                 // TODO: check if deploy inscription is matched
             } else {
-                console.error(
+                console.warn(
                     `unknown brc-20 op ${inscription_id} ${
                         p.op
                     } ${JSON.stringify(content)}`,
@@ -405,7 +431,7 @@ class InscriptionContentLoader {
             } else if (p.op === 'res') {
                 return ResonanceOp.parse_content(content);
             } else {
-                console.error(
+                console.warn(
                     `unknown pdi op ${inscription_id} ${p.op} ${JSON.stringify(
                         content,
                     )}`,

@@ -2,6 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
 const { TRANSFER_DB_FILE } = require('../constants');
+const { InscriptionOp } = require('../index/item');
+
 
 class InscriptionTransferStorage {
     constructor(data_dir) {
@@ -56,6 +58,7 @@ class InscriptionTransferStorage {
                         to_address TEXT,
                         value INTEGER,
                         idx INTEGER DEFAULT 0,
+                        op TEXT,
                         PRIMARY KEY(inscription_id, timestamp)
                       );`,
                     (err) => {
@@ -76,6 +79,20 @@ class InscriptionTransferStorage {
         });
     }
 
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @param {string} inscription_number 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {string} satpoint 
+     * @param {string | null} from_address 
+     * @param {string} to_address 
+     * @param {number} value 
+     * @param {number} index 
+     * @param {InscriptionOp} op 
+     * @returns {Promise<{ret: number}>}
+     */
     async insert_transfer(
         inscription_id,
         inscription_number,
@@ -86,6 +103,7 @@ class InscriptionTransferStorage {
         to_address,
         value,
         index, // index Indicates the number of transfers
+        op, // op Indicates the operation type
     ) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -119,6 +137,7 @@ class InscriptionTransferStorage {
         assert(typeof value === 'number', `value should be number: ${value}`);
         assert(typeof index === 'number', `index should be number: ${index}`);
         assert(index >= 0, `index should be >= 0: ${index}`);
+        assert(InscriptionOp.contains(op), `op should be valid: ${op}`);
 
         return new Promise((resolve, reject) => {
             const sql = `
@@ -131,9 +150,10 @@ class InscriptionTransferStorage {
                     from_address,
                     to_address, 
                     value,
-                    idx
+                    idx,
+                    op
                 )
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             this.db.run(
@@ -148,6 +168,7 @@ class InscriptionTransferStorage {
                     to_address,
                     value,
                     index,
+                    op,
                 ],
                 function (err) {
                     if (err) {
@@ -166,6 +187,11 @@ class InscriptionTransferStorage {
         });
     }
 
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @returns {Promise<{ret: number, data: object}>}
+     */
     async get_all_transfer(inscription_id) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -255,7 +281,7 @@ class InscriptionTransferStorage {
 
     /**
      *
-     * @returns {Promise<{ret: number, data: object}>}
+     * @returns {Promise<{ret: number, data: Array<object>}>}
      */
     get_all_inscriptions_with_last_transfer() {
         assert(this.db != null, `db should not be null`);
@@ -269,6 +295,7 @@ class InscriptionTransferStorage {
                 GROUP BY inscription_id
                 ) it2
                 ON it1.inscription_id = it2.inscription_id AND it1.timestamp = it2.max_timestamp
+                WHERE ((it1.op = 'transfer' OR it1.op = 'resonance') AND it1.idx = 0) OR it1.op = 'inscribe'
             `;
 
             this.db.all(sql, [], (err, rows) => {
