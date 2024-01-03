@@ -49,12 +49,16 @@ class Store {
 const store = new Store();
 
 const TABLE_NAME = {
-    INSCRIBE: "inscribe_data",
-    RESONANCE: "resonance_records",
-    CHANT: "chant_records",
-    MINT: "mint_records",
+    INSCRIBE_DATA: "inscribe_data",
     BALANCE: "balance",
     STATE: 'state',
+
+    RESONANCE_RECORDS: "resonance_records",
+    CHANT_RECORDS: "chant_records",
+    MINT_RECORDS: "mint_records",
+    INSCRIBE_RECORDS: "inscribe_records",
+    TRANSFER_RECORDS: "transfer_records",
+    SET_PRICE_RECORDS: "set_price_records",
 };
 
 module.exports = {

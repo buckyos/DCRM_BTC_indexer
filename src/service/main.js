@@ -7,6 +7,7 @@ const bodyParser = require('koa-bodyparser');
 const { InscribeService } = require('./biz/inscribeService');
 const { MintService } = require('./biz/mintService');
 const { ChainService } = require('./biz/chainService');
+const { SearchService } = require('./biz/searchService');
 const { config } = require('./config/config');
 const { store } = require('./biz/store');
 const path = require('path');
@@ -31,6 +32,9 @@ class Service {
 
         const chainService = new ChainService();
         chainService.registerRouter(this.m_router);
+
+        const searchService = new SearchService();
+        searchService.registerRouter(this.m_router);
     }
 
     async start() {

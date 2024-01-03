@@ -13,7 +13,7 @@ class InscribeStore {
         }
 
         try {
-            const stmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE hash = ?`);
+            const stmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash = ?`);
             const ret = stmt.get(hash);
 
             logger.debug('queryInscriptionByHash:', hash, "ret:", ret);
@@ -40,12 +40,12 @@ class InscribeStore {
         order = order == "ASC" ? "ASC" : "DESC";
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE} WHERE address = ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE address = ?`);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE address = ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -70,12 +70,12 @@ class InscribeStore {
         order = order == "ASC" ? "ASC" : "DESC";
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE} WHERE block_height >= ? AND block_height < ?`);
+            const countStmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE block_height >= ? AND block_height < ?`);
             const countResult = countStmt.get(beginBlock, endBlock);
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE} WHERE block_height >= ? AND block_height < ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE block_height >= ? AND block_height < ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(beginBlock, endBlock, limit, offset);
             }
 
@@ -92,7 +92,7 @@ class InscribeStore {
 
     queryInscriptionCount() {
         try {
-            const stmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE}`);
+            const stmt = store.indexDB.prepare(`SELECT COUNT(*) AS count FROM ${TABLE_NAME.INSCRIBE_DATA}`);
             const ret = stmt.get();
             const count = ret.count;
 
@@ -118,14 +118,14 @@ class InscribeStore {
             let list = [];
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.RESONANCE} 
+                FROM ${TABLE_NAME.RESONANCE_RECORDS} 
                 WHERE hash = ? AND state = ?`
             );
             const countResult = countStmt.get(hash, InscriptionOpState.OK);
             const count = countResult.count;
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
-                    `SELECT * FROM ${TABLE_NAME.RESONANCE} 
+                    `SELECT * FROM ${TABLE_NAME.RESONANCE_RECORDS} 
                     WHERE hash = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
@@ -155,7 +155,7 @@ class InscribeStore {
             let list = [];
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.RESONANCE} 
+                FROM ${TABLE_NAME.RESONANCE_RECORDS} 
                 WHERE address = ? AND state = ?`
             );
             const countResult = countStmt.get(address, InscriptionOpState.OK);
@@ -163,7 +163,7 @@ class InscribeStore {
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
-                    `SELECT * FROM ${TABLE_NAME.RESONANCE} 
+                    `SELECT * FROM ${TABLE_NAME.RESONANCE_RECORDS} 
                     WHERE address = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
@@ -194,7 +194,7 @@ class InscribeStore {
             let list = [];
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.CHANT} 
+                FROM ${TABLE_NAME.CHANT_RECORDS} 
                 WHERE hash = ? AND state = ?`
             );
             const countResult = countStmt.get(hash, InscriptionOpState.OK);
@@ -202,7 +202,7 @@ class InscribeStore {
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
-                    `SELECT * FROM ${TABLE_NAME.CHANT} 
+                    `SELECT * FROM ${TABLE_NAME.CHANT_RECORDS} 
                     WHERE hash = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
@@ -233,7 +233,7 @@ class InscribeStore {
             let list = [];
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.CHANT} 
+                FROM ${TABLE_NAME.CHANT_RECORDS} 
                 WHERE address = ? AND state = ?`
             );
             const countResult = countStmt.get(address, InscriptionOpState.OK);
@@ -241,7 +241,7 @@ class InscribeStore {
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
-                    `SELECT * FROM ${TABLE_NAME.CHANT} 
+                    `SELECT * FROM ${TABLE_NAME.CHANT_RECORDS} 
                     WHERE address = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`

@@ -407,3 +407,26 @@
         }
     }
     ```
+
+16. 根据txid搜索：
+
+    /search/:txid
+
+    GET
+
+    参数
+
+    txid: 交易id
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            type,               // mint or resonance or chant or transfer or inscribe or set_price
+            ...                 // 其他数据参考上面对应数据
+        }
+    }
+    ```

@@ -1,7 +1,7 @@
 const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../index/ops/state');
-const { BigNumberUtil, Util } = require('../../util');
+const { BigNumberUtil } = require('../../util');
 
 class MintStore {
     constructor() {
@@ -30,14 +30,14 @@ class MintStore {
         try {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.MINT} WHERE address = ?`
+                FROM ${TABLE_NAME.MINT_RECORDS} WHERE address = ?`
             );
             const countResult = countStmt.get(address);
             count = countResult.count;
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
-                    `SELECT * FROM ${TABLE_NAME.MINT} 
+                    `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} 
                     WHERE address = ? 
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
@@ -64,7 +64,7 @@ class MintStore {
         try {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.MINT} 
+                FROM ${TABLE_NAME.MINT_RECORDS} 
                 WHERE lucky is not null`
             );
             const countResult = countStmt.get();
@@ -72,21 +72,12 @@ class MintStore {
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
-                    `SELECT * FROM ${TABLE_NAME.MINT} 
+                    `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} 
                     WHERE lucky is not null 
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`
                 );
                 list = pageStmt.all(limit, offset);
-            }
-            for (const item of list) {
-                if (item.inscription_id) {
-                    const { ret, txid, index } = Util.parse_inscription_id(item.inscription_id);
-                    if (ret == 0) {
-                        item.txid = txid;
-                        item.index = index;
-                    }
-                }
             }
 
             logger.debug('queryLuckyMintRecord:', offset, limit, "ret:", count, list);
@@ -108,7 +99,7 @@ class MintStore {
         try {
             const stmt = store.indexDB.prepare(
                 `SELECT amount
-                FROM ${TABLE_NAME.MINT} 
+                FROM ${TABLE_NAME.MINT_RECORDS} 
                 WHERE timestamp >= ? AND timestamp < ?`
             );
             const ret = stmt.all(beginTime, endTime);
@@ -198,7 +189,7 @@ class MintStore {
             };
             let stmt = store.indexDB.prepare(
                 `SELECT amount
-                FROM ${TABLE_NAME.MINT} 
+                FROM ${TABLE_NAME.MINT_RECORDS} 
                 WHERE address = ? AND timestamp >= ? AND timestamp < ?`
             );
             let ret = stmt.all(address, beginTime, endTime);
@@ -210,8 +201,8 @@ class MintStore {
 
             stmt = store.indexDB.prepare(
                 `SELECT i.hash, r.owner_bouns
-                FROM ${TABLE_NAME.INSCRIBE} i
-                JOIN ${TABLE_NAME.RESONANCE} r ON i.hash = r.hash
+                FROM ${TABLE_NAME.INSCRIBE_DATA} i
+                JOIN ${TABLE_NAME.RESONANCE_RECORDS} r ON i.hash = r.hash
                 WHERE i.address = ? AND r.timestamp >= ? AND r.timestamp < ? AND r.state = ?`
             );
             ret = stmt.all(address, beginTime, endTime, InscriptionOpState.OK);
@@ -223,8 +214,8 @@ class MintStore {
 
             stmt = store.indexDB.prepare(
                 `SELECT i.hash, c.owner_bouns
-                FROM ${TABLE_NAME.INSCRIBE} i
-                JOIN  ${TABLE_NAME.CHANT} c ON i.hash = c.hash
+                FROM ${TABLE_NAME.INSCRIBE_DATA} i
+                JOIN  ${TABLE_NAME.CHANT_RECORDS} c ON i.hash = c.hash
                 WHERE i.address = ? AND c.timestamp >= ? AND c.timestamp < ? AND c.state = ?`
             );
             ret = stmt.all(address, beginTime, endTime, InscriptionOpState.OK);
@@ -236,7 +227,7 @@ class MintStore {
 
             stmt = store.indexDB.prepare(
                 `SELECT user_bouns
-                FROM ${TABLE_NAME.CHANT}
+                FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE address = ? AND timestamp >= ? AND timestamp < ? AND state = ?`
             );
             ret = stmt.all(address, beginTime, endTime, InscriptionOpState.OK);
