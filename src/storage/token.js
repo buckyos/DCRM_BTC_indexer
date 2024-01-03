@@ -1747,6 +1747,12 @@ class TokenIndexStorage {
      * @returns {ret: number}
      */
     async update_pool_balance_on_ops(op, amount) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            BigNumberUtil.is_positive_number_string(amount),
+            `amount should be >= 0 number string: ${amount}`,
+        );
+
         switch (op) {
             case UpdatePoolBalanceOp.Mint:
                 {

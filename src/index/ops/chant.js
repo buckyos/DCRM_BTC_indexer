@@ -1,9 +1,10 @@
 const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
-const { TokenIndexStorage } = require('../../storage/token');
+const { TokenIndexStorage, UpdatePoolBalanceOp } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem } = require('../item');
+const { TOKEN_MINT_POOL_VIRTUAL_ADDRESS } = require('../../constants');
 
 
 class ChantOperator {
@@ -183,10 +184,10 @@ class ChantOperator {
         }
         this.user_chant_ops.set(inscription_item.address, inscription_item);
 
-        // 5. check Mint pool balance
+        // 5. check Mint pool left balance
         const { ret: get_mint_pool_ret, amount: mint_pool_balance } =
             await this.storage.get_balance(
-                this.config.token.account.mint_pool_address,
+                TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
             );
         
         if (get_mint_pool_ret !== 0) {
@@ -198,12 +199,20 @@ class ChantOperator {
 
         assert(BigNumberUtil.is_positive_number_string(mint_pool_balance), `invalid mint pool balance ${mint_pool_balance}`);
 
-        // if bouns > mint_pool_balance
+        // if bouns > mint_pool_balance then bouns = mint_pool_balance
         if (BigNumberUtil.compare(bouns, mint_pool_balance) > 0) {
-            console.error(
-                `not enough mint pool balance ${inscription_item.inscription_id} ${mint_pool_balance} < ${bouns}`,
+            console.warn(
+                `not enough mint pool balance for bouns ${inscription_item.inscription_id} ${mint_pool_balance} < ${bouns}`,
             );
             bouns = mint_pool_balance;
+        }
+
+        // is bouns is zero, then we should ignore this inscription
+        if (BigNumberUtil.compare(bouns, 0) <= 0) {
+            console.warn(
+                `empty mint pool balance ${inscription_item.inscription_id} ${mint_pool_balance} < ${bouns}`,
+            );
+            return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
         // 6. trans bouns to user and owner
@@ -220,12 +229,12 @@ class ChantOperator {
 
         // if user_bonus > 0
         if (BigNumberUtil.compare(user_bonus, 0) > 0) {
-            const { ret } = await this.storage.transfer_balance(
-                this.config.token.account.mint_pool_address,
+            const { ret } = await this.storage.update_balance(
                 inscription_item.address,
                 user_bonus,
             );
             if (ret !== 0) {
+                assert(ret < 0);
                 console.error(
                     `failed to transfer user bonus ${inscription_item.inscription_id} ${inscription_item.address} ${user_bonus}`,
                 );
@@ -239,12 +248,12 @@ class ChantOperator {
 
         // if owner_bonus > 0
         if (BigNumberUtil.compare(owner_bonus, 0) > 0) {
-            const { ret } = await this.storage.transfer_balance(
-                this.config.token.account.mint_pool_address,
+            const { ret } = await this.storage.update_balance(
                 data.address,
                 owner_bonus,
             );
             if (ret !== 0) {
+                assert(ret < 0);
                 console.error(
                     `failed to transfer owner bonus ${inscription_item.inscription_id} ${data.address} ${owner_bonus}`,
                 );
@@ -258,6 +267,19 @@ class ChantOperator {
 
         inscription_item.user_bonus = user_bonus;
         inscription_item.owner_bonus = owner_bonus;
+
+        // 7. update pool amount
+        const { ret: update_pool_ret } = await this.storage.update_pool_balance_on_ops(
+            UpdatePoolBalanceOp.Chant,
+            bouns,
+        );
+        if (update_pool_ret !== 0) {
+            assert(update_pool_ret < 0);
+            console.error(
+                `failed to update pool balance ${inscription_item.inscription_id} ${bouns}`,
+            );
+            return { ret: update_pool_ret };
+        }
 
         return { ret: 0, state: InscriptionOpState.OK };
     }
