@@ -1,8 +1,12 @@
 const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
-const { TokenIndexStorage } = require('../../storage/token');
+const {
+    TokenIndexStorage,
+    UpdatePoolBalanceOp,
+} = require('../../storage/token');
 const constants = require('../../constants');
 const { InscriptionNewItem } = require('../item');
+const { InscriptionOpState } = require('./state');
 
 class MintOperator {
     constructor(config, storage) {
@@ -22,7 +26,10 @@ class MintOperator {
     {"p":"brc-20","op":"mint","tick":"DMC ","amt":"2100","lucky":"dmc-discord"}
     */
     async on_mint(inscription_item) {
-        assert(inscription_item instanceof InscriptionNewItem, `invalid inscription_item on_mint`);
+        assert(
+            inscription_item instanceof InscriptionNewItem,
+            `invalid inscription_item on_mint`,
+        );
 
         // check amt is exists and is number
         const content = inscription_item.content;
@@ -50,6 +57,7 @@ class MintOperator {
         }
 
         let amt;
+        let is_lucky_mint = false;
         if (
             content.lucky != null &&
             this._is_lucky_block_mint(inscription_item)
@@ -73,6 +81,8 @@ class MintOperator {
             } else {
                 amt = content.amt;
             }
+
+            is_lucky_mint = true;
         } else {
             console.log(
                 `mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.amount}`,
@@ -88,14 +98,50 @@ class MintOperator {
                 console.warn(
                     `mint amount is too large ${inscription_item.inscription_id} ${inscription_item.address} ${content.amt}`,
                 );
-                
+
                 amt = constants.NORMAL_MINT_MAX_AMOUNT;
             } else {
                 amt = content.amt;
             }
         }
 
-        // first add mint record
+        // first update mint pool balance
+        const update_pool_op = is_lucky_mint
+            ? UpdatePoolBalanceOp.LuckyMint
+            : UpdatePoolBalanceOp.Mint;
+        const { ret: update_mint_pool_balance_ret } =
+            await this.storage.update_pool_balance_on_ops(update_pool_op, amt);
+        if (update_mint_pool_balance_ret < 0) {
+            console.error(
+                `failed to update mint pool balance ${inscription_item.inscription_id}`,
+            );
+            return { ret: update_mint_pool_balance_ret };
+        }
+
+        let state = 0;
+        if (update_mint_pool_balance_ret > 0) {
+            assert(
+                update_mint_pool_balance_ret ===
+                    InscriptionOpState.INSUFFICIENT_BALANCE,
+            );
+            state = InscriptionOpState.INSUFFICIENT_BALANCE;
+        } else {
+            // then update balance for the address if the pool balance is enough
+            const { ret } = await this.storage.update_balance(
+                inscription_item.address,
+                amt,
+            );
+            if (ret !== 0) {
+                assert(ret < 0);
+                console.error(
+                    `failed to update balance ${inscription_item.inscription_id}`,
+                );
+
+                return { ret };
+            }
+        }
+
+        // then add mint record
         const { ret: mint_ret } = await this.storage.add_mint_record(
             inscription_item.inscription_id,
             inscription_item.block_height,
@@ -105,24 +151,13 @@ class MintOperator {
             JSON.stringify(content),
             amt,
             content.lucky,
+            state,
         );
         if (mint_ret !== 0) {
             console.error(
                 `failed to add mint record ${inscription_item.inscription_id}`,
             );
             return { ret: mint_ret };
-        }
-
-        // then update balance for the address
-        const { ret } = await this.storage.update_balance(
-            inscription_item.address,
-            amt,
-        );
-        if (ret !== 0) {
-            console.error(
-                `failed to update balance ${inscription_item.inscription_id}`,
-            );
-            return { ret };
         }
 
         return { ret: 0 };

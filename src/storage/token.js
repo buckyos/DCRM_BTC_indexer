@@ -108,7 +108,8 @@ class TokenIndexStorage {
                         address TEXT,
                         content TEXT,   
                         amount TEXT,
-                        lucky TEXT DEFAULT NULL
+                        lucky TEXT DEFAULT NULL,
+                        state INTEGER DEFAULT 0
                     )`,
                     (err) => {
                         if (err) {
@@ -623,6 +624,7 @@ class TokenIndexStorage {
      * @param {string} content
      * @param {string} amount
      * @param {string} lucky
+     * @param {number} state
      * @returns {ret: number}
      */
     async add_mint_record(
@@ -634,6 +636,7 @@ class TokenIndexStorage {
         content,
         amount,
         lucky,
+        state,
     ) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -656,6 +659,10 @@ class TokenIndexStorage {
             lucky == null || typeof lucky === 'string',
             `lucky should be string or null`,
         );
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
 
         return new Promise((resolve, reject) => {
             this.db.run(
@@ -667,9 +674,10 @@ class TokenIndexStorage {
                     address, 
                     content, 
                     amount, 
-                    lucky
+                    lucky,
+                    state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -679,6 +687,7 @@ class TokenIndexStorage {
                     content,
                     amount,
                     lucky,
+                    state,
                 ],
                 (err) => {
                     if (err) {
@@ -1663,6 +1672,16 @@ class TokenIndexStorage {
                         resolve({ ret: -1 });
                     } else {
                         if (row == null) {
+                            // balance should >= 0
+                            if (BigNumberUtil.compare(amount, '0') < 0) {
+                                console.error(
+                                    `init amount ${amount} is negative`,
+                                );
+                                resolve({
+                                    ret: InscriptionOpState.INSUFFICIENT_BALANCE,
+                                });
+                            }
+
                             this.db.run(
                                 'INSERT INTO balance (address, amount) VALUES (?, ?)',
                                 [address, amount],
@@ -1681,8 +1700,7 @@ class TokenIndexStorage {
                                 },
                             );
                         } else {
-                            const current_amount =
-                                row == null ? '0' : row.amount;
+                            const current_amount = row.amount;
                             const new_amount = BigNumberUtil.add(
                                 current_amount,
                                 amount,
@@ -1693,7 +1711,9 @@ class TokenIndexStorage {
                                 console.error(
                                     `new amount ${new_amount} is negative, current amount ${current_amount}, amount ${amount}`,
                                 );
-                                resolve({ ret: InscriptionOpState.INSUFFICIENT_BALANCE });
+                                resolve({
+                                    ret: InscriptionOpState.INSUFFICIENT_BALANCE,
+                                });
                             }
 
                             this.db.run(
@@ -1722,11 +1742,11 @@ class TokenIndexStorage {
 
     /**
      * @comment update pool balance on mint or chant or resonance
-     * @param {UpdatePoolBalanceOp} op 
-     * @param {string} amount 
+     * @param {UpdatePoolBalanceOp} op
+     * @param {string} amount
      * @returns {ret: number}
      */
-    async update_pool_balance_on_mint_or_chant(op, amount) {
+    async update_pool_balance_on_ops(op, amount) {
         switch (op) {
             case UpdatePoolBalanceOp.Mint:
                 {
@@ -1822,11 +1842,10 @@ class TokenIndexStorage {
 
                 break;
 
-            default:
-                {
-                    console.error(`Unknown update_pool_balance_on_mint_or_chant op ${op}`);
-                    return { ret: -1 };
-                }
+            default: {
+                console.error(`Unknown update_pool_balance_on_ops op ${op}`);
+                return { ret: -1 };
+            }
         }
 
         return { ret: 0 };
@@ -1882,8 +1901,9 @@ class TokenIndexStorage {
             });
         });
     }
+
     /**
-     *
+     * @comment transfer balance from from_address to to_address, return InscriptionOpState.INSUFFICIENT_BALANCE if balance is not enough, return -1 on error, return 0 on success
      * @param {string} from_address
      * @param {string} to_address
      * @param {string} amount
@@ -1913,23 +1933,24 @@ class TokenIndexStorage {
             await this.get_balance(from_address);
         if (get_from_balance_ret != 0) {
             console.error(`Could not get balance ${from_address}`);
-            return { ret: -1 };
+            return { ret: get_from_balance_ret };
         }
 
         if (BigNumberUtil.compare(from_balance, amount) < 0) {
             console.error(
                 `Insufficient balance ${from_address} : ${from_balance} < ${amount}`,
             );
-            return { ret: -1 };
+            return { ret: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
-        const { ret: update_from_balance_ret } = await this.update_balance(
+        const new_amount = BigNumberUtil.subtract(from_balance, amount);
+        const { ret: update_from_balance_ret } = await this.set_balance(
             from_address,
-            BigNumberUtil.multiply(amount, -1),
+            amount,
         );
         if (update_from_balance_ret != 0) {
             console.error(`Could not update balance ${from_address}`);
-            return { ret: -1 };
+            return { ret: update_from_balance_ret };
         }
 
         const { ret: update_to_balance_ret } = await this.update_balance(
@@ -2223,4 +2244,4 @@ class TokenIndexStorage {
     }
 }
 
-module.exports = { TokenIndexStorage };
+module.exports = { UpdatePoolBalanceOp, TokenIndexStorage };
