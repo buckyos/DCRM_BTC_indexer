@@ -160,6 +160,13 @@ class ETHIndexStorage {
         });
     }
 
+    /**
+     * 
+     * @param {number} block_height 
+     * @param {string} hash 
+     * @param {number} amount 
+     * @returns 
+     */
     async update_point(block_height, hash, amount) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -185,7 +192,7 @@ class ETHIndexStorage {
 
         return new Promise((resolve, reject) => {
             this.db.run(
-                `INSERT OR REPLACE INTO points (block_height, hash, point) VALUES (?, ?, ?, ?)`,
+                `INSERT OR REPLACE INTO points (block_height, hash, point) VALUES (?, ?, ?)`,
                 [block_height, hash, new_point],
                 (err) => {
                     if (err) {

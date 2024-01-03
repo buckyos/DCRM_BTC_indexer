@@ -19,6 +19,18 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "test_eth",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/test/test_eth.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "test_transfer",
             "skipFiles": [
                 "<node_internals>/**"

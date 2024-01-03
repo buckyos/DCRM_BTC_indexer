@@ -156,21 +156,11 @@ class Util {
     }
 
     /**
-     * try convert hash string to base58 string, maybe hex string
+     * try convert hash string in hex to base58 string
      * @param {string} hash_str
      * @returns {ret: number, hash_str: string}
      */
     static hex_to_base58(hash_str) {
-        // Try to decode as base58
-        try {
-            bs58.decode(hash_str);
-            return { ret: 0, hash_str };
-        } catch (err) {
-            console.warn(
-                `hash str tot a base58 string, now try hex ${hash_str} ${err}`,
-            );
-        }
-
         // Try to decode as hex
         try {
             if (hash_str.startsWith('0x') || hash_str.startsWith('0X')) {

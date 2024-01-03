@@ -13,7 +13,7 @@ const INDEX_CONFIG = {
         network: 'testnet',
         host: '127.0.0.1',
         auth: {
-            cookie_file: 'E:\\data\\testnet\\testnet3\\.cookie',
+            cookie_file: '/btc/.cookie',
             // cookie: username:password
             // username: "",
             // password: ""
@@ -21,9 +21,9 @@ const INDEX_CONFIG = {
     },
 
     eth: {
-        rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
-        genesis_block_height: 100000,
-        contract_address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+        rpc_url: 'http://127.0.0.1:8547',
+        genesis_block_height: 1,
+        contract_address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
         contract_abi: 'contract.json',
     },
 
@@ -33,9 +33,6 @@ const INDEX_CONFIG = {
 
     db: {
         data_dir,
-        index_db_file: 'index.sqlite',
-        eth_db_file: 'eth_index.sqlite',
-        inscription_db_file: 'inscriptions.sqlite',
     },
 
     service: {
@@ -50,7 +47,7 @@ const INDEX_CONFIG = {
 
         genesis_block_height: 2543000,
         token_name: 'TTTT',
-    }
+    },
 };
 
 module.exports = INDEX_CONFIG;

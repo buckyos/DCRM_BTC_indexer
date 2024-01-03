@@ -141,7 +141,6 @@ class TestTokenIndex {
             return { ret };
         }
 
-        await token_index.process_pending_inscribe_ops();
         return { ret: 0 };
     }
 }

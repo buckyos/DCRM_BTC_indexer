@@ -191,6 +191,7 @@ class ETHIndex {
 
     // try sync block for range [begin, end)
     async sync_blocks(begin, end) {
+        // console.log(`sync eth blocks from ${begin} to ${end}`);
         assert(begin < end, `begin should be less than end`);
 
         // insert all blocks with timestamp
@@ -217,7 +218,7 @@ class ETHIndex {
         let events;
         try {
             events = await this.contract.getPastEvents(
-                'SupplierReward', // the point change event name
+                'DataPointAdded', // the point change event name
                 {
                     fromBlock: begin,
                     toBlock: end - 1,
@@ -231,18 +232,35 @@ class ETHIndex {
         // process all events
         for (let i = 0; i < events.length; i++) {
             const event = events[i];
-            const block_height = event.blockNumber;
-            const hash = event.returnValues.hash;
-            const point = event.returnValues.point;
+            const block_height = Number(event.blockNumber);
+            const hash = event.returnValues.mixedHash;
+            let point = event.returnValues.point;
+
+            // check params
+            if (!_.isString(hash) || typeof point !== 'bigint') {
+                // should not happen?
+                console.error(`invalid eth event params ${block_height} ${hash} ${point}`);
+                return {ret: -1};
+            }
+
+            const {ret: convert_ret, hash_str} = Util.hex_to_base58(hash);
+            if (convert_ret !== 0) {
+                console.error(`failed to convert hash ${hash} to base58`);
+                return { ret: convert_ret };
+            }
+
+            assert(_.isString(hash_str), `hash should be string after convert to base58 ${hash_str}`);
+
+            point = Number(point);
 
             const { ret } = await this.storage.update_point(
                 block_height,
-                hash,
+                hash_str,
                 point,
             );
             if (ret !== 0) {
                 console.error(
-                    `failed to insert point ${hash} for block ${block_height}`,
+                    `failed to insert point ${hash}=${point} for block ${block_height}`,
                 );
                 return { ret };
             }
