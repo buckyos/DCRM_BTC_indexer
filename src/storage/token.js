@@ -2,8 +2,24 @@ const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
 const { InscriptionStage } = require('../index/ops/state');
-const { BigNumberUtil } = require('../util');
-const { TOKEN_INDEX_DB_FILE } = require('../constants');
+const { BigNumberUtil, Util } = require('../util');
+const {
+    TOKEN_INDEX_DB_FILE,
+    TOKEN_MINT_POOL_INIT_AMOUNT,
+    TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
+} = require('../constants');
+const { InscriptionOpState } = require('../index/ops/state');
+
+// the ops that can update pool balance
+const UpdatePoolBalanceOp = {
+    Mint: 'mint',
+    LuckyMint: 'lucky_mint',
+    Chant: 'chant',
+    InscribeData: 'inscribe_data',
+};
 
 class TokenIndexStorage {
     constructor(data_dir) {
@@ -24,6 +40,38 @@ class TokenIndexStorage {
     async init() {
         assert(this.db == null, `TokenIndexStorage db should be null`);
 
+        // first init db
+        const { ret } = await this._init_db();
+        if (ret !== 0) {
+            console.error(`failed to init token storage db`);
+            return { ret };
+        }
+
+        // then init tables
+        const { ret: ret2 } = await this._init_tables();
+        if (ret2 !== 0) {
+            console.error(`failed to init token storage tables`);
+            return { ret: ret2 };
+        }
+
+        // then init data
+        const { ret: ret3 } = await this._init_data();
+        if (ret3 !== 0) {
+            console.error(`failed to init token storage data`);
+            return { ret: ret3 };
+        }
+
+        console.log(`init token storage success`);
+        return { ret: 0 };
+    }
+
+    /**
+     *
+     * @returns {ret: number}
+     */
+    async _init_db() {
+        assert(this.db == null, `TokenIndexStorage db should be null`);
+
         return new Promise((resolve, reject) => {
             assert(this.db == null, `TokenIndexStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
@@ -34,14 +82,16 @@ class TokenIndexStorage {
                 }
 
                 console.log(`Connected to ${this.db_file_path}`);
-                this.init_tables().then(({ ret }) => {
-                    resolve({ ret });
-                });
+                resolve({ ret: 0 });
             });
         });
     }
 
-    init_tables() {
+    /**
+     *
+     * @returns {ret: number}
+     */
+    _init_tables() {
         assert(this.db != null, `db should not be null`);
 
         return new Promise((resolve, reject) => {
@@ -265,7 +315,7 @@ class TokenIndexStorage {
                 );
 
                 if (has_error) {
-                    return
+                    return;
                 }
 
                 // Create set_price_records table
@@ -459,6 +509,51 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     *
+     * @returns {ret: number}
+     */
+    async _init_data() {
+        assert(this.db != null, `db should not be null`);
+
+        const { ret } = await this.init_balance(
+            TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+            TOKEN_MINT_POOL_INIT_AMOUNT,
+        );
+        if (ret !== 0) {
+            console.error(`failed to init balance for mint pool`);
+            return { ret };
+        }
+
+        const { ret: ret2 } = await this.init_balance(
+            TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
+            '0',
+        );
+        if (ret2 !== 0) {
+            console.error(`failed to init balance for mint pool charged`);
+            return { ret: ret2 };
+        }
+
+        const { ret: ret3 } = await this.init_balance(
+            TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
+            '0',
+        );
+        if (ret3 !== 0) {
+            console.error(`failed to init balance for mint pool lucky mint`);
+            return { ret: ret3 };
+        }
+
+        const { ret: ret4 } = await this.init_balance(
+            TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
+            '0',
+        );
+        if (ret4 !== 0) {
+            console.error(`failed to init balance for mint pool chant`);
+            return { ret: ret4 };
+        }
+
+        return { ret: 0 };
+    }
     /**
      *
      * @returns {ret: number}
@@ -1483,12 +1578,42 @@ class TokenIndexStorage {
     }
 
     /**
-     *
+     * @comment set the init balance for address, if address exists, do nothing
      * @param {string} address
      * @param {string} amount
      * @returns {ret: number}
      */
-    async add_balance(address, amount) {
+    async init_balance(address, amount) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof address === 'string', `address should be string`);
+        assert(
+            BigNumberUtil.is_number_string(str),
+            `amount should be valid number string: ${amount}`,
+        );
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR IGNORE INTO balance (address, amount) VALUES (?, ?)`,
+                [address, amount],
+                (err) => {
+                    if (err) {
+                        console.error('failed to init balance', err);
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     * @comeent set the balance for address, if address exists, update it
+     * @param {string} address
+     * @param {string} amount
+     * @returns {ret: number}
+     */
+    async set_balance(address, amount) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
         assert(
@@ -1512,12 +1637,11 @@ class TokenIndexStorage {
         });
     }
 
-    // balance table methods
     /**
-     *
+     * @comment update balance for address, return InscriptionOpState.INSUFFICIENT_BALANCE if balance is not enough, return -1 on error, return 0 on success
      * @param {string} address
      * @param {string} amount
-     * @returns
+     * @returns {ret: number}
      */
     async update_balance(address, amount) {
         assert(this.db != null, `db should not be null`);
@@ -1563,6 +1687,15 @@ class TokenIndexStorage {
                                 current_amount,
                                 amount,
                             );
+
+                            // new_amount should >= 0
+                            if (BigNumberUtil.compare(new_amount, '0') < 0) {
+                                console.error(
+                                    `new amount ${new_amount} is negative, current amount ${current_amount}, amount ${amount}`,
+                                );
+                                resolve({ ret: InscriptionOpState.INSUFFICIENT_BALANCE });
+                            }
+
                             this.db.run(
                                 'UPDATE balance SET amount = ? WHERE address = ?',
                                 [new_amount, address],
@@ -1588,6 +1721,117 @@ class TokenIndexStorage {
     }
 
     /**
+     * @comment update pool balance on mint or chant or resonance
+     * @param {UpdatePoolBalanceOp} op 
+     * @param {string} amount 
+     * @returns {ret: number}
+     */
+    async update_pool_balance_on_mint_or_chant(op, amount) {
+        switch (op) {
+            case UpdatePoolBalanceOp.Mint:
+                {
+                    const { ret: update_ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+                        BigNumberUtil.multiply(amount, -1),
+                    );
+                    if (update_ret != 0) {
+                        console.error(
+                            `Could not update pool balance on mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret: update_ret };
+                    }
+                }
+
+                break;
+            case UpdatePoolBalanceOp.LuckyMint:
+                {
+                    const { ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
+                        amount,
+                    );
+                    if (ret != 0) {
+                        console.error(
+                            `Could not update lucky mint balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret };
+                    }
+
+                    const { ret: update_ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+                        BigNumberUtil.multiply(amount, -1),
+                    );
+                    if (update_ret != 0) {
+                        console.error(
+                            `Could not update pool balance on lucky mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret: update_ret };
+                    }
+                }
+
+                break;
+            case UpdatePoolBalanceOp.Chant:
+                {
+                    const { ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
+                        amount,
+                    );
+                    if (ret != 0) {
+                        console.error(
+                            `Could not update chant balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret };
+                    }
+
+                    const { ret: update_ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+                        BigNumberUtil.multiply(amount, -1),
+                    );
+                    if (update_ret != 0) {
+                        console.error(
+                            `Could not update pool balance on chant ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret: update_ret };
+                    }
+                }
+
+                break;
+            case UpdatePoolBalanceOp.Resonance:
+                {
+                    const { ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
+                        amount,
+                    );
+                    if (ret != 0) {
+                        console.error(
+                            `Could not update resonance service charge balance ${TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret };
+                    }
+
+                    const { ret: update_ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+                        amount,
+                    );
+                    if (update_ret != 0) {
+                        console.error(
+                            `Could not update pool balance on resonance ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret: update_ret };
+                    }
+                }
+
+                break;
+
+            default:
+                {
+                    console.error(`Unknown update_pool_balance_on_mint_or_chant op ${op}`);
+                    return { ret: -1 };
+                }
+        }
+
+        return { ret: 0 };
+    }
+    /**
      *
      * @param {string} address
      * @returns {ret: number, amount: string}
@@ -1609,6 +1853,35 @@ class TokenIndexStorage {
         });
     }
 
+    /**
+     * @comment get balances for addresses
+     * @param {Array} addresses
+     * @returns {ret: number, balances: object}
+     */
+    async get_balances(addresses) {
+        assert(Array.isArray(addresses), `addresses should be array`);
+
+        const sql = `
+            SELECT address, amount FROM balance WHERE address IN (${addresses
+                .map((_) => '?')
+                .join(',')})
+        `;
+
+        return new Promise((resolve) => {
+            this.db.all(sql, addresses, (err, rows) => {
+                if (err) {
+                    console.error('Could not get balances', err);
+                    resolve({ ret: -1 });
+                } else {
+                    const balances = {};
+                    for (const row of rows) {
+                        balances[row.address] = row.amount;
+                    }
+                    resolve({ ret: 0, balances });
+                }
+            });
+        });
+    }
     /**
      *
      * @param {string} from_address

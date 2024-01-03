@@ -9,12 +9,23 @@ const TRANSFER_DB_FILE = 'transfer.db';
 const LUCKY_MINT_MAX_AMOUNT = '2100';
 const NORMAL_MINT_MAX_AMOUNT = '210';
 
+// the token init amount in mint pool: 210 million.
+const TOKEN_MINT_POOL_INIT_AMOUNT = '210000000'; 
+
 // the virtual address of mint pool and unmint pool
 const TOKEN_MINT_POOL_VIRTUAL_ADDRESS = '0x0';
 
-// the virtual address of mint pool's charged token amount
-const TOKEN_MINT_POOL_CHANGED_VIRTUAL_ADDRESS = '0x1';
+// the virtual address of mint pool's service charged token amount
+const TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS = '0x1';
 
+// the virtual address of mint pool's lucky mint token amount
+const TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS = '0x2';
+
+// the virtual address of mint pool's chant token amount
+const TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS = '0x3';
+
+
+// the decimal of our token
 const TOKEN_DECIMAL = 18;
 
 module.exports = {
@@ -27,8 +38,11 @@ module.exports = {
     LUCKY_MINT_MAX_AMOUNT,
     NORMAL_MINT_MAX_AMOUNT,
 
+    TOKEN_MINT_POOL_INIT_AMOUNT,
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-    TOKEN_MINT_POOL_CHANGED_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
 
     TOKEN_DECIMAL,
 };
