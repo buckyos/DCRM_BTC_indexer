@@ -199,6 +199,8 @@ class TransferOperator {
             content.amt,
         );
         if (ret !== 0) {
+            assert(ret < 0);
+            
             console.error(
                 `failed to transfer ${inscription_item.inscription_id} ${inscription_item.from_address} -> ${inscription_item.to_address} ${content.amt}}`,
             );

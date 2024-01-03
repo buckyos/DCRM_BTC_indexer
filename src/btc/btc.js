@@ -5,6 +5,7 @@ const { LRUCache } = require('lru-cache');
 const { assert } = require('console');
 
 // add lru cache for tx
+// eslint-disable-next-line no-unused-vars
 class TxCache {
     constructor() {
         this.cache = new LRUCache({
@@ -20,6 +21,16 @@ class TxCache {
     set(txid, tx) {
         this.cache.set(txid, tx);
     }
+}
+
+class DummyTxCache {
+    // eslint-disable-next-line no-unused-vars
+    get(txid) {
+        return null;
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    set(txid, tx) {}
 }
 
 class BTCClient {
@@ -45,7 +56,7 @@ class BTCClient {
         });
 
         this.retry_count = 3;
-        this.tx_cache = new TxCache();
+        this.tx_cache = new DummyTxCache();
     }
 
     _should_retry(error) {

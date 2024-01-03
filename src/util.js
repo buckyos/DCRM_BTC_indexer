@@ -463,6 +463,7 @@ new BigNumberUtil();
 
 module.exports = { Util, BigNumberUtil };
 
+/*
 function test() {
     const v = '100';
     assert(BigNumberUtil.check_decimal_string(v));
@@ -479,5 +480,6 @@ function test() {
     const v4 = '100av';
     assert(!BigNumberUtil.check_decimal_string(v4));
 }
+*/
 
 // test();

@@ -2,8 +2,6 @@ const { InscriptionTransferMonitor } = require('../index/monitor');
 const { Config } = require('../config');
 const { OrdClient } = require('../btc/ord');
 const assert = require('assert');
-const { SatPoint, OutPoint } = require('../btc/point');
-const { Util } = require('../util');
 const { LogHelper } = require('../log/log');
 const moment = require('moment');
 

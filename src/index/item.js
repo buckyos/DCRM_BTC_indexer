@@ -58,7 +58,7 @@ class MintOp {
 
         // check amt
         if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(`invalid mint content amt ${amt}`);
+            console.warn(`invalid mint content amt ${amt} ${typeof amt}`);
             return { ret: 0, valid: false };
         }
 
