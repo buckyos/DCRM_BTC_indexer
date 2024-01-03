@@ -152,7 +152,7 @@ class ChantOperator {
         }
 
         assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
-        const bouns = hash_weight;
+        let bouns = hash_weight;
         // const stamina = hash_weight / 4;
         const stamina = BigNumberUtil.divide(hash_weight, 4);
 
@@ -216,6 +216,8 @@ class ChantOperator {
         }
 
         // 6. trans bouns to user and owner
+        let user_bonus;
+        let owner_bonus;
         if (data.address !== inscription_item.address) {
             // user_bonus = bouns * 0.8;
             user_bonus =  BigNumberUtil.multiply(bouns, 0.8)   

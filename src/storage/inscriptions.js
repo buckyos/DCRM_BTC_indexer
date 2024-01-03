@@ -21,7 +21,7 @@ class InscriptionsStorage {
     async init() {
         assert(this.db == null, `InscriptionsStorage db should be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             assert(this.db == null, `InscriptionsStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
@@ -41,7 +41,7 @@ class InscriptionsStorage {
     async init_tables() {
         assert(this.db != null, `db should not be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.serialize(() => {
                 let has_error = false;
 
@@ -161,7 +161,7 @@ class InscriptionsStorage {
                 (err) => {
                     if (err) {
                         console.error(
-                            `failed to add new inscription ${item.inscription_id} ${item.content} ${item.creator} ${item.owner}`,
+                            `failed to add new inscription ${block_height} ${inscription_id} ${content} ${creator}`,
                             err,
                         );
                         resolve({ ret: -1 });

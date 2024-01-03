@@ -19,7 +19,7 @@ class InscriptionTransferStorage {
     async init() {
         assert(this.db == null, `InscriptionTransferStorage db should be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             assert(
                 this.db == null,
                 `InscriptionTransferStorage db should be null`,
@@ -44,7 +44,7 @@ class InscriptionTransferStorage {
     async init_tables() {
         assert(this.db != null, `db should not be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.serialize(() => {
                 // Create inscription_transfers table
                 this.db.run(
@@ -66,7 +66,7 @@ class InscriptionTransferStorage {
                             console.error(
                                 `failed to create inscription_transfers table: ${err}`,
                             );
-                            has_error = true;
+                            
                             resolve({ ret: -1 });
                             return;
                         }
@@ -139,7 +139,7 @@ class InscriptionTransferStorage {
         assert(index >= 0, `index should be >= 0: ${index}`);
         assert(InscriptionOp.contains(op), `op should be valid: ${op}`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const sql = `
                 INSERT OR REPLACE INTO inscription_transfers(
                     inscription_id, 
@@ -199,7 +199,7 @@ class InscriptionTransferStorage {
             `inscription_id should be string: ${inscription_id}`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const sql = `
                 SELECT * FROM inscription_transfers
                 WHERE inscription_id = ?
@@ -258,7 +258,10 @@ class InscriptionTransferStorage {
      * @returns {Promise<{ret: number, data: object}>}
      */
     async get_first_transfer(inscription_id) {
-        return new Promise((resolve, reject) => {
+        assert(this.db != null, `db should not be null`);
+        assert(_.isString(inscription_id), `inscription_id should be string`);
+        
+        return new Promise((resolve) => {
             const sql = `
                 SELECT * FROM inscription_transfers
                 WHERE inscription_id = ?

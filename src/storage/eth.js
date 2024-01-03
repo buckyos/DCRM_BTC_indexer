@@ -1,7 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
-const { Util } = require('../util');
 const { ETH_INDEX_DB_FILE } = require('../constants');
 
 class ETHIndexStorage {
@@ -22,7 +21,7 @@ class ETHIndexStorage {
     async init() {
         assert(this.db == null, `ETHIndexStorage db should be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             assert(this.db == null, `ETHIndexStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
@@ -42,7 +41,7 @@ class ETHIndexStorage {
     async init_tables() {
         assert(this.db != null, `db should not be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.serialize(() => {
                 let has_error = false;
 
@@ -109,7 +108,7 @@ class ETHIndexStorage {
         );
         assert(block_height >= 0, `block_height should be greater than 0`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(
                 `SELECT timestamp FROM blocks WHERE block_height = ?`,
                 block_height,
@@ -141,7 +140,7 @@ class ETHIndexStorage {
         );
         assert(typeof hash === 'string', `hash should be string`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(
                 `SELECT point FROM points WHERE block_height <= ? AND hash = ? ORDER BY block_height DESC LIMIT 1`,
                 [block_height, hash],
@@ -190,7 +189,7 @@ class ETHIndexStorage {
 
         const new_point = point + amount;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO points (block_height, hash, point) VALUES (?, ?, ?)`,
                 [block_height, hash, new_point],
@@ -261,7 +260,7 @@ class ETHIndexStorage {
             `target_timestamp should be number`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(
                 `
                 SELECT b1.block_height FROM blocks b1, blocks b2

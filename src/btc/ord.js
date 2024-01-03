@@ -48,6 +48,8 @@ class OrdClient {
             // get by pages
             let page = 0;
             let inscriptions = [];
+            
+            // eslint-disable-next-line no-constant-condition
             while (true) {
                 const response = await this.client.get(
                     `/inscriptions/block/${block_height}/${page}`,

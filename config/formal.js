@@ -21,6 +21,7 @@ const INDEX_CONFIG = {
         },
     },
 
+    
     eth: {
         rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
         genesis_block_height: 16757234,

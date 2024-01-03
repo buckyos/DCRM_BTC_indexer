@@ -1,4 +1,4 @@
-const { Util, BigNumberUtil } = require('../../util');
+const { BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const assert = require('assert');
 const { InscriptionOpState, InscriptionStage } = require('./state');

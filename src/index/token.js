@@ -1,21 +1,15 @@
 const assert = require('assert');
 const { TokenIndexStorage } = require('../storage/token');
-const constants = require('../constants');
 const { Util } = require('../util');
 const { ETHIndex } = require('../eth/index');
 const { HashHelper } = require('./ops/hash');
 const { InscribeDataOperator } = require('./ops/inscribe');
-const { MintManger, MintOperator } = require('./ops/mint');
+const { MintOperator } = require('./ops/mint');
 const { TransferOperator } = require('./ops/transfer');
 const { ChantOperator } = require('./ops/chant');
 const { ResonanceOperator } = require('./ops/resonance');
 const { SetPriceOperator } = require('./ops/set_price');
-const {
-    BlockInscriptonCollector,
-    InscriptionNewItem,
-    InscriptionTransferItem,
-    InscriptionOp,
-} = require('./item');
+const { BlockInscriptonCollector, InscriptionOp } = require('./item');
 
 class TokenIndex {
     constructor(config) {
@@ -117,195 +111,203 @@ class TokenBlockIndex {
             return { ret: start_ret };
         }
 
-        let is_failed = false;
+        let process_result = 0;
         try {
-            // process new inscriptions
-            for (const inscription_item of this.block_collector
-                .new_inscriptions) {
-                if (inscription_item.op.op === InscriptionOp.Mint) {
-                    const { ret } = await this.on_mint(inscription_item);
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to mint at block ${this.block_height} ${inscription_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else if (inscription_item.op.op === InscriptionOp.Inscribe) {
-                    const { ret } = await this.on_inscribe_data(
-                        inscription_item,
-                    );
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to inscribe data at block ${this.block_height} ${inscription_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else if (inscription_item.op.op === InscriptionOp.SetPrice) {
-                    const { ret } = await this.on_set_resonance_price(
-                        inscription_item,
-                    );
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to set price at block ${this.block_height} ${inscription_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else if (inscription_item.op.op === InscriptionOp.Chant) {
-                    const { ret } = await this.on_chant(inscription_item);
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to chant at block ${this.block_height} ${inscription_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else if (inscription_item.op.op === InscriptionOp.Resonance) {
-                    const { ret } = await this.on_inscribe_resonance(
-                        inscription_item,
-                    );
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to inscribe resonance at block ${this.block_height} ${inscription_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else if (inscription_item.op.op === InscriptionOp.Transfer) {
-                    const { ret } = await this.on_inscribe_transfer(
-                        inscription_item,
-                    );
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to transfer at block ${this.block_height} ${inscription_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else {
-                    console.error(
-                        `unknown inscription op ${inscription_item.op.op}`,
-                    );
-                }
-            }
-
-            // process transfer inscriptions
-            for (const inscription_transfer_item of this.block_collector
-                .inscription_transfers) {
-                if (inscription_transfer_item.op.op === InscriptionOp.Mint) {
-                    console.warn(
-                        `mint op should not be transfered ${inscription_transfer_item.inscription_id}`,
-                    );
-                } else if (
-                    inscription_transfer_item.op.op === InscriptionOp.Inscribe
-                ) {
-                    const { ret } = await this.on_inscribe_data_transfer(
-                        inscription_transfer_item,
-                    );
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to inscribe data transfer at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else if (
-                    inscription_transfer_item.op.op === InscriptionOp.SetPrice
-                ) {
-                    console.warn(
-                        `set price op should not be transfered ${inscription_transfer_item.inscription_id}`,
-                    );
-                } else if (
-                    inscription_transfer_item.op.op === InscriptionOp.Chant
-                ) {
-                    console.warn(
-                        `chant op should not be transfered ${inscription_transfer_item.inscription_id}`,
-                    );
-                } else if (
-                    inscription_transfer_item.op.op === InscriptionOp.Resonance
-                ) {
-                    const { ret } = await this.on_transfer_resonance(
-                        inscription_transfer_item,
-                    );
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to transfer resonance at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else if (
-                    inscription_transfer_item.op.op === InscriptionOp.Transfer
-                ) {
-                    const { ret } = await this.on_transfer(
-                        inscription_transfer_item,
-                    );
-                    if (ret !== 0) {
-                        console.error(
-                            `failed to transfer at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
-                        );
-                        is_failed = true;
-                        return { ret };
-                    }
-                } else {
-                    console.error(
-                        `unknown inscription op ${inscription_transfer_item.op.op}`,
-                    );
-                }
-            }
-
-            // process pending ops
-            const { ret: inscribe_ret } =
-                await this.inscribe_operator.process_pending_inscribe_ops();
-            if (inscribe_ret !== 0) {
-                console.error(
-                    `failed to process pending inscribe ops at block ${this.block_height}`,
-                );
-                is_failed = true;
-                return { ret: inscribe_ret };
-            }
-
-            const { ret: resonance_ret } =
-                await this.resonance_operator.process_pending_resonance_ops();
-            if (resonance_ret !== 0) {
-                console.error(
-                    `failed to process pending resonance ops at block ${this.block_height}`,
-                );
-                is_failed = true;
-                return { ret: resonance_ret };
-            }
+            const { ret } = await this._process_inscriptions();
+            process_result = ret;
         } catch (error) {
             console.error(
                 `failed to process inscription at block ${this.block_height}`,
-                error, error.stack,
+                error,
+                error.stack,
             );
-            is_failed = true;
-            return { ret: -1 };
+            process_result = -1;
         } finally {
+            const is_success = process_result === 0;
+
             const { ret: commit_ret } = await this.storage.end_transaction(
-                !is_failed,
+                is_success,
             );
             if (commit_ret !== 0) {
                 console.error(
                     `failed to commit transaction at block ${this.block_height}`,
                 );
-                return { ret: commit_ret };
+                process_result = commit_ret;
             }
 
-            if (!is_failed) {
+            if (is_success) {
                 console.log(
                     `processed block ${this.block_height} inscriptions success`,
                 );
-                return { ret: 0 };
             } else {
                 console.error(
                     `processed block ${this.block_height} inscriptions failed`,
                 );
-                return { ret: -1 };
             }
         }
+
+        return { ret: process_result };
+    }
+
+    async _process_inscriptions() {
+        assert(this.block_collector != null, `block_collector should be set`);
+
+        // process new inscriptions
+        for (const inscription_item of this.block_collector.new_inscriptions) {
+            if (inscription_item.op.op === InscriptionOp.Mint) {
+                const { ret } = await this.on_mint(inscription_item);
+                if (ret !== 0) {
+                    console.error(
+                        `failed to mint at block ${this.block_height} ${inscription_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else if (inscription_item.op.op === InscriptionOp.Inscribe) {
+                const { ret } = await this.on_inscribe_data(inscription_item);
+                if (ret !== 0) {
+                    console.error(
+                        `failed to inscribe data at block ${this.block_height} ${inscription_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else if (inscription_item.op.op === InscriptionOp.SetPrice) {
+                const { ret } = await this.on_set_resonance_price(
+                    inscription_item,
+                );
+                if (ret !== 0) {
+                    console.error(
+                        `failed to set price at block ${this.block_height} ${inscription_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else if (inscription_item.op.op === InscriptionOp.Chant) {
+                const { ret } = await this.on_chant(inscription_item);
+                if (ret !== 0) {
+                    console.error(
+                        `failed to chant at block ${this.block_height} ${inscription_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else if (inscription_item.op.op === InscriptionOp.Resonance) {
+                const { ret } = await this.on_inscribe_resonance(
+                    inscription_item,
+                );
+                if (ret !== 0) {
+                    console.error(
+                        `failed to inscribe resonance at block ${this.block_height} ${inscription_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else if (inscription_item.op.op === InscriptionOp.Transfer) {
+                const { ret } = await this.on_inscribe_transfer(
+                    inscription_item,
+                );
+                if (ret !== 0) {
+                    console.error(
+                        `failed to transfer at block ${this.block_height} ${inscription_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else {
+                console.error(
+                    `unknown inscription op ${inscription_item.op.op}`,
+                );
+            }
+        }
+
+        // process transfer inscriptions
+        for (const inscription_transfer_item of this.block_collector
+            .inscription_transfers) {
+            if (inscription_transfer_item.op.op === InscriptionOp.Mint) {
+                console.warn(
+                    `mint op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                );
+            } else if (
+                inscription_transfer_item.op.op === InscriptionOp.Inscribe
+            ) {
+                const { ret } = await this.on_inscribe_data_transfer(
+                    inscription_transfer_item,
+                );
+                if (ret !== 0) {
+                    console.error(
+                        `failed to inscribe data transfer at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else if (
+                inscription_transfer_item.op.op === InscriptionOp.SetPrice
+            ) {
+                console.warn(
+                    `set price op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                );
+            } else if (
+                inscription_transfer_item.op.op === InscriptionOp.Chant
+            ) {
+                console.warn(
+                    `chant op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                );
+            } else if (
+                inscription_transfer_item.op.op === InscriptionOp.Resonance
+            ) {
+                const { ret } = await this.on_transfer_resonance(
+                    inscription_transfer_item,
+                );
+                if (ret !== 0) {
+                    console.error(
+                        `failed to transfer resonance at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else if (
+                inscription_transfer_item.op.op === InscriptionOp.Transfer
+            ) {
+                const { ret } = await this.on_transfer(
+                    inscription_transfer_item,
+                );
+                if (ret !== 0) {
+                    console.error(
+                        `failed to transfer at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
+                    );
+
+                    return { ret };
+                }
+            } else {
+                console.error(
+                    `unknown inscription op ${inscription_transfer_item.op.op}`,
+                );
+            }
+        }
+
+        // process pending ops
+        const { ret: inscribe_ret } =
+            await this.inscribe_operator.process_pending_inscribe_ops();
+        if (inscribe_ret !== 0) {
+            console.error(
+                `failed to process pending inscribe ops at block ${this.block_height}`,
+            );
+
+            return { ret: inscribe_ret };
+        }
+
+        const { ret: resonance_ret } =
+            await this.resonance_operator.process_pending_resonance_ops();
+        if (resonance_ret !== 0) {
+            console.error(
+                `failed to process pending resonance ops at block ${this.block_height}`,
+            );
+
+            return { ret: resonance_ret };
+        }
+
+        return { ret: 0 };
     }
 
     // deploy

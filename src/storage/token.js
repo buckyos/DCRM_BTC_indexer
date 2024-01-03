@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
 const { InscriptionStage } = require('../index/ops/state');
-const { BigNumberUtil, Util } = require('../util');
+const { BigNumberUtil } = require('../util');
 const {
     TOKEN_INDEX_DB_FILE,
     TOKEN_MINT_POOL_INIT_AMOUNT,
@@ -72,7 +72,7 @@ class TokenIndexStorage {
     async _init_db() {
         assert(this.db == null, `TokenIndexStorage db should be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             assert(this.db == null, `TokenIndexStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
@@ -94,7 +94,7 @@ class TokenIndexStorage {
     _init_tables() {
         assert(this.db != null, `db should not be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.serialize(() => {
                 let has_error = false;
 
@@ -563,7 +563,7 @@ class TokenIndexStorage {
         assert(this.db != null, `db should not be null`);
         assert(!this.during_transaction, `should not be during transaction`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run('BEGIN TRANSACTION', (err) => {
                 if (err) {
                     console.error('Could not begin transaction', err);
@@ -591,7 +591,7 @@ class TokenIndexStorage {
 
         const sql = is_success ? 'COMMIT' : 'ROLLBACK';
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(sql, (err) => {
                 if (err) {
                     console.error(
@@ -664,7 +664,7 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO mint_records (
                     inscription_id, 
@@ -765,7 +765,7 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO inscribe_records 
                     (inscription_id, 
@@ -890,7 +890,7 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO chant_records (
                     inscription_id, 
@@ -946,7 +946,7 @@ class TokenIndexStorage {
             LIMIT 1
         `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(sql, [address], (err, row) => {
                 if (err) {
                     console.error(
@@ -1115,7 +1115,7 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO transfer_records (
                     inscription_id,
@@ -1244,7 +1244,7 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO set_price_records (
                     inscription_id, 
@@ -1467,7 +1467,7 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO resonance_records 
                 (
@@ -1572,7 +1572,7 @@ class TokenIndexStorage {
             LIMIT 1
         `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(sql, [address, hash], (err, row) => {
                 if (err) {
                     console.error(
@@ -1596,7 +1596,7 @@ class TokenIndexStorage {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
         assert(
-            BigNumberUtil.is_number_string(str),
+            BigNumberUtil.is_positive_number_string(amount),
             `amount should be valid number string: ${amount}`,
         );
 
@@ -1626,7 +1626,7 @@ class TokenIndexStorage {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
         assert(
-            BigNumberUtil.is_number_string(str),
+            BigNumberUtil.is_positive_number_string(amount),
             `amount should be valid number string: ${amount}`,
         );
 
@@ -1868,7 +1868,7 @@ class TokenIndexStorage {
             SELECT amount FROM balance WHERE address = ?
         `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(sql, [address], (err, row) => {
                 if (err) {
                     console.error('Could not get balance', err);
@@ -1890,7 +1890,7 @@ class TokenIndexStorage {
 
         const sql = `
             SELECT address, amount FROM balance WHERE address IN (${addresses
-                .map((_) => '?')
+                .map(() => '?')
                 .join(',')})
         `;
 
@@ -1954,7 +1954,7 @@ class TokenIndexStorage {
         const new_amount = BigNumberUtil.subtract(from_balance, amount);
         const { ret: update_from_balance_ret } = await this.set_balance(
             from_address,
-            amount,
+            new_amount,
         );
         if (update_from_balance_ret != 0) {
             console.error(`Could not update balance ${from_address}`);
@@ -2020,7 +2020,7 @@ class TokenIndexStorage {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 sql,
                 [
@@ -2069,7 +2069,7 @@ class TokenIndexStorage {
                 UPDATE inscribe_data SET price = ? WHERE hash = ?
             `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(sql, [price, hash], (err) => {
                 if (err) {
                     console.error(
@@ -2098,7 +2098,7 @@ class TokenIndexStorage {
                 UPDATE inscribe_data SET resonance_count = resonance_count + 1 WHERE hash = ? AND resonance_count < 15
             `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(sql, [hash], (err) => {
                 if (err) {
                     console.error(
@@ -2229,7 +2229,7 @@ class TokenIndexStorage {
             VALUES (?, ?, ?, ?)
         `;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 sql,
                 [address, inscription_id, block_height, op],

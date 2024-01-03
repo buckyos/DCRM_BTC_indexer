@@ -22,7 +22,7 @@ class StateStorage {
     async init() {
         assert(this.db == null, `StateStorage db should be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             assert(this.db == null, `StateStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
@@ -42,7 +42,7 @@ class StateStorage {
     async _init_tables() {
         assert(this.db != null, `db should not be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.serialize(() => {
 
                 // Create state table
@@ -56,13 +56,12 @@ class StateStorage {
                             console.error(
                                 `failed to create state table: ${err}`,
                             );
-                            has_error = true;
+    
                             resolve({ ret: -1 });
                             return;
                         }
 
                         console.log(`created state table`);
-
                         resolve({ ret: 0 });
                     },
                 );
@@ -77,7 +76,7 @@ class StateStorage {
     async get_btc_latest_block_height() {
         assert(this.db != null, `db should not be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(
                 "SELECT value FROM state WHERE name = 'btc_latest_block_height'",
                 (err, row) => {
@@ -99,7 +98,7 @@ class StateStorage {
             'block_height must be a non-negative integer',
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO state (name, value) VALUES ('btc_latest_block_height', ?)`,
                 block_height,
@@ -125,7 +124,7 @@ class StateStorage {
     async get_eth_latest_block_height() {
         assert(this.db != null, `db should not be null`);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.get(
                 "SELECT value FROM state WHERE name = 'eth_latest_block_height'",
                 (err, row) => {
@@ -147,7 +146,7 @@ class StateStorage {
             'block_height must be a non-negative integer',
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO state (name, value) VALUES ('eth_latest_block_height', ?)`,
                 block_height,

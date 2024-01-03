@@ -94,6 +94,7 @@ class ETHIndex {
 
     // run forever
     async run() {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.current_block_height === 0) {
  
@@ -156,6 +157,7 @@ class ETHIndex {
         const chunk_size = this.eth_blocks_process_step;
         assert(chunk_size > 0, `chunk size should be positive`);
 
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             let end = this.current_block_height + chunk_size;
             if (end > latest_block_number) {
@@ -291,6 +293,8 @@ class ETHIndex {
         // find target block height for timestamp
         // if now found, we should wait for the block and retry
         let target_block_height;
+
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const { ret, block_height } =
                 await this.storage.query_block_with_timestamp(timestamp);

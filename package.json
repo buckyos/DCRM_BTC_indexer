@@ -30,5 +30,8 @@
     "web3": "^4.3.0",
     "winston": "^3.11.0",
     "winston-daily-rotate-file": "^4.7.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
   }
 }

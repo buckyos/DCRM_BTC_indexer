@@ -5,7 +5,6 @@ const { BTCClient } = require('../btc/btc');
 const { TxSimpleItem } = require('../btc/tx');
 const { OutPoint, SatPoint } = require('../btc/point');
 const { UTXOMemoryCache } = require('../btc/utxo');
-const { OrdClient } = require('../btc/ord');
 const {
     InscriptionTransferItem,
     InscriptionContentLoader,
@@ -613,7 +612,7 @@ class InscriptionTransferMonitor {
         );
         if (ret !== 0) {
             console.error(
-                `failed to add inscription transfer ${inscription_id} block ${block_height} ${satpoint.to_string()} ${address}`,
+                `failed to add inscription transfer ${inscription_id} block ${block_height} ${satpoint.to_string()} ${from_address} -> ${to_address}`,
             );
             return { ret };
         }
@@ -693,7 +692,7 @@ class InscriptionTransferMonitor {
         );
         if (ret !== 0) {
             console.error(
-                `failed to add inscription transfer ${inscription_id} block ${block_height} ${satpoint.to_string()} ${address}`,
+                `failed to add inscription transfer to fee ${inscription_id} block ${block_height} ${from_address}`,
             );
             return { ret };
         }

@@ -150,7 +150,6 @@ class BTCClient {
      * @returns {Promise<{ret: number, txs: Array}>}
      */
     async get_transaction_batch(txids) {
-        const { ret } = await this.get_transaction(txids[0]);
 
         // call _get_transaction_batch in 256 batch
         const batch_size = 64;
@@ -235,7 +234,7 @@ class BTCClient {
             const block = await this.client.getBlock(blockhash);
             return { ret: 0, block };
         } catch (err) {
-            console.error(`failed to get block ${blockhash}, ${err}`);
+            console.error(`failed to get block ${block_height}, ${err}`);
             return { ret: -1, error: err };
         }
     }

@@ -105,7 +105,7 @@ class InscribeDataOp {
     static parse_content(content) {
         assert(_.isObject(content), `inscribe content should be object`);
 
-        const { ph, text, amt, price } = content;
+        let { ph, text, amt, price } = content;
 
         // check ph
         if (!_.isString(ph)) {

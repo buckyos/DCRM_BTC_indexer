@@ -12,7 +12,7 @@ const {
     BlockInscriptonCollector,
 } = require('./item');
 const { StateStorage } = require('../storage/state');
-const { InscriptionStateStorage } = require('../storage/state');
+
 
 class InscriptionIndex {
     constructor(config) {
@@ -87,6 +87,7 @@ class InscriptionIndex {
 
     // run forever
     async run() {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.current_block_height === 0) {
                 // get latest block height already synced
@@ -457,7 +458,7 @@ class InscriptionIndex {
         );
         if (add_ret !== 0) {
             console.error(
-                `failed to add new inscription creator record ${inscription_id} ${creator_satpoint.to_string()}, ${creator_address}`,
+                `failed to add new inscription creator record ${inscription_new_item.inscription_id} ${inscription_new_item.satpoint.to_string()}, ${inscription_new_item.address}`,
             );
             return { ret: add_ret };
         }

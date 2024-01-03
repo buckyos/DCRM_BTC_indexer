@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Util, BigNumberUtil } = require('../../util');
+const { BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -47,7 +47,7 @@ class SetPriceOperator {
         );
         if (record_ret !== 0) {
             console.error(
-                `failed to record set price ${inscription_item.inscription_id} ${inscription_item.address} ${content.ph} ${content.amt}`,
+                `failed to record set price ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.content.ph} ${inscription_item.content.amt}`,
             );
             return { ret: record_ret };
         }

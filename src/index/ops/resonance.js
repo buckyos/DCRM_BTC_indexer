@@ -1,8 +1,8 @@
 const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
-const { TokenIndex, TokenIndexStorage } = require('../../storage/token');
+const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
-const { InscriptionOpState } = require('./state');
+const { InscriptionOpState, InscriptionStage } = require('./state');
 const { InscriptionTransferItem, InscriptionNewItem } = require('../item');
 
 class PendingResonanceOp {
