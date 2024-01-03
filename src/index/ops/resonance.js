@@ -99,7 +99,7 @@ class ResonanceOperator {
 
         // only process on first transfer
         if (inscription_transfer_item.index > 1) {
-            console.log(
+            console.warn(
                 `ignore resonance transfer ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.from_address} -> ${inscription_transfer_item.to_address}, ${inscription_transfer_item.index}`,
             );
             return { ret: 0 };

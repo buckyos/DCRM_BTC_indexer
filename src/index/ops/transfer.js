@@ -66,7 +66,7 @@ class TransferOperator {
 
         // only process on first transfer
         if (inscription_transfer_item.index > 1) {
-            console.log(
+            console.warn(
                 `ignore transfer ${inscription_transfer_item.block_height} ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.from_address} -> ${inscription_transfer_item.to_address}, ${inscription_transfer_item.index}`,
             );
             return { ret: 0 };
@@ -200,7 +200,7 @@ class TransferOperator {
         );
         if (ret !== 0) {
             assert(ret < 0);
-            
+
             console.error(
                 `failed to transfer ${inscription_item.inscription_id} ${inscription_item.from_address} -> ${inscription_item.to_address} ${content.amt}}`,
             );

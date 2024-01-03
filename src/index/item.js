@@ -398,13 +398,15 @@ class InscriptionContentLoader {
         }
 
         const p = content.p.toLowerCase();
+
+        // The first deployment of a ticker is the only one that has claim to the ticker. Tickers are not case sensitive (DOGE = doge). 
         if (p === 'brc-20') {
             // first should check if token name is matched
             assert(
                 _.isString(config.token.token_name),
                 `invalid config token name`,
             );
-            if (content.tick !== config.token.token_name) {
+            if (content.tick == null || content.tick.toLowerCase() !== config.token.token_name.toLowerCase()) {
                 return { ret: 0, valid: false };
             }
         }
