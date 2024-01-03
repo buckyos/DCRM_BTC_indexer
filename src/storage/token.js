@@ -54,6 +54,7 @@ class TokenIndexStorage {
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
                         timestamp INTEGER,
+                        txid TEXT,
                         address TEXT,
                         content TEXT,   
                         amount TEXT,
@@ -76,6 +77,28 @@ class TokenIndexStorage {
                     return;
                 }
 
+                // create index for txid and address field on mint_records table
+                this.db.exec(
+                    `CREATE INDEX IF NOT EXISTS idx_mint_records_txid ON mint_records (txid);
+                     CREATE INDEX IF NOT EXISTS idx_mint_records_address ON mint_records (address);
+                     `,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index on mint_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on mint_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
                 // Create inscribe_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS inscribe_records (
@@ -83,6 +106,7 @@ class TokenIndexStorage {
                         block_height INTEGER,
                         address TEXT,
                         timestamp INTEGER,
+                        txid TEXT,
                         content TEXT,
                         hash TEXT,
                         mint_amount TEXT,
@@ -108,12 +132,36 @@ class TokenIndexStorage {
                     return;
                 }
 
+                // create index for txid/address/hash field on inscribe_records table
+                this.db.exec(
+                    `CREATE INDEX IF NOT EXISTS idx_inscribe_records_txid ON inscribe_records (txid);
+                     CREATE INDEX IF NOT EXISTS idx_inscribe_records_address ON inscribe_records (address);
+                     CREATE INDEX IF NOT EXISTS idx_inscribe_records_hash ON inscribe_records (hash);
+                     `,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index on inscribe_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on inscribe_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
                 // Create chant_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS chant_records (
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
                         timestamp INTEGER,
+                        txid TEXT,
                         address TEXT,
                         content TEXT,
                         hash TEXT,
@@ -138,10 +186,11 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // create index for hash and address field on chant_records table
+                // create index for hash/address/txid field on chant_records table
                 this.db.exec(
                     `CREATE INDEX IF NOT EXISTS idx_chant_records_hash ON chant_records (hash);
                      CREATE INDEX IF NOT EXISTS idx_chant_records_address ON chant_records (address);
+                     CREATE INDEX IF NOT EXISTS idx_chant_records_txid ON chant_records (txid);
                      `,
                     (err) => {
                         if (err) {
@@ -195,12 +244,37 @@ class TokenIndexStorage {
                     return;
                 }
 
+                // create index for genesis_txid/txid/from_address/to_address field on transfer_records table
+                this.db.exec(
+                    `CREATE INDEX IF NOT EXISTS idx_transfer_records_genesis_txid ON transfer_records (genesis_txid);
+                     CREATE INDEX IF NOT EXISTS idx_transfer_records_txid ON transfer_records (txid);
+                     CREATE INDEX IF NOT EXISTS idx_transfer_records_from_address ON transfer_records (from_address);
+                     CREATE INDEX IF NOT EXISTS idx_transfer_records_to_address ON transfer_records (to_address);
+                     `,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index on transfer_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on transfer_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return
+                }
+
                 // Create set_price_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS set_price_records (
                         inscription_id TEXT PRIMARY KEY,
                         block_height INTEGER,
                         timestamp INTEGER,
+                        txid TEXT,
                         content TEXT,
                         hash TEXT,
                         address TEXT,
@@ -217,6 +291,29 @@ class TokenIndexStorage {
                         }
 
                         console.log(`created set_price_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
+                // create index on txid/address/hash field on set_price_records table
+                this.db.exec(
+                    `CREATE INDEX IF NOT EXISTS idx_set_price_records_txid ON set_price_records (txid);
+                     CREATE INDEX IF NOT EXISTS idx_set_price_records_address ON set_price_records (address);
+                     CREATE INDEX IF NOT EXISTS idx_set_price_records_hash ON set_price_records (hash);
+                     `,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index on set_price_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on set_price_records table`);
                     },
                 );
 
@@ -268,6 +365,7 @@ class TokenIndexStorage {
                 this.db.exec(
                     `CREATE INDEX IF NOT EXISTS idx_resonance_records_hash ON resonance_records (hash);
                      CREATE INDEX IF NOT EXISTS idx_resonance_records_address ON resonance_records (address);
+                     CREATE INDEX IF NOT EXISTS idx_resonance_records_genesis_txid ON resonance_records (genesis_txid);
                      `,
                     (err) => {
                         if (err) {
@@ -425,6 +523,7 @@ class TokenIndexStorage {
      * @param {string} inscription_id
      * @param {number} block_height
      * @param {number} timestamp
+     * @param {string} txid
      * @param {string} address
      * @param {string} content
      * @param {string} amount
@@ -435,6 +534,7 @@ class TokenIndexStorage {
         inscription_id,
         block_height,
         timestamp,
+        txid,
         address,
         content,
         amount,
@@ -450,6 +550,7 @@ class TokenIndexStorage {
             `block_height should be non-negative integer`,
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
         assert(typeof address === 'string', `address should be string`);
         assert(typeof content === 'string', `content should be string`);
         assert(
@@ -467,16 +568,18 @@ class TokenIndexStorage {
                     inscription_id, 
                     block_height, 
                     timestamp, 
+                    txid,
                     address, 
                     content, 
                     amount, 
                     lucky
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     timestamp,
+                    txid,
                     address,
                     content,
                     amount,
@@ -502,6 +605,7 @@ class TokenIndexStorage {
      * @param {number} block_height
      * @param {string} address
      * @param {number} timestamp
+     * @param {string} txid
      * @param {string} hash
      * @param {string} content
      * @param {string} mint_amount
@@ -516,6 +620,7 @@ class TokenIndexStorage {
         block_height,
         address,
         timestamp,
+        txid,
         hash,
         content,
         mint_amount,
@@ -535,6 +640,7 @@ class TokenIndexStorage {
         );
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof content === 'string', `content should be string`);
         assert(
@@ -562,6 +668,7 @@ class TokenIndexStorage {
                     block_height, 
                     address, 
                     timestamp, 
+                    txid,
                     hash, 
                     content,
                     mint_amount, 
@@ -569,12 +676,13 @@ class TokenIndexStorage {
                     text, 
                     price, 
                     state) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     address,
                     timestamp,
+                    txid,
                     hash,
                     content,
                     mint_amount,
@@ -630,18 +738,20 @@ class TokenIndexStorage {
      * @param {string} inscription_id
      * @param {number} block_height
      * @param {number} timestamp
+     * @param {string} txid
      * @param {string} address
      * @param {string} content
      * @param {string} hash
      * @param {string} user_bouns
      * @param {string} owner_bouns
      * @param {number} state
-     * @returns
+     * @returns {ret: number}
      */
     async add_chant_record(
         inscription_id,
         block_height,
         timestamp,
+        txid,
         address,
         content,
         hash,
@@ -660,6 +770,7 @@ class TokenIndexStorage {
         );
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
         assert(typeof content === 'string', `content should be string`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(
@@ -680,7 +791,8 @@ class TokenIndexStorage {
                 `INSERT OR REPLACE INTO chant_records (
                     inscription_id, 
                     block_height, 
-                    timestamp, 
+                    timestamp,
+                    txid,
                     address,
                     content,
                     hash, 
@@ -688,11 +800,12 @@ class TokenIndexStorage {
                     owner_bouns, 
                     state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     timestamp,
+                    txid,
                     address,
                     content,
                     hash,
@@ -986,6 +1099,7 @@ class TokenIndexStorage {
      * @param {string} inscription_id
      * @param {number} block_height
      * @param {number} timestamp
+     * @param {string} txid
      * @param {string} content
      * @param {string} hash
      * @param {string} address
@@ -996,6 +1110,7 @@ class TokenIndexStorage {
         inscription_id,
         block_height,
         timestamp,
+        txid,
         content,
         hash,
         address,
@@ -1012,6 +1127,7 @@ class TokenIndexStorage {
             `block_height should be non-negative integer`,
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
         assert(typeof content === 'string', `content should be string`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(typeof address === 'string', `address should be string`);
@@ -1030,17 +1146,19 @@ class TokenIndexStorage {
                     inscription_id, 
                     block_height, 
                     timestamp, 
+                    txid,
                     content,
                     hash, 
                     address, 
                     price, 
                     state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
                     timestamp,
+                    txid,
                     content,
                     hash,
                     address,

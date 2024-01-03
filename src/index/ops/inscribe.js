@@ -399,6 +399,7 @@ class InscribeDataOperator {
             op.inscription_item.block_height,
             op.inscription_item.address,
             op.inscription_item.timestamp,
+            op.inscription_item.txid,
             op.inscription_item.content.ph,
             JSON.stringify(op.inscription_item.content),
             mint_amt,

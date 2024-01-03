@@ -100,6 +100,7 @@ class MintOperator {
             inscription_item.inscription_id,
             inscription_item.block_height,
             inscription_item.timestamp,
+            inscription_item.txid,
             inscription_item.address,
             JSON.stringify(content),
             amt,
