@@ -1,7 +1,7 @@
 const {
     InscriptionNewItem,
     InscriptionContentLoader,
-    BlockInscriptonCollector,
+    BlockInscriptionCollector,
 } = require('../index/item');
 const { InscriptionTransferItem } = require('../index/item');
 const { SatPoint } = require('../btc/point');
@@ -18,7 +18,7 @@ class TestInscriptionsGenerator {
 
     // gen hash 32bytes len with random data, in hex code string
     /**
-     * 
+     *
      * @returns {string}
      */
     gen_random_hash(last_bytes_in_hex) {
@@ -29,9 +29,15 @@ class TestInscriptionsGenerator {
         }
 
         if (last_bytes_in_hex) {
-            assert(_.isString(last_bytes_in_hex), `last_bytes_in_hex should be string`);
+            assert(
+                _.isString(last_bytes_in_hex),
+                `last_bytes_in_hex should be string`,
+            );
             const last_bytes = Buffer.from(last_bytes_in_hex, 'hex');
-            assert(last_bytes.length <= len, `last_bytes should not longer than 32`);
+            assert(
+                last_bytes.length <= len,
+                `last_bytes should not longer than 32`,
+            );
             last_bytes.copy(buf, len - last_bytes.length);
         }
 
@@ -40,7 +46,7 @@ class TestInscriptionsGenerator {
 
     // gen some random inscriptions
     gen() {
-        const block_collector = new BlockInscriptonCollector(100);
+        const block_collector = new BlockInscriptionCollector(100);
 
         const { satpoint } = SatPoint.parse('100000:0:0');
         const inscribe_data_content1 = {
@@ -52,11 +58,12 @@ class TestInscriptionsGenerator {
             price: '100',
         };
 
-        const {item: inscribe_data_op1} = InscriptionContentLoader.parse_content(
-            '1',
-            inscribe_data_content1,
-            this.config,
-        );
+        const { item: inscribe_data_op1 } =
+            InscriptionContentLoader.parse_content(
+                '1',
+                inscribe_data_content1,
+                this.config,
+            );
 
         // block 100
         const inscribe_data_1 = new InscriptionNewItem(
@@ -81,11 +88,12 @@ class TestInscriptionsGenerator {
             price: '100',
         };
 
-        const {item: inscribe_data_op2} = InscriptionContentLoader.parse_content(
-            '2',
-            inscribe_data_content2,
-            this.config,
-        );
+        const { item: inscribe_data_op2 } =
+            InscriptionContentLoader.parse_content(
+                '2',
+                inscribe_data_content2,
+                this.config,
+            );
 
         const inscribe_data_2 = new InscriptionNewItem(
             '2', // inscription_id
@@ -130,7 +138,9 @@ class TestTokenIndex {
             return { ret: init_token_index_ret };
         }
 
-        const block_collector = new TestInscriptionsGenerator(this.config).gen();
+        const block_collector = new TestInscriptionsGenerator(
+            this.config,
+        ).gen();
 
         const { ret } = await token_index.process_block_inscriptions(
             100,

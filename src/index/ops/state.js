@@ -1,7 +1,7 @@
 // the state of inscription on btc chain
 const InscriptionStage = {
-    Inscribe: 'inscribe',   // commit and reveal on chain
-    Transfer: 'transfer',   // transfer on chain
+    Inscribe: 'inscribe', // commit and reveal on chain
+    Transfer: 'transfer', // transfer on chain
 };
 
 // inscription op's state
@@ -10,7 +10,7 @@ const InscriptionOpState = {
 
     ALREADY_EXISTS: 1,
 
-    HASH_UNMATCH: 2,
+    HASH_UNMATCHED: 2,
 
     // competition failed in same block
     COMPETITION_FAILED: 3,
@@ -39,6 +39,5 @@ const InscriptionOpState = {
 
     OUT_ADDRESS_IS_NOT_OWNER: 12,
 };
-
 
 module.exports = { InscriptionOpState, InscriptionStage };

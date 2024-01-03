@@ -18,7 +18,7 @@ class UTXOMemoryCache {
      * @param {string} outpoint in format `txid:vout`
      * @returns {Promise<{ret: number, value: number, address: string}>}
      */
-    async get_uxto(outpoint) {
+    async get_utxo(outpoint) {
         assert(_.isString(outpoint), `invalid outpoint ${outpoint}`);
 
         const item = this.utxo.get(outpoint);

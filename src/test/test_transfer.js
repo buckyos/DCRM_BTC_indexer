@@ -51,7 +51,7 @@ class RangeBlockGenerator extends BlockGenerator {
     }
 }
 
-class InscrtionTransferMonitorRunner {
+class InscriptionTransferMonitorRunner {
     constructor(config) {
         this.monitor = new InscriptionTransferMonitor(config);
         this.ord_client = new OrdClient(config.ord.rpc_url);
@@ -187,7 +187,7 @@ async function test() {
     log.path_console();
     log.enable_console_target(false);
 
-    const runner = new InscrtionTransferMonitorRunner(config.config);
+    const runner = new InscriptionTransferMonitorRunner(config.config);
     const { ret: init_ret } = await runner.init();
     if (init_ret !== 0) {
         console.error(`failed to init monitor runner`);

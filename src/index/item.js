@@ -12,8 +12,8 @@ const InscriptionOp = {
     Resonance: 'resonance',
 
     /**
-     * 
-     * @param {string} op 
+     *
+     * @param {string} op
      * @returns {boolean}
      */
     contains: (op) => {
@@ -21,8 +21,8 @@ const InscriptionOp = {
     },
 
     /**
-     * 
-     * @param {string} op 
+     *
+     * @param {string} op
      * @returns {boolean}
      */
     need_track_transfer: (op) => {
@@ -36,7 +36,6 @@ const InscriptionOp = {
         }
     },
 };
-
 
 class MintOp {
     constructor(amt, lucky) {
@@ -211,7 +210,7 @@ class SetPriceOp {
     }
 
     /**
-     * 
+     *
      * @param {object} content
      * @returns {ret: number, valid: boolean, item: SetPriceOp}
      */
@@ -253,8 +252,8 @@ class ResonanceOp {
     }
 
     /**
-     * 
-     * @param {object} content 
+     *
+     * @param {object} content
      * @returns {ret: number, valid: boolean, item: ResonanceOp}
      */
     static parse_content(content) {
@@ -272,7 +271,7 @@ class ResonanceOp {
             console.error(`invalid resonance content ph ${ph}`);
             return { ret: 0, valid: false };
         }
-        
+
         // check amt
         if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.error(`invalid resonance content amt ${amt}`);
@@ -304,7 +303,10 @@ class InscriptionContentLoader {
             `ord_client should be OrdClient`,
         );
         assert(_.isString(inscription_id), `inscription_id should be string`);
-        assert(content_type == null ||  _.isString(content_type), `content_type should be string or null: ${content_type}`);
+        assert(
+            content_type == null || _.isString(content_type),
+            `content_type should be string or null: ${content_type}`,
+        );
         assert(_.isObject(config), `config should be object`);
 
         // check content type at first
@@ -382,10 +384,10 @@ class InscriptionContentLoader {
     }
 
     /**
-     * 
-     * @param {string} inscription_id 
-     * @param {object} content 
-     * @param {object} config 
+     *
+     * @param {string} inscription_id
+     * @param {object} content
+     * @param {object} config
      * @returns {{ret: number, valid: boolean, item: object}}
      */
     static parse_content(inscription_id, content, config) {
@@ -399,14 +401,18 @@ class InscriptionContentLoader {
 
         const p = content.p.toLowerCase();
 
-        // The first deployment of a ticker is the only one that has claim to the ticker. Tickers are not case sensitive (DOGE = doge). 
+        // The first deployment of a ticker is the only one that has claim to the ticker. Tickers are not case sensitive (DOGE = doge).
         if (p === 'brc-20') {
             // first should check if token name is matched
             assert(
                 _.isString(config.token.token_name),
                 `invalid config token name`,
             );
-            if (content.tick == null || content.tick.toLowerCase() !== config.token.token_name.toLowerCase()) {
+            if (
+                content.tick == null ||
+                content.tick.toLowerCase() !==
+                    config.token.token_name.toLowerCase()
+            ) {
                 return { ret: 0, valid: false };
             }
         }
@@ -454,9 +460,9 @@ class InscriptionContentLoader {
                 return ResonanceOp.parse_content(content);
             } else {
                 console.warn(
-                    `unknown pdi op ${inscription_id} ${content.op} ${JSON.stringify(
-                        content,
-                    )}`,
+                    `unknown pdi op ${inscription_id} ${
+                        content.op
+                    } ${JSON.stringify(content)}`,
                 );
             }
         }
@@ -520,17 +526,17 @@ class InscriptionNewItem {
 
 class InscriptionTransferItem {
     /**
-     * 
-     * @param {string} inscription_id 
-     * @param {number} inscription_number 
-     * @param {number} block_height 
-     * @param {number} timestamp 
-     * @param {SatPoint} satpoint 
-     * @param {string} from_address 
-     * @param {string} to_address 
-     * @param {number} value 
-     * @param {object} content 
-     * @param {object} op 
+     *
+     * @param {string} inscription_id
+     * @param {number} inscription_number
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {SatPoint} satpoint
+     * @param {string} from_address
+     * @param {string} to_address
+     * @param {number} value
+     * @param {object} content
+     * @param {object} op
      * @param {number} index
      */
     constructor(
@@ -553,9 +559,7 @@ class InscriptionTransferItem {
         );
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(_.isNumber(timestamp), `timestamp should be number`);
-        assert(
-            satpoint instanceof SatPoint, `satpoint should be SatPoint`,
-        );
+        assert(satpoint instanceof SatPoint, `satpoint should be SatPoint`);
         assert(
             from_address == null || _.isString(from_address),
             `from_address should be string or null`,
@@ -596,7 +600,7 @@ class InscriptionTransferItem {
     }
 }
 
-class BlockInscriptonCollector {
+class BlockInscriptionCollector {
     constructor(block_height) {
         assert(_.isNumber(block_height), `invalid block_height`);
 
@@ -652,5 +656,5 @@ module.exports = {
 
     InscriptionNewItem,
     InscriptionTransferItem,
-    BlockInscriptonCollector,
+    BlockInscriptionCollector,
 };

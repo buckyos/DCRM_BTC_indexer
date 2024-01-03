@@ -1,6 +1,9 @@
 const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
-const { InscriptionOpState, InscriptionStage } = require('../../index/ops/state');
+const {
+    InscriptionOpState,
+    InscriptionStage,
+} = require('../../index/ops/state');
 const { BigNumberUtil } = require('../../util');
 const {
     TOKEN_MINT_POOL_INIT_AMOUNT,
@@ -9,8 +12,7 @@ const {
 } = require('../../constants');
 
 class MintStore {
-    constructor() {
-    }
+    constructor() {}
 
     // return null or data
     queryMintRecordByHash(hash) {
@@ -25,17 +27,17 @@ class MintStore {
     //return {count, list}
     queryMintRecordByAddress(address, limit, offset, order) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == 'ASC' ? 'ASC' : 'DESC';
         let count = 0;
         let list = [];
 
         try {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.MINT_RECORDS} WHERE address = ?`
+                FROM ${TABLE_NAME.MINT_RECORDS} WHERE address = ?`,
             );
             const countResult = countStmt.get(address);
             count = countResult.count;
@@ -45,13 +47,20 @@ class MintStore {
                     `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} 
                     WHERE address = ? 
                     ORDER BY timestamp ${order} 
-                    LIMIT ? OFFSET ?`
+                    LIMIT ? OFFSET ?`,
                 );
                 list = pageStmt.all(address, limit, offset);
             }
 
-            logger.debug('queryMintRecordByAddress:', address, offset, limit, "ret:", count, list);
-
+            logger.debug(
+                'queryMintRecordByAddress:',
+                address,
+                offset,
+                limit,
+                'ret:',
+                count,
+                list,
+            );
         } catch (error) {
             logger.error('queryMintRecordByAddress failed:', error);
 
@@ -62,7 +71,7 @@ class MintStore {
     }
 
     queryLuckyMintRecord(limit, offset, order) {
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == 'ASC' ? 'ASC' : 'DESC';
         let count = 0;
         let list = [];
 
@@ -70,7 +79,7 @@ class MintStore {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.MINT_RECORDS} 
-                WHERE lucky is not null`
+                WHERE lucky is not null`,
             );
             const countResult = countStmt.get();
             count = countResult.count;
@@ -80,13 +89,19 @@ class MintStore {
                     `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} 
                     WHERE lucky is not null 
                     ORDER BY timestamp ${order} 
-                    LIMIT ? OFFSET ?`
+                    LIMIT ? OFFSET ?`,
                 );
                 list = pageStmt.all(limit, offset);
             }
 
-            logger.debug('queryLuckyMintRecord:', offset, limit, "ret:", count, list);
-
+            logger.debug(
+                'queryLuckyMintRecord:',
+                offset,
+                limit,
+                'ret:',
+                count,
+                list,
+            );
         } catch (error) {
             logger.error('queryLuckyMintRecord failed:', error);
 
@@ -98,14 +113,14 @@ class MintStore {
 
     queryTotalMintByTime(beginTime, endTime) {
         if (!beginTime || !endTime) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
         try {
             const stmt = store.indexDB.prepare(
                 `SELECT amount
                 FROM ${TABLE_NAME.MINT_RECORDS} 
-                WHERE timestamp >= ? AND timestamp < ?`
+                WHERE timestamp >= ? AND timestamp < ?`,
             );
             const ret = stmt.all(beginTime, endTime);
 
@@ -116,10 +131,15 @@ class MintStore {
 
             console.log('ret:', ret);
 
-            logger.debug('queryTotalMintByTime', beginTime, endTime, ', ret:', total);
+            logger.debug(
+                'queryTotalMintByTime',
+                beginTime,
+                endTime,
+                ', ret:',
+                total,
+            );
 
             return makeSuccessReponse(total);
-
         } catch (error) {
             logger.error('queryTotalMintByTime failed:', error);
 
@@ -163,24 +183,23 @@ class MintStore {
 
     queryBalanceByAddress(address) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
         try {
             const stmt = store.indexDB.prepare(
                 `SELECT amount FROM ${TABLE_NAME.BALANCE} 
-                WHERE address = ?`
+                WHERE address = ?`,
             );
             const ret = stmt.get(address);
             if (ret != null) {
                 const amount = ret.amount;
-                logger.debug('queryBalanceByAddress:', address, "ret:", amount);
+                logger.debug('queryBalanceByAddress:', address, 'ret:', amount);
 
                 return makeSuccessReponse(amount);
             }
 
             return makeReponse(ERR_CODE.NOT_FOUND);
-
         } catch (error) {
             logger.error('queryBalanceByAddress failed:', error);
 
@@ -191,13 +210,13 @@ class MintStore {
     queryIndexerState() {
         try {
             const ethStmt = store.stateDB.prepare(
-                `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`
+                `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`,
             );
             const ethRet = ethStmt.get('eth_latest_block_height');
             const ethHeight = ethRet.value;
 
             const btcStmt = store.stateDB.prepare(
-                `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`
+                `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`,
             );
             const btcRet = btcStmt.get('btc_latest_block_height');
             const btcHeight = btcRet.value;
@@ -210,7 +229,6 @@ class MintStore {
             logger.debug('queryIndexerState: ret:', ret);
 
             return makeSuccessReponse(ret);
-
         } catch (error) {
             logger.error('queryIndexerState failed:', error);
 
@@ -221,15 +239,15 @@ class MintStore {
     queryIncomeByTime(address, beginTime, endTime) {
         try {
             const result = {
-                mint: '0',              // mint
-                chant_bouns: '0',       // chant other's inscription
-                chanted_bouns: '0',     // chanted by others
-                resonance_bouns: '0',   // resonance by others
+                mint: '0', // mint
+                chant_bonus: '0', // chant other's inscription
+                chanted_bonus: '0', // chanted by others
+                resonance_bonus: '0', // resonance by others
             };
             let stmt = store.indexDB.prepare(
                 `SELECT amount
                 FROM ${TABLE_NAME.MINT_RECORDS} 
-                WHERE address = ? AND timestamp >= ? AND timestamp < ?`
+                WHERE address = ? AND timestamp >= ? AND timestamp < ?`,
             );
             let ret = stmt.all(address, beginTime, endTime);
             let total = '0';
@@ -239,47 +257,46 @@ class MintStore {
             result.mint = total;
 
             stmt = store.indexDB.prepare(
-                `SELECT i.hash, r.owner_bouns
+                `SELECT i.hash, r.owner_bonus
                 FROM ${TABLE_NAME.INSCRIBE_DATA} i
                 JOIN ${TABLE_NAME.RESONANCE_RECORDS} r ON i.hash = r.hash
-                WHERE i.address = ? AND r.timestamp >= ? AND r.timestamp < ? AND r.state = ?`
+                WHERE i.address = ? AND r.timestamp >= ? AND r.timestamp < ? AND r.state = ?`,
             );
             ret = stmt.all(address, beginTime, endTime, InscriptionOpState.OK);
             total = '0';
             for (const item of ret) {
-                total = BigNumberUtil.add(total, item.owner_bouns);
+                total = BigNumberUtil.add(total, item.owner_bonus);
             }
-            result.resonance_bouns = total;
+            result.resonance_bonus = total;
 
             stmt = store.indexDB.prepare(
-                `SELECT i.hash, c.owner_bouns
+                `SELECT i.hash, c.owner_bonus
                 FROM ${TABLE_NAME.INSCRIBE_DATA} i
                 JOIN  ${TABLE_NAME.CHANT_RECORDS} c ON i.hash = c.hash
-                WHERE i.address = ? AND c.timestamp >= ? AND c.timestamp < ? AND c.state = ?`
+                WHERE i.address = ? AND c.timestamp >= ? AND c.timestamp < ? AND c.state = ?`,
             );
             ret = stmt.all(address, beginTime, endTime, InscriptionOpState.OK);
             total = '0';
             for (const item of ret) {
-                total = BigNumberUtil.add(total, item.owner_bouns);
+                total = BigNumberUtil.add(total, item.owner_bonus);
             }
-            result.chanted_bouns = total;
+            result.chanted_bonus = total;
 
             stmt = store.indexDB.prepare(
-                `SELECT user_bouns
+                `SELECT user_bonus
                 FROM ${TABLE_NAME.CHANT_RECORDS}
-                WHERE address = ? AND timestamp >= ? AND timestamp < ? AND state = ?`
+                WHERE address = ? AND timestamp >= ? AND timestamp < ? AND state = ?`,
             );
             ret = stmt.all(address, beginTime, endTime, InscriptionOpState.OK);
             total = '0';
             for (const item of ret) {
-                total = BigNumberUtil.add(total, item.user_bouns);
+                total = BigNumberUtil.add(total, item.user_bonus);
             }
-            result.chant_bouns = total;
+            result.chant_bonus = total;
 
             logger.debug('queryIncomeByTime: ret:', result);
 
             return makeSuccessReponse(result);
-
         } catch (error) {
             logger.error('queryIncomeByTime failed:', error);
 
@@ -289,5 +306,5 @@ class MintStore {
 }
 
 module.exports = {
-    MintStore
+    MintStore,
 };

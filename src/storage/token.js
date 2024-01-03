@@ -216,8 +216,8 @@ class TokenIndexStorage {
                         address TEXT,
                         content TEXT,
                         hash TEXT,
-                        user_bouns TEXT,
-                        owner_bouns TEXT,
+                        user_bonus TEXT,
+                        owner_bonus TEXT,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -390,7 +390,7 @@ class TokenIndexStorage {
                         txid TEXT,
                         owner_address TEXT,
 
-                        owner_bouns TEXT,
+                        owner_bonus TEXT,
                         service_charge TEXT,
 
                         state INTEGER DEFAULT 0
@@ -846,8 +846,8 @@ class TokenIndexStorage {
      * @param {string} address
      * @param {string} content
      * @param {string} hash
-     * @param {string} user_bouns
-     * @param {string} owner_bouns
+     * @param {string} user_bonus
+     * @param {string} owner_bonus
      * @param {number} state
      * @returns {ret: number}
      */
@@ -859,8 +859,8 @@ class TokenIndexStorage {
         address,
         content,
         hash,
-        user_bouns,
-        owner_bouns,
+        user_bonus,
+        owner_bonus,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -878,12 +878,12 @@ class TokenIndexStorage {
         assert(typeof content === 'string', `content should be string`);
         assert(typeof hash === 'string', `hash should be string`);
         assert(
-            BigNumberUtil.is_positive_number_string(user_bouns),
-            `user_bouns should be positive number string`,
+            BigNumberUtil.is_positive_number_string(user_bonus),
+            `user_bonus should be positive number string`,
         );
         assert(
-            BigNumberUtil.is_positive_number_string(owner_bouns),
-            `owner_bouns should be positive number string`,
+            BigNumberUtil.is_positive_number_string(owner_bonus),
+            `owner_bonus should be positive number string`,
         );
         assert(
             Number.isInteger(state) && state >= 0,
@@ -900,8 +900,8 @@ class TokenIndexStorage {
                     address,
                     content,
                     hash, 
-                    user_bouns, 
-                    owner_bouns, 
+                    user_bonus, 
+                    owner_bonus, 
                     state
                 ) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -913,8 +913,8 @@ class TokenIndexStorage {
                     address,
                     content,
                     hash,
-                    user_bouns,
-                    owner_bouns,
+                    user_bonus,
+                    owner_bonus,
                     state,
                 ],
                 (err) => {
@@ -1063,7 +1063,7 @@ class TokenIndexStorage {
      * @param {number} state
      * @returns {ret: number}
      */
-    async add_transfer_record_on_transfered(
+    async add_transfer_record_on_transferred(
         inscription_id,
 
         genesis_block_height,
@@ -1341,7 +1341,7 @@ class TokenIndexStorage {
                     txid,
                     owner_address,
 
-                    owner_bouns,
+                    owner_bonus,
                     service_charge,
 
                     state,
@@ -1395,12 +1395,12 @@ class TokenIndexStorage {
      * @param {number} timestamp
      * @param {string} txid
      * @param {string} owner_address
-     * @param {string} owner_bouns
+     * @param {string} owner_bonus
      * @param {string} service_charge
      * @param {number} state
      * @returns {ret: number}
      */
-    async add_resonance_record_on_transfered(
+    async add_resonance_record_on_transferred(
         inscription_id,
 
         genesis_block_height,
@@ -1415,7 +1415,7 @@ class TokenIndexStorage {
         txid,
         owner_address,
 
-        owner_bouns,
+        owner_bonus,
         service_charge,
 
         state,
@@ -1454,8 +1454,8 @@ class TokenIndexStorage {
         );
 
         assert(
-            BigNumberUtil.is_positive_number_string(owner_bouns),
-            `owner_bouns should be positive number string ${owner_bouns}`,
+            BigNumberUtil.is_positive_number_string(owner_bonus),
+            `owner_bonus should be positive number string ${owner_bonus}`,
         );
         assert(
             BigNumberUtil.is_positive_number_string(service_charge),
@@ -1486,7 +1486,7 @@ class TokenIndexStorage {
                     txid,
                     owner_address,
 
-                    owner_bouns,
+                    owner_bonus,
                     service_charge,
 
                     state,
@@ -1507,7 +1507,7 @@ class TokenIndexStorage {
                     txid,
                     owner_address,
 
-                    owner_bouns,
+                    owner_bonus,
                     service_charge,
 
                     state,
@@ -1515,7 +1515,7 @@ class TokenIndexStorage {
                 (err) => {
                     if (err) {
                         console.error(
-                            `failed to add resonance transfered record: ${inscription_id} ${err}`,
+                            `failed to add resonance transferred record: ${inscription_id} ${err}`,
                         );
                         resolve({ ret: -1 });
                     } else {
@@ -1617,7 +1617,7 @@ class TokenIndexStorage {
     }
 
     /**
-     * @comeent set the balance for address, if address exists, update it
+     * @comment set the balance for address, if address exists, update it
      * @param {string} address
      * @param {string} amount
      * @returns {ret: number}

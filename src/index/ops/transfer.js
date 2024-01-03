@@ -72,7 +72,6 @@ class TransferOperator {
             return { ret: 0 };
         }
 
-
         // first query the inscription at the inscribed stage
         const { ret: get_inscribed_ret, data: inscription_item } =
             await this.storage.query_transfer_record(
@@ -124,7 +123,7 @@ class TransferOperator {
 
         // record transfer op
         const { ret: record_ret } =
-            await this.storage.add_transfer_record_on_transfered(
+            await this.storage.add_transfer_record_on_transferred(
                 inscription_item.inscription_id,
 
                 inscription_item.genesis_block_height,

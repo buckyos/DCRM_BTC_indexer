@@ -268,7 +268,7 @@ class InscriptionTransferMonitor {
 
     /**
      * add new inscription on inscription index scanner, then we can monitor it
-     * it's the firt step to monitor a new inscription, and it's the first transfer record
+     * it's the first step to monitor a new inscription, and it's the first transfer record
      * @param {string} inscription_id
      * @param {number} inscription_number
      * @param {number} block_height
@@ -305,7 +305,7 @@ class InscriptionTransferMonitor {
             block_height,
             timestamp,
             satpoint,
-            null, // creator transcation's from address is null
+            null, // creator transaction's from address is null
             creator_address,
             value,
             0,
@@ -653,7 +653,7 @@ class InscriptionTransferMonitor {
         return { ret: 0 };
     }
 
-    // the inscription is spent as fee, like this 58a58d5ccbf032c4ec94decf73531de4fb3d9b073ddcbf1abcdbe7c61b5cd587i0
+    // the inscription is spent as fee, like this "58a58d5ccbf032c4ec94decf73531de4fb3d9b073ddcbf1abcdbe7c61b5cd587i0"
     async _on_inscription_transfer_as_fee(
         inscription_id,
         inscription_number,

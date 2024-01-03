@@ -9,10 +9,9 @@ const { InscriptionsManager } = require('../storage/manager');
 const {
     InscriptionContentLoader,
     InscriptionNewItem,
-    BlockInscriptonCollector,
+    BlockInscriptionCollector,
 } = require('./item');
 const { StateStorage } = require('../storage/state');
-
 
 class InscriptionIndex {
     constructor(config) {
@@ -145,10 +144,10 @@ class InscriptionIndex {
         );
 
         if (this.current_block_height >= height) {
-            if (
-                this.current_block_height > height
-            ) {
-                console.warn(`current block height ${this.current_block_height} > latest block height ${height}`);
+            if (this.current_block_height > height) {
+                console.warn(
+                    `current block height ${this.current_block_height} > latest block height ${height}`,
+                );
             }
 
             return { ret: 0 };
@@ -199,7 +198,7 @@ class InscriptionIndex {
     async sync_block(block_height) {
         console.info(`syncing block ${block_height}`);
 
-        const collector = new BlockInscriptonCollector(block_height, [], []);
+        const collector = new BlockInscriptionCollector(block_height, [], []);
 
         // first process block inscriptions
         const { ret: process_ret } = await this._process_block_inscriptions(
@@ -252,13 +251,13 @@ class InscriptionIndex {
     /**
      *
      * @param {number} block_height
-     * @param {BlockInscriptonCollector} collector
+     * @param {BlockInscriptionCollector} collector
      * @returns {Promise<{ret: number}>}
      */
     async _scan_block_inscription_transfer(block_height, collector) {
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(
-            collector instanceof BlockInscriptonCollector,
+            collector instanceof BlockInscriptionCollector,
             `invalid collector`,
         );
 
@@ -303,7 +302,7 @@ class InscriptionIndex {
     async _process_block_inscriptions(block_height, collector) {
         assert(block_height != null, `block_height should not be null`);
         assert(
-            collector instanceof BlockInscriptonCollector,
+            collector instanceof BlockInscriptionCollector,
             `invalid collector`,
         );
 
@@ -425,8 +424,14 @@ class InscriptionIndex {
             inscription_new_item instanceof InscriptionNewItem,
             `invalid inscription_new_item`,
         );
-        assert(_.isObject(inscription_new_item), `invalid inscription_new_item`);
-        assert(_.isObject(inscription_new_item.op), `invalid inscription_new_item.op`);
+        assert(
+            _.isObject(inscription_new_item),
+            `invalid inscription_new_item`,
+        );
+        assert(
+            _.isObject(inscription_new_item.op),
+            `invalid inscription_new_item.op`,
+        );
 
         // first record new inscription
         const { ret: add_new_inscription_ret } =
@@ -458,7 +463,11 @@ class InscriptionIndex {
         );
         if (add_ret !== 0) {
             console.error(
-                `failed to add new inscription creator record ${inscription_new_item.inscription_id} ${inscription_new_item.satpoint.to_string()}, ${inscription_new_item.address}`,
+                `failed to add new inscription creator record ${
+                    inscription_new_item.inscription_id
+                } ${inscription_new_item.satpoint.to_string()}, ${
+                    inscription_new_item.address
+                }`,
             );
             return { ret: add_ret };
         }
@@ -469,7 +478,7 @@ class InscriptionIndex {
     /**
      * Handles all inscriptions and transfers in a block
      *
-     * @param {BlockInscriptonCollector} collector
+     * @param {BlockInscriptionCollector} collector
      * @returns {Promise<{ret: number}>}
      */
     async _on_block_inscriptions_and_transfers(block_height, collector) {
@@ -484,4 +493,4 @@ class InscriptionIndex {
     }
 }
 
-module.exports = { InscriptionIndex, BlockInscriptonCollector };
+module.exports = { InscriptionIndex, BlockInscriptionCollector };

@@ -37,7 +37,7 @@ class InscribeDataOperator {
     }
 
     /**
-     * @comment processed on the inscription transfered
+     * @comment processed on the inscription transferred
      * @param {InscriptionTransferItem} inscription_transfer_item
      * @returns {Promise<{ret: number}>}
      */
@@ -195,7 +195,7 @@ class InscribeDataOperator {
             return { ret: 0 };
         }
 
-        // 2. chech hash condition if satisfied
+        // 2. check hash condition if satisfied
         assert(inscription_item.commit_txid != null);
         if (
             !Util.check_inscribe_hash_and_txid(
@@ -210,7 +210,7 @@ class InscribeDataOperator {
             // not match (hash - commit_txid) % 32 != 0, so this inscription will failed
             const op = new PendingInscribeOp(
                 inscription_item,
-                InscriptionOpState.HASH_UNMATCH,
+                InscriptionOpState.HASH_UNMATCHED,
                 0,
             );
             this.pending_inscribe_ops.push(op);

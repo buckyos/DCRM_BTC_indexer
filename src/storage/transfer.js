@@ -224,7 +224,7 @@ class InscriptionTransferStorage {
      * @param {string} inscription_id
      * @returns {Promise<{ret: number, data: object}>}
      */
-    async get_lastest_transfer(inscription_id) {
+    async get_latest_transfer(inscription_id) {
         assert(this.db != null, `db should not be null`);
         assert(
             typeof inscription_id === 'string',

@@ -1,16 +1,21 @@
 const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
-const { TokenIndexStorage, UpdatePoolBalanceOp } = require('../../storage/token');
+const {
+    TokenIndexStorage,
+    UpdatePoolBalanceOp,
+} = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem } = require('../item');
 const { TOKEN_MINT_POOL_VIRTUAL_ADDRESS } = require('../../constants');
 
-
 class ChantOperator {
     constructor(config, storage, hash_helper) {
         assert(_.isObject(config), `config should be object`);
-        assert(storage instanceof TokenIndexStorage, `storage should be TokenIndex`);
+        assert(
+            storage instanceof TokenIndexStorage,
+            `storage should be TokenIndex`,
+        );
         assert(
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,
@@ -25,8 +30,8 @@ class ChantOperator {
     }
 
     /**
-     * 
-     * @param {InscriptionNewItem} inscription_item 
+     *
+     * @param {InscriptionNewItem} inscription_item
      * @returns {Promise<{ret: number}>}
      */
     async on_chant(inscription_item) {
@@ -62,8 +67,8 @@ class ChantOperator {
     }
 
     /**
-     * 
-     * @param {InscriptionNewItem} inscription_item 
+     *
+     * @param {InscriptionNewItem} inscription_item
      * @returns {Promise<{ret: number, state: number}>}
      */
     async _chant(inscription_item) {
@@ -132,7 +137,7 @@ class ChantOperator {
                 `invalid hash relation ${inscription_item.inscription_id} hash: ${hash} block: ${inscription_item.block_height}`,
             );
 
-            return { ret: 0, state: InscriptionOpState.HASH_UNMATCH };
+            return { ret: 0, state: InscriptionOpState.HASH_UNMATCHED };
         }
 
         // 3. check weight of hash
@@ -152,7 +157,7 @@ class ChantOperator {
         }
 
         assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
-        let bouns = hash_weight;
+        let bonus = hash_weight;
         // const stamina = hash_weight / 4;
         const stamina = BigNumberUtil.divide(hash_weight, 4);
 
@@ -174,7 +179,7 @@ class ChantOperator {
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
-        // 4. check if alreay has one chant op in this block
+        // 4. check if already has one chant op in this block
         const user_chant_op = this.user_chant_ops.get(inscription_item.address);
         if (user_chant_op != null) {
             console.warn(
@@ -186,10 +191,8 @@ class ChantOperator {
 
         // 5. check Mint pool left balance
         const { ret: get_mint_pool_ret, amount: mint_pool_balance } =
-            await this.storage.get_balance(
-                TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-            );
-        
+            await this.storage.get_balance(TOKEN_MINT_POOL_VIRTUAL_ADDRESS);
+
         if (get_mint_pool_ret !== 0) {
             console.error(
                 `failed to get mint pool balance ${inscription_item.inscription_id} ${this.config.token.account.mint_pool_address}`,
@@ -197,35 +200,38 @@ class ChantOperator {
             return { ret: get_mint_pool_ret };
         }
 
-        assert(BigNumberUtil.is_positive_number_string(mint_pool_balance), `invalid mint pool balance ${mint_pool_balance}`);
+        assert(
+            BigNumberUtil.is_positive_number_string(mint_pool_balance),
+            `invalid mint pool balance ${mint_pool_balance}`,
+        );
 
-        // if bouns > mint_pool_balance then bouns = mint_pool_balance
-        if (BigNumberUtil.compare(bouns, mint_pool_balance) > 0) {
+        // if bonus > mint_pool_balance then bonus = mint_pool_balance
+        if (BigNumberUtil.compare(bonus, mint_pool_balance) > 0) {
             console.warn(
-                `not enough mint pool balance for bouns ${inscription_item.inscription_id} ${mint_pool_balance} < ${bouns}`,
+                `not enough mint pool balance for bonus ${inscription_item.inscription_id} ${mint_pool_balance} < ${bonus}`,
             );
-            bouns = mint_pool_balance;
+            bonus = mint_pool_balance;
         }
 
-        // is bouns is zero, then we should ignore this inscription
-        if (BigNumberUtil.compare(bouns, 0) <= 0) {
+        // is bonus is zero, then we should ignore this inscription
+        if (BigNumberUtil.compare(bonus, 0) <= 0) {
             console.warn(
-                `empty mint pool balance ${inscription_item.inscription_id} ${mint_pool_balance} < ${bouns}`,
+                `empty mint pool balance ${inscription_item.inscription_id} ${mint_pool_balance} < ${bonus}`,
             );
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
-        // 6. trans bouns to user and owner
+        // 6. trans bonus to user and owner
         let user_bonus;
         let owner_bonus;
         if (data.address !== inscription_item.address) {
-            // user_bonus = bouns * 0.8;
-            user_bonus =  BigNumberUtil.multiply(bouns, 0.8)   
+            // user_bonus = bonus * 0.8;
+            user_bonus = BigNumberUtil.multiply(bonus, 0.8);
 
-            // owner_bouns = bouns - user_bonus;
-            owner_bonus = BigNumberUtil.subtract(bouns, user_bonus);    
+            // owner_bonus = bonus - user_bonus;
+            owner_bonus = BigNumberUtil.subtract(bonus, user_bonus);
         } else {
-            user_bonus = bouns;
+            user_bonus = bonus;
             owner_bonus = '0';
         }
 
@@ -271,14 +277,15 @@ class ChantOperator {
         inscription_item.owner_bonus = owner_bonus;
 
         // 7. update pool amount
-        const { ret: update_pool_ret } = await this.storage.update_pool_balance_on_ops(
-            UpdatePoolBalanceOp.Chant,
-            bouns,
-        );
+        const { ret: update_pool_ret } =
+            await this.storage.update_pool_balance_on_ops(
+                UpdatePoolBalanceOp.Chant,
+                bonus,
+            );
         if (update_pool_ret !== 0) {
             assert(update_pool_ret < 0);
             console.error(
-                `failed to update pool balance ${inscription_item.inscription_id} ${bouns}`,
+                `failed to update pool balance ${inscription_item.inscription_id} ${bonus}`,
             );
             return { ret: update_pool_ret };
         }

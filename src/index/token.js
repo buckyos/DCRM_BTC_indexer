@@ -9,7 +9,7 @@ const { TransferOperator } = require('./ops/transfer');
 const { ChantOperator } = require('./ops/chant');
 const { ResonanceOperator } = require('./ops/resonance');
 const { SetPriceOperator } = require('./ops/set_price');
-const { BlockInscriptonCollector, InscriptionOp } = require('./item');
+const { BlockInscriptionCollector, InscriptionOp } = require('./item');
 
 class TokenIndex {
     constructor(config) {
@@ -48,8 +48,8 @@ class TokenIndex {
     async process_block_inscriptions(block_height, block_collector) {
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(
-            block_collector instanceof BlockInscriptonCollector,
-            `block_collector should be BlockInscriptonCollector`,
+            block_collector instanceof BlockInscriptionCollector,
+            `block_collector should be BlockInscriptionCollector`,
         );
 
         const block_indexer = new TokenBlockIndex(
@@ -76,8 +76,8 @@ class TokenBlockIndex {
         );
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(
-            block_collector instanceof BlockInscriptonCollector,
-            `block_collector should be BlockInscriptonCollector`,
+            block_collector instanceof BlockInscriptionCollector,
+            `block_collector should be BlockInscriptionCollector`,
         );
 
         this.storage = storage;
@@ -226,7 +226,7 @@ class TokenBlockIndex {
             .inscription_transfers) {
             if (inscription_transfer_item.op.op === InscriptionOp.Mint) {
                 console.warn(
-                    `mint op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                    `mint op should not be transferred ${inscription_transfer_item.inscription_id}`,
                 );
             } else if (
                 inscription_transfer_item.op.op === InscriptionOp.Inscribe
@@ -245,13 +245,13 @@ class TokenBlockIndex {
                 inscription_transfer_item.op.op === InscriptionOp.SetPrice
             ) {
                 console.warn(
-                    `set price op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                    `set price op should not be transferred ${inscription_transfer_item.inscription_id}`,
                 );
             } else if (
                 inscription_transfer_item.op.op === InscriptionOp.Chant
             ) {
                 console.warn(
-                    `chant op should not be transfered ${inscription_transfer_item.inscription_id}`,
+                    `chant op should not be transferred ${inscription_transfer_item.inscription_id}`,
                 );
             } else if (
                 inscription_transfer_item.op.op === InscriptionOp.Resonance
@@ -350,7 +350,7 @@ class TokenBlockIndex {
 
     // resonance
     async on_inscribe_resonance(inscription_item) {
-        return await this.resonance_operator.on_inscrib(inscription_item);
+        return await this.resonance_operator.on_inscribe(inscription_item);
     }
 
     async on_transfer_resonance(inscription_transfer_item) {

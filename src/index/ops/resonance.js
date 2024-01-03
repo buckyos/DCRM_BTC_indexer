@@ -39,7 +39,7 @@ class ResonanceOperator {
         this.storage = storage;
         this.hash_helper = hash_helper;
 
-        // pending resonance ops that need to be processed, has some rescirptions in the same block
+        // pending resonance ops that need to be processed, has some restrictions in the same block
         this.pending_resonance_ops = [];
     }
 
@@ -120,7 +120,7 @@ class ResonanceOperator {
 
         if (inscription_item == null) {
             console.error(
-                `query resonance isncribe record but not found: ${inscription_transfer_item.inscription_id}`,
+                `query resonance inscribe record but not found: ${inscription_transfer_item.inscription_id}`,
             );
             return { ret: 0 };
         }
@@ -230,7 +230,7 @@ class ResonanceOperator {
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
         }
 
-        // 2. check the price of the hash, a hash can be resnoanced only if the price is greater than zero
+        // 2. check the price of the hash, a hash can be resonated only if the price is greater than zero
         const price = data.price;
         if (price == null || BigNumberUtil.compare(price, 0) <= 0) {
             console.warn(`hash ${hash} price is zero or not set yet`);
@@ -252,7 +252,7 @@ class ResonanceOperator {
             console.error(`get_balance failed ${inscription_item.address}`);
             return { ret: get_balance_ret };
         }
-        
+
         assert(_.isString(balance), `balance should be string ${balance}`);
         if (BigNumberUtil.compare(balance, amt) < 0) {
             console.warn(
@@ -342,12 +342,15 @@ class ResonanceOperator {
     async _resonance(inscription_item, content, state) {
         assert(_.isNumber(state), `state should be number`);
 
-        // 1. first transfer balance for bouns and service charge
+        // 1. first transfer balance for bonus and service charge
         const amt = content.amt;
-        assert(BigNumberUtil.is_positive_number_string(amt), `invalid amt ${amt}`);
+        assert(
+            BigNumberUtil.is_positive_number_string(amt),
+            `invalid amt ${amt}`,
+        );
 
-        const service_charge = BigNumberUtil.multiply(amt, 0.2) // amt * 0.2;
-        const owner_bouns = BigNumberUtil.subtract(amt, service_charge); // amt - service_charge;
+        const service_charge = BigNumberUtil.multiply(amt, 0.2); // amt * 0.2;
+        const owner_bonus = BigNumberUtil.subtract(amt, service_charge); // amt - service_charge;
 
         if (BigNumberUtil.compare(service_charge, 0) > 0) {
             const { ret } = await this.storage.transfer_balance(
@@ -364,17 +367,17 @@ class ResonanceOperator {
         }
 
         if (
-            BigNumberUtil.compare(owner_bouns, 0) > 0 &&
+            BigNumberUtil.compare(owner_bonus, 0) > 0 &&
             inscription_item.address !== inscription_item.output_address
         ) {
             const { ret } = await this.storage.transfer_balance(
                 inscription_item.address,
                 inscription_item.output_address,
-                owner_bouns,
+                owner_bonus,
             );
             if (ret !== 0) {
                 console.error(
-                    `transfer_balance for owner bouns failed ${inscription_item.address} ${inscription_item.output_address} ${owner_bouns}`,
+                    `transfer_balance for owner bonus failed ${inscription_item.address} ${inscription_item.output_address} ${owner_bonus}`,
                 );
                 return { ret };
             }
@@ -391,9 +394,9 @@ class ResonanceOperator {
             return { ret: update_inscribe_data_ret };
         }
 
-        // 3. record the resnoance op
+        // 3. record the resonance op
         const { ret: add_resonance_op_ret } =
-            await this.storage.add_resonance_record_on_transfered(
+            await this.storage.add_resonance_record_on_transferred(
                 inscription_item.inscription_id,
 
                 inscription_item.genesis_block_height,
@@ -408,7 +411,7 @@ class ResonanceOperator {
                 inscription_item.txid,
                 inscription_item.owner_address,
 
-                owner_bouns,
+                owner_bonus,
                 service_charge,
 
                 state,

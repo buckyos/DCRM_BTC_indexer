@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { SatPoint, OutPoint } = require('./point');
-const {Util} = require('../util');
+const { Util } = require('../util');
 
 class TxSimpleItem {
     constructor(tx) {
@@ -28,10 +28,10 @@ class TxSimpleItem {
             let address = null;
             if (vout.scriptPubKey && vout.scriptPubKey.address) {
                 address = vout.scriptPubKey.address;
-            } else if (vout.type == "nulldata") {
+            } else if (vout.type == 'nulldata') {
                 // OP_RETURN, ignore
             } else {
-                // FIXME should makesure it is OP_RETURN or known invalid case
+                // FIXME should make sure it is OP_RETURN or known invalid case
                 // console.warn(`failed to get address for ${this.txid}:${i}`);
             }
 
@@ -46,14 +46,17 @@ class TxSimpleItem {
     }
 
     /**
-     * 
-     * @param {SatPoint} satpoint 
-     * @param {UTXOMemoryCache} utxo_cache 
+     *
+     * @param {SatPoint} satpoint
+     * @param {UTXOMemoryCache} utxo_cache
      * @returns {Promise<{ret: number, point: SatPoint, address: string, value: number}>}
      * point is SatPoint, is null if not found
      */
     async calc_next_satpoint(satpoint, utxo_cache) {
-        assert(satpoint instanceof SatPoint, `invalid satpoint on calc_next_satpoint`);
+        assert(
+            satpoint instanceof SatPoint,
+            `invalid satpoint on calc_next_satpoint`,
+        );
 
         const index = this.vin.indexOf(satpoint.outpoint.to_string());
         if (index < 0) {
@@ -64,7 +67,7 @@ class TxSimpleItem {
         // calc the sat position in this tx inputs
         let pos = 0;
         for (let i = 0; i < index; ++i) {
-            const { ret, value } = await utxo_cache.get_uxto(this.vin[i]);
+            const { ret, value } = await utxo_cache.get_utxo(this.vin[i]);
             if (ret !== 0) {
                 console.error(`failed to get utxo ${this.vin[i]}`);
                 return { ret };
@@ -86,9 +89,16 @@ class TxSimpleItem {
                 );
 
                 console.log(
-                    `found ordinal ${satpoint.to_string()} -> ${point.to_string()}, address: ${output.address}`,
+                    `found ordinal ${satpoint.to_string()} -> ${point.to_string()}, address: ${
+                        output.address
+                    }`,
                 );
-                return { ret: 0, point, address: output.address, value: output.value };
+                return {
+                    ret: 0,
+                    point,
+                    address: output.address,
+                    value: output.value,
+                };
             }
 
             current += output.value;

@@ -25,7 +25,9 @@ class InscriptionsStorage {
             assert(this.db == null, `InscriptionsStorage db should be null`);
             this.db = new sqlite3.Database(this.db_file_path, (err) => {
                 if (err) {
-                    console.error(`failed to connect to InscriptionsStorage sqlite: ${err}`);
+                    console.error(
+                        `failed to connect to InscriptionsStorage sqlite: ${err}`,
+                    );
                     resolve({ ret: -1 });
                     return;
                 }
@@ -56,7 +58,7 @@ class InscriptionsStorage {
 
                     creator TEXT,
                     owner TEXT,
-                    last_block_height INTEGER,  /* last block height that this inscription transfered to new owner */
+                    last_block_height INTEGER,  /* last block height that this inscription transferred to new owner */
 
                     transfer_count INTEGER
                 )`,
@@ -99,13 +101,13 @@ class InscriptionsStorage {
     }
 
     /**
-     * 
-     * @param {string} inscription_id 
-     * @param {string} inscription_number 
-     * @param {string} content 
-     * @param {string} op 
-     * @param {string} creator 
-     * @param {number} block_height 
+     *
+     * @param {string} inscription_id
+     * @param {string} inscription_number
+     * @param {string} content
+     * @param {string} op
+     * @param {string} creator
+     * @param {number} block_height
      * @returns {ret: number}
      */
     async add_new_inscription(

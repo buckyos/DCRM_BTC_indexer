@@ -39,7 +39,7 @@ class OrdClient {
 
     /**
      * 
-     * @param {numver} block_height 
+     * @param {number} block_height 
      * @returns {Promise<{ret: number, data: object}>}
      */
     async get_inscription_by_block(block_height) {
@@ -48,7 +48,7 @@ class OrdClient {
             // get by pages
             let page = 0;
             let inscriptions = [];
-            
+
             // eslint-disable-next-line no-constant-condition
             while (true) {
                 const response = await this.client.get(
