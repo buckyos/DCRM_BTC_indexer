@@ -1821,15 +1821,16 @@ class TokenIndexStorage {
                 }
 
                 break;
-            case UpdatePoolBalanceOp.Resonance:
+            case UpdatePoolBalanceOp.InscribeData:
                 {
                     const { ret } = await this.update_balance(
                         TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
                         amount,
                     );
                     if (ret != 0) {
+                        assert(ret < 0);
                         console.error(
-                            `Could not update resonance service charge balance ${TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS}`,
+                            `Could not update inscribe data service charge balance ${TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS}`,
                         );
                         return { ret };
                     }
@@ -1839,6 +1840,7 @@ class TokenIndexStorage {
                         amount,
                     );
                     if (update_ret != 0) {
+                        assert(ret < 0);
                         console.error(
                             `Could not update pool balance on resonance ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
                         );

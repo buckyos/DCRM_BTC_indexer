@@ -1,6 +1,9 @@
 const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
-const { TokenIndexStorage } = require('../../storage/token');
+const {
+    TokenIndexStorage,
+    UpdatePoolBalanceOp,
+} = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem, InscriptionTransferItem } = require('../item');
@@ -16,7 +19,10 @@ class PendingInscribeOp {
 class InscribeDataOperator {
     constructor(config, storage, hash_helper) {
         assert(config, `config should not be null`);
-        assert(storage instanceof TokenIndexStorage, `storage should be TokenIndex`);
+        assert(
+            storage instanceof TokenIndexStorage,
+            `storage should be TokenIndex`,
+        );
         assert(
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,
@@ -139,7 +145,10 @@ class InscribeDataOperator {
      * @returns {Promise<{ret: number}>}
      */
     async on_inscribe(inscription_item) {
-        assert(inscription_item instanceof InscriptionNewItem, `invalid inscription_item`);
+        assert(
+            inscription_item instanceof InscriptionNewItem,
+            `invalid inscription_item`,
+        );
 
         // first check if hash and amt field is exists
         const hash = inscription_item.content.ph;
@@ -194,7 +203,9 @@ class InscribeDataOperator {
                 inscription_item.commit_txid,
             )
         ) {
-            console.info(`hash and txid not match ${inscription_item.inscription_id} ${hash} ${inscription_item.commit_txid}`);
+            console.info(
+                `hash and txid not match ${inscription_item.inscription_id} ${hash} ${inscription_item.commit_txid}`,
+            );
 
             // not match (hash - commit_txid) % 32 != 0, so this inscription will failed
             const op = new PendingInscribeOp(
@@ -225,8 +236,11 @@ class InscribeDataOperator {
 
         // try fix price if exists
         if (inscription_item.content.price != null) {
-            let price = inscription_item.content.price
-            assert(BigNumberUtil.is_positive_number_string(price), `invalid price ${price}`);
+            const price = inscription_item.content.price;
+            assert(
+                BigNumberUtil.is_positive_number_string(price),
+                `invalid price ${price}`,
+            );
 
             // check and try fix price
             const max_price = BigNumberUtil.multiply(hash_weight, 2);
@@ -317,7 +331,7 @@ class InscribeDataOperator {
             }
         }
 
-        this.pending_inscribe_ops.push(op);
+        this.pending_inscribe_ops.push(new_op);
 
         return { ret: 0 };
     }
@@ -354,11 +368,14 @@ class InscribeDataOperator {
 
         // 1. transfer amt to mint pool and foundation address
         const amt = op.inscription_item.content.amt;
-        assert(BigNumberUtil.is_positive_number_string(amt), `invalid amt ${amt}`);
+        assert(
+            BigNumberUtil.is_positive_number_string(amt),
+            `invalid amt ${amt}`,
+        );
 
         // 98% of the DMC paid by the user for inscribing a public data inscription goes to the DMC Mint Pool, and the remaining 2% goes to the Foundation's account as a handling fee.
-        const mint_amt = BigNumberUtil.multiply(amy, 0.98); // amt * 0.98;
-        const service_charge = BigNumberUtil.subtract(amt, mint_amt) // amt - mint_amt;
+        const mint_amt = BigNumberUtil.multiply(amt, 0.98); // amt * 0.98;
+        const service_charge = BigNumberUtil.subtract(amt, mint_amt); // amt - mint_amt;
 
         assert(
             _.isString(this.config.token.account.mint_pool_address),
@@ -369,31 +386,50 @@ class InscribeDataOperator {
             `foundation_address should be string`,
         );
 
-        const { ret: transfer_ret } = await this.storage.transfer_balance(
+        // 1. subtract balance from address
+        const { ret: update_balance_ret } = await this.storage.update_balance(
             op.inscription_item.address,
-            this.config.token.account.mint_pool_address,
-            mint_amt,
+            BigNumberUtil.multiply(amt, '-1'),
         );
-        if (transfer_ret !== 0) {
+        if (update_balance_ret !== 0) {
+            // the balance has been checked in on_inscribe, so should not reach here
+            assert(update_balance_ret < 0);
             console.error(
                 `failed to transfer balance to mint pool ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${mint_amt}`,
             );
-            return { ret: transfer_ret };
+            return { ret: update_balance_ret };
         }
 
+        // 2. transfer service charge to foundation address
         const { ret: transfer_ret2 } = await this.storage.transfer_balance(
             op.inscription_item.address,
             this.config.token.account.foundation_address,
             service_charge,
         );
         if (transfer_ret2 !== 0) {
+            // the balance has been checked in on_inscribe, so should not reach here
+            assert(transfer_ret2 < 0);
             console.error(
                 `failed to transfer service charge to foundation ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${service_charge}`,
             );
             return { ret: transfer_ret2 };
         }
 
-        // 2. record inscribe op
+        // 3. update the pool balance
+        const { ret: update_pool_ret } =
+            await this.storage.update_pool_balance_on_ops(
+                UpdatePoolBalanceOp.InscribeData,
+                mint_amt,
+            );
+        if (update_pool_ret !== 0) {
+            assert(update_pool_ret < 0);
+            console.error(
+                `failed to update mint pool balance ${op.inscription_item.inscription_id}`,
+            );
+            return { ret: update_pool_ret };
+        }
+
+        // 4. record inscribe op
         const { ret: record_ret } = await this.storage.add_inscribe_data_record(
             op.inscription_item.inscription_id,
             op.inscription_item.block_height,
