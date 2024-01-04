@@ -13,7 +13,7 @@ class HashHelper {
      * query hash weight from eth network, maybe wait for a while if block not synced yet
      * @param {number} timestamp
      * @param {string} hash
-     * @returns {ret: number, weight: string}
+     * @returns {ret: number, weight: string, point: number}
      */
     async query_hash_weight(timestamp, hash) {
         assert(_.isString(hash), `hash should be string`);
@@ -45,7 +45,7 @@ class HashHelper {
             `calc hash weight ${hash} point: ${point} weight: ${weight}`,
         );
 
-        return { ret: 0, weight };
+        return { ret: 0, weight, point };
     }
 }
 

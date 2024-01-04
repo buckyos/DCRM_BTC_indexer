@@ -165,6 +165,8 @@ class TokenIndexStorage {
                         service_charge TEXT,
                         text TEXT,
                         price TEXT,
+                        hash_point INTEGER,
+                        hash_weight TEXT,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -219,6 +221,8 @@ class TokenIndexStorage {
                         hash TEXT,
                         user_bonus TEXT,
                         owner_bonus TEXT,
+                        hash_point INTEGER,
+                        hash_weight TEXT,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -331,6 +335,8 @@ class TokenIndexStorage {
                         hash TEXT,
                         address TEXT,
                         price TEXT,
+                        hash_point INTEGER,
+                        hash_weight TEXT,
                         state INTEGER
                     )`,
                     (err) => {
@@ -721,6 +727,8 @@ class TokenIndexStorage {
      * @param {string} service_charge
      * @param {string} text
      * @param {string} price
+     * @param {number} hash_point
+     * @param {number} hash_weight
      * @param {number} state
      * @returns
      */
@@ -736,6 +744,8 @@ class TokenIndexStorage {
         service_charge,
         text,
         price,
+        hash_point,
+        hash_weight,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -766,6 +776,14 @@ class TokenIndexStorage {
             `price should be positive number string ${price}`,
         );
         assert(
+            Number.isInteger(hash_point) && hash_point >= 0,
+            `hash_point should be non-negative integer ${hash_point}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(hash_weight),
+            `hash_weight should be non-negative number string ${hash_weight}`,
+        );
+        assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
@@ -784,8 +802,10 @@ class TokenIndexStorage {
                     service_charge, 
                     text, 
                     price, 
+                    hash_point,
+                    hash_weight,
                     state) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -798,6 +818,8 @@ class TokenIndexStorage {
                     service_charge,
                     text,
                     price,
+                    hash_point,
+                    hash_weight,
                     state,
                 ],
                 (err) => {
@@ -853,6 +875,8 @@ class TokenIndexStorage {
      * @param {string} hash
      * @param {string} user_bonus
      * @param {string} owner_bonus
+     * @param {number} hash_point
+     * @param {string} hash_weight
      * @param {number} state
      * @returns {ret: number}
      */
@@ -866,6 +890,8 @@ class TokenIndexStorage {
         hash,
         user_bonus,
         owner_bonus,
+        hash_point,
+        hash_weight,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -891,6 +917,14 @@ class TokenIndexStorage {
             `owner_bonus should be positive number string ${owner_bonus}`,
         );
         assert(
+            Number.isInteger(hash_point) && hash_point >= 0,
+            `hash_point should be non-negative integer ${hash_point}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(hash_weight),
+            `hash_weight should be non-negative number string ${hash_weight}`,
+        );
+        assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer ${state}`,
         );
@@ -907,9 +941,11 @@ class TokenIndexStorage {
                     hash, 
                     user_bonus, 
                     owner_bonus, 
+                    hash_point,
+                    hash_weight,
                     state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -920,11 +956,13 @@ class TokenIndexStorage {
                     hash,
                     user_bonus,
                     owner_bonus,
+                    hash_point,
+                    hash_weight,
                     state,
                 ],
                 (err) => {
                     if (err) {
-                        console.error('failed to add chant record', err);
+                        console.error(`failed to add chant record ${inscription_id} ${err}`);
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0 });
@@ -1213,6 +1251,8 @@ class TokenIndexStorage {
      * @param {string} hash
      * @param {string} address
      * @param {string} price
+     * @param {number} hash_point
+     * @param {string} hash_weight
      * @returns {ret: number}
      */
     async add_set_price_record(
@@ -1224,6 +1264,8 @@ class TokenIndexStorage {
         hash,
         address,
         price,
+        hash_point,
+        hash_weight,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -1244,6 +1286,11 @@ class TokenIndexStorage {
             BigNumberUtil.is_positive_number_string(price),
             `price should be positive number string`,
         );
+        assert(_.isNumber(hash_point), `hash_point should be number ${hash_point}`);
+        assert(
+            BigNumberUtil.is_positive_number_string(hash_weight),
+            `hash_weight should be positive number string`,
+        );
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
@@ -1260,9 +1307,11 @@ class TokenIndexStorage {
                     hash, 
                     address, 
                     price, 
+                    hash_point,
+                    hash_weight,
                     state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -1272,6 +1321,8 @@ class TokenIndexStorage {
                     hash,
                     address,
                     price,
+                    hash_point,
+                    hash_weight,
                     state,
                 ],
                 (err) => {

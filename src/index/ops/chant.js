@@ -63,6 +63,8 @@ class ChantOperator {
             inscription_item.content.ph,
             inscription_item.user_bonus,
             inscription_item.owner_bonus,
+            inscription_item.hash_point,
+            inscription_item.hash_weight,
             state,
         );
         if (record_ret !== 0) {
@@ -84,6 +86,9 @@ class ChantOperator {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
         // should be init to zero on start
+        inscription_item.hash_point = 0;
+        inscription_item.hash_weight = '0';
+
         inscription_item.user_bonus = '0';
         inscription_item.owner_bonus = '0';
 
@@ -157,7 +162,7 @@ class ChantOperator {
         // Chant Bonus = weight and Chant Stamina = weight / 4, and user' balance should be enough: balance >= chant stamina
 
         // calc hash weight
-        const { ret: calc_ret, weight: hash_weight } =
+        const { ret: calc_ret, weight: hash_weight, point: hash_point } =
             await this.hash_helper.query_hash_weight(
                 inscription_item.timestamp,
                 hash,
@@ -170,6 +175,11 @@ class ChantOperator {
         }
 
         assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
+        assert(_.isNumber(hash_point), `invalid hash point ${hash_point}`);
+
+        inscription_item.hash_point = hash_point;
+        inscription_item.hash_weight = hash_weight;
+
         let bonus = hash_weight;
         // const stamina = hash_weight / 4;
         const stamina = BigNumberUtil.divide(hash_weight, 4);

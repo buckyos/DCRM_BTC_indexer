@@ -43,6 +43,8 @@ class SetPriceOperator {
             JSON.stringify(inscription_item.content),
             inscription_item.content.ph,
             inscription_item.address,
+            inscription_item.hash_point,
+            inscription_item.hash_weight,
             state,
         );
         if (record_ret !== 0) {
@@ -63,6 +65,10 @@ class SetPriceOperator {
     async _set_price(inscription_item) {
         const content = inscription_item.content;
 
+        //  set to default value on start
+        inscription_item.hash_point = 0;
+        inscription_item.hash_weight = '0';
+
         // 1. first check if hash and amt field is exists and valid
         const hash = content.ph;
         if (hash == null || !_.isString(hash)) {
@@ -71,7 +77,7 @@ class SetPriceOperator {
             );
 
             // invalid format, so we should ignore this inscription
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
         let price = content.price;
@@ -79,7 +85,7 @@ class SetPriceOperator {
             console.error(
                 `invalid set_price price ${inscription_item.inscription_id} ${price}`,
             );
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
         // 2. check if hash's owner is the same
@@ -109,7 +115,7 @@ class SetPriceOperator {
 
         // 3. check price, should less than weight * 2
         // calc hash weight
-        const { ret: calc_ret, weight: hash_weight } =
+        const { ret: calc_ret, weight: hash_weight, point: hash_point } =
             await this.hash_helper.query_hash_weight(
                 inscription_item.timestamp,
                 hash,
@@ -122,6 +128,10 @@ class SetPriceOperator {
         }
 
         assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
+        assert(_.isNumber(hash_point), `invalid hash point ${hash_point}`);
+
+        inscription_item.hash_point = hash_point;
+        inscription_item.hash_weight = hash_weight;
 
         // check and try fix price
         const max_price = BigNumberUtil.multiply(hash_weight, 2);

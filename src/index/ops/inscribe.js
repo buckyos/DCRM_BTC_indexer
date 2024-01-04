@@ -160,6 +160,11 @@ class InscribeDataOperator {
             `invalid inscription_item`,
         );
 
+        // set to default value on start
+        inscription_item.hash_point = 0;
+        inscription_item.hash_weight = '0';
+        
+
         // first check if hash and amt field is exists
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
@@ -231,7 +236,7 @@ class InscribeDataOperator {
 
         // 3. check weight with amt, amt must be greater than hash weight
         // calc hash weight
-        const { ret: calc_ret, weight: hash_weight } =
+        const { ret: calc_ret, weight: hash_weight, point: hash_point } =
             await this.hash_helper.query_hash_weight(
                 inscription_item.timestamp,
                 hash,
@@ -244,6 +249,10 @@ class InscribeDataOperator {
         }
 
         assert(_.isString(hash_weight), `invalid hash weight ${hash_weight}`);
+        assert(_.isNumber(hash_point), `invalid hash point ${hash_point}`);
+
+        inscription_item.hash_weight = hash_weight;
+        inscription_item.hash_point = hash_point;
 
         // try fix price if exists
         if (inscription_item.content.price != null) {
@@ -453,6 +462,8 @@ class InscribeDataOperator {
             service_charge,
             op.inscription_item.content.text,
             op.inscription_item.content.price,
+            op.inscription_item.hash_point,
+            op.inscription_item.hash_weight,
             op.state,
         );
         if (record_ret !== 0) {
