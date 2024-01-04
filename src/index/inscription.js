@@ -273,7 +273,7 @@ class InscriptionIndex {
 
         if (collector.is_empty()) {
             console.info(
-                `no known inscriptions and transfers in block ${block_height}`,
+                `synced block and no known inscriptions and transfers found ${block_height}`,
             );
             return { ret: 0 };
         }
@@ -290,7 +290,7 @@ class InscriptionIndex {
             return { ret };
         }
 
-        console.info(`synced block ${block_height}`);
+        console.info(`synced block with inscriptions: ${collector.new_inscriptions.length}, transfers: ${collector.inscription_transfers.length } ${block_height}`);
 
         return { ret: 0 };
     }
@@ -345,7 +345,8 @@ class InscriptionIndex {
         return { ret: 0 };
     }
 
-    // get all inscriptions created in block
+    /*
+    // process all inscriptions created in block one by one
     async _process_block_inscriptions(block_height, collector) {
         assert(block_height != null, `block_height should not be null`);
         assert(
@@ -468,6 +469,184 @@ class InscriptionIndex {
         }
 
         return { ret: 0 };
+    }
+    */
+
+    // process all inscriptions created in block by batch
+    async _process_block_inscriptions(block_height, collector) {
+        assert(block_height != null, `block_height should not be null`);
+        assert(
+            collector instanceof BlockInscriptionCollector,
+            `invalid collector`,
+        );
+
+        const { ret, data: inscription_ids } =
+            await this.ord_client.get_inscription_by_block(block_height);
+
+        if (ret !== 0) {
+            console.error(
+                `failed to get inscription by block: ${block_height}`,
+            );
+            return { ret };
+        }
+
+        if (inscription_ids.length === 0) {
+            console.info(`no inscriptions in block ${block_height}`);
+            return { ret: 0 };
+        }
+
+        // get inscriptions by batch
+        const { ret: batch_get_inscriptions_ret, inscriptions } =
+            await this.ord_client.get_inscription_batch(inscription_ids);
+        if (batch_get_inscriptions_ret !== 0) {
+            console.error(`failed to get inscriptions by batch`);
+            return { ret: batch_get_inscriptions_ret };
+        }
+
+        assert(
+            inscription_ids.length === inscriptions.length,
+            `invalid inscriptions length`,
+        );
+
+        // load inscriptions content in batch
+        const {ret: load_content, results} = await this._load_inscriptions_content(inscriptions);
+        if (load_content !== 0) {
+            console.error(`failed to load inscriptions content`);
+            return { ret: load_content };
+        }
+
+        for (let i = 0; i < results.length; i++) {
+  
+            const {
+                ret: load_ret,
+                valid,
+                content,
+                op,
+                inscription,
+            } = results[i];
+            assert(load_ret === 0, `invalid load_ret`);
+
+            const inscription_id = inscription.inscription_id;
+
+            // we only process inscribe op that we interested
+            if (!valid) {
+                // console.warn(`invalid inscription content ${inscription_id}`);
+                continue;
+            }
+
+            assert(_.isObject(content), `invalid inscription content`);
+            assert(_.isObject(op), `invalid inscription op item`);
+
+            // get creator address and satpoint info
+            const {
+                ret: get_address_ret,
+                satpoint: creator_satpoint,
+                address: creator_address,
+                value: creator_value,
+                commit_txid,
+            } = await this.monitor.calc_create_satpoint(inscription_id);
+            if (get_address_ret !== 0) {
+                console.error(
+                    `failed to get creator address for ${inscription_id}`,
+                );
+                return { ret: get_address_ret };
+            }
+
+            const new_inscription_item = new InscriptionNewItem(
+                inscription_id,
+                inscription.inscription_number,
+                block_height,
+                inscription.timestamp,
+                creator_address,
+                creator_satpoint,
+                creator_value,
+                content,
+                op,
+                commit_txid,
+            );
+
+            // process inscription
+            const { ret: process_ret } = await this._on_new_inscription(
+                block_height,
+                new_inscription_item,
+            );
+            if (process_ret !== 0) {
+                console.error(
+                    `failed to process new inscription ${inscription_id}`,
+                );
+                return { ret: process_ret };
+            }
+
+            // add to collector for later use
+            collector.new_inscriptions.push(new_inscription_item);
+        }
+
+        return { ret: 0 };
+    }
+
+    /**
+     * 
+     * @param {Array<object} inscriptions 
+     * @returns {Promise<{ret: number, results: Array<object>}>}
+     */
+    async _load_inscriptions_content(inscriptions) {
+
+        // process in batch size 64
+        const batch_size = 64;
+        const content = [];
+        for (let i = 0; i < inscriptions.length; i += batch_size) {
+            let end = i + batch_size;
+            if (end > inscriptions.length) {
+                end = inscriptions.length;
+            }
+
+            const batch_inscriptions = inscriptions.slice(i, end);
+            const { ret, results } =
+                await this._load_inscriptions_content_batch(batch_inscriptions);
+            if (ret !== 0) {
+                console.error(`failed to load inscription content in batch`);
+                return { ret };
+            }
+
+            content.push(...results);
+        }
+
+        return { ret: 0, results: content };
+    }
+
+    async _load_inscriptions_content_batch(inscriptions) {
+        assert(_.isArray(inscriptions), `invalid inscriptions`);
+        assert(inscriptions.length > 0, `invalid inscriptions length`);
+
+        const promises = inscriptions.map((inscription) =>
+            InscriptionContentLoader.load_content(
+                this.ord_client,
+                inscription.inscription_id,
+                inscription.content_type,
+                this.config,
+            ),
+        );
+
+        try {
+            const results = await Promise.all(promises);
+
+            for (let i = 0; i < results.length; i++) {
+                const result = results[i];
+                if (result.ret !== 0) {
+                    console.error(
+                        `failed to load inscription content ${inscriptions[i].inscription_id}`,
+                    );
+                    return { ret: result.ret };
+                }
+
+                result.inscription = inscriptions[i];
+            }
+
+            return { ret: 0, results };
+        } catch (error) {
+            console.error(`failed to load inscription content in batch ${error}`);
+            return { ret: -1 };
+        }
     }
 
     // new inscription event

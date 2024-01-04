@@ -1,5 +1,5 @@
 {
     "editor.fontLigatures": false,
     "editor.formatOnSave": true,
-    "cSpell.words": ["nulldata", "satpoint", "txid", "vin", "vout", "dcrm", "satoshi", "mixhash", "utxo", "bignumber", "txids", "bitcoind", "ordi"]
+    "cSpell.words": ["nulldata", "satpoint", "txid", "vin", "vout", "dcrm", "satoshi", "mixhash", "utxo", "bignumber", "txids", "bitcoind", "ordi", "dmcs", "blockheight", "unmint"]
 }

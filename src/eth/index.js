@@ -307,13 +307,13 @@ class ETHIndex {
             }
 
             if (block_height == null) {
-                console.warn(`no block found for timestamp ${timestamp}`);
+                console.warn(`no block found for timestamp ${timestamp}, now wait and retry...`);
                 await Util.sleep(1000 * 5);
                 continue;
             }
 
             target_block_height = block_height;
-            console.info(`query eth block with timestamp ${timestamp} success: ${target_block_height}`);
+            console.info(`found eth block with timestamp ${timestamp}: ${target_block_height}`);
             break;
         }
 

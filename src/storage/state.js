@@ -92,12 +92,12 @@ class StateStorage {
     }
 
     /**
-     * @comment update btc latest block height only block_height = current_block_height + 1 or current_block_heighgt = 0
+     * @comment update btc latest block height only block_height = current_block_height + 1 or current_block_height = 0
      * @param {number} block_height 
      * @returns {ret: number}
      */
     async update_btc_latest_block_height(block_height) {
-        // update btc latest block height only block_height = current_block_height + 1 or current_block_heighgt = 0
+        // update btc latest block height only block_height = current_block_height + 1 or current_block_height = 0
         assert(this.db != null, `db should not be null`);
         assert(
             Number.isInteger(block_height) && block_height >= 0,
