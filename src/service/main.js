@@ -13,6 +13,9 @@ const { store } = require('./biz/store');
 const path = require('path');
 const assert = require('assert');
 const fs = require('fs');
+const yargs = require('yargs/yargs');
+const { hideBin } = require('yargs/helpers');
+
 
 class Service {
     constructor() {
@@ -61,12 +64,20 @@ class Service {
 }
 
 function main() {
-    const argv = process.argv;
-    let configPath = path.resolve(__dirname, '../../config/formal.js');
-    if (argv.length == 3 && argv[2] == '-test') {
-        configPath = path.resolve(__dirname, '../../config/test.js');
-    }
+    // first parse args
+    const argv = yargs(hideBin(process.argv))
+        .option('config', {
+            alias: 'c',
+            type: 'string',
+            description: 'Select the configuration of bitcoin ethereum network',
+            choices: ['formal', 'test'],
+            default: 'formal',
+        })
+        .help().argv;
+    const config_name = argv.config;
+    console.log(`config name: ${config_name}`);
 
+    const configPath = path.resolve(__dirname, `../../config/${config_name}.js`);
     assert(fs.existsSync(configPath), `config file not found: ${configPath}`);
 
     config.init(configPath);

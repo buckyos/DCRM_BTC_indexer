@@ -83,6 +83,23 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
+        },
+        ,
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "service-main",
+            "args": [
+                "--config",
+                "formal"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/service/main.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
         }
     ]
 }
