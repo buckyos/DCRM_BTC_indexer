@@ -34,9 +34,11 @@ class InscribeDataOperator {
         this.hash_helper = hash_helper;
 
         // load difficulty of inscribe data hash threshold from config
-        this.inscribe_data_hash_threshold = DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD;
+        this.inscribe_data_hash_threshold =
+            DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD;
         if (config.token.difficulty.inscribe_data_hash_threshold != null) {
-            this.inscribe_data_hash_threshold = config.token.difficulty.inscribe_data_hash_threshold;
+            this.inscribe_data_hash_threshold =
+                config.token.difficulty.inscribe_data_hash_threshold;
             assert(_.isNumber(this.inscribe_data_hash_threshold));
         }
 
@@ -370,9 +372,9 @@ class InscribeDataOperator {
             `op should be PendingInscribeOp`,
         );
         assert(
-            op.state === InscriptionOpState.READY ||
+            op.state === InscriptionOpState.OK ||
                 op.state === InscriptionOpState.COMPETITION_FAILED,
-            `op state should be READY or COMPETITION_FAILED`,
+            `op state should be READY or COMPETITION_FAILED: ${op.state}`,
         );
 
         // 1. transfer amt to mint pool and foundation address
@@ -434,6 +436,10 @@ class InscribeDataOperator {
             return { ret: update_pool_ret };
         }
 
+        console.info(
+            `new inscribe record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.content.price}`,
+        );
+
         // 4. record inscribe op
         const { ret: record_ret } = await this.storage.add_inscribe_data_record(
             op.inscription_item.inscription_id,
@@ -457,7 +463,7 @@ class InscribeDataOperator {
         }
 
         // 3. update inscribe_data table if ready
-        if (op.state === InscriptionOpState.READY) {
+        if (op.state === InscriptionOpState.OK) {
             const { ret } = await this.storage.add_inscribe_data(
                 op.inscription_item.content.ph,
                 op.inscription_item.address,

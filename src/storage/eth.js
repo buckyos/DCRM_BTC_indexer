@@ -228,7 +228,7 @@ class ETHIndexStorage {
 
         return new Promise((resolve) => {
             this.db.run(
-                `INSERT OR FAIL INTO blocks (block_height, timestamp) VALUES (?, ?)`,
+                `INSERT OR REPLACE INTO blocks (block_height, timestamp) VALUES (?, ?)`,
                 [block_height, timestamp],
                 (err) => {
                     if (err) {

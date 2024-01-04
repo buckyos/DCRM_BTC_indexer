@@ -5,6 +5,8 @@ const fs = require('fs');
 const bs58 = require('bs58');
 const sb = require('satoshi-bitcoin');
 const Decimal = require('decimal.js');
+const BigNumber = require('bignumber.js');
+const { TOKEN_DECIMAL } = require('./constants');
 
 class Util {
     /**
@@ -213,8 +215,8 @@ class Util {
     }
 
     /**
-     * 
-     * @param {string} mixhash 
+     *
+     * @param {string} mixhash
      * @returns {boolean}
      */
     static is_valid_mixhash(mixhash) {
@@ -225,11 +227,10 @@ class Util {
             if (decoded.length !== 32) {
                 return false;
             }
-
         } catch (error) {
             return false;
         }
-        
+
         return true;
     }
     /**
@@ -301,7 +302,7 @@ class Util {
     static calc_point(data_size, point) {
         const baseScore = new Decimal(999)
             .dividedBy(
-                Decimal.one.plus(
+                new Decimal('1').plus(
                     Decimal.exp(
                         new Decimal('-0.00000762939453125').times(
                             new Decimal(data_size).minus(
@@ -315,7 +316,7 @@ class Util {
 
         const baseRate = new Decimal(19)
             .dividedBy(
-                Decimal.one.plus(
+                new Decimal('1').plus(
                     Decimal.exp(
                         new Decimal(-0.15).times(new Decimal(point).minus(90)),
                     ),
@@ -327,6 +328,23 @@ class Util {
         return score.toString();
     }
 
+    /*
+    static calc_point(data_size, point) {
+        const baseScore = new BigNumber(
+            999 /
+                (1 + Math.exp(-0.00000762939453125 * (data_size - 127999999))) +
+                1,
+        );
+
+        const baseRate = new BigNumber(
+            19 / (1 + Math.exp(-0.15 * (point - 90))) + 1,
+        );
+
+        const n = baseScore.multipliedBy(baseRate.pow(2));
+
+        return n.toString();
+    }
+    */
     /**
      *
      * @param {string} hash in base58
@@ -336,12 +354,15 @@ class Util {
     static check_inscribe_hash_and_txid(hash, txid, hash_threshold) {
         assert(_.isString(hash), `hash should be string ${hash}`);
         assert(_.isString(txid), `txid should be string ${txid}`);
-        assert(hash_threshold > 0, `hash_threshold should be greater than 0 ${hash_threshold}`);
+        assert(
+            hash_threshold > 0,
+            `hash_threshold should be greater than 0 ${hash_threshold}`,
+        );
 
         const hash_number = this.address_number(hash);
         const txid_number = this.address_number(txid);
         const ret = Math.abs(hash_number - txid_number) % hash_threshold;
-        
+
         return ret === 0;
     }
 
@@ -361,9 +382,6 @@ class Util {
         return distance;
     }
 }
-
-const BigNumber = require('bignumber.js');
-const { TOKEN_DECIMAL } = require('./constants');
 
 class BigNumberUtil {
     constructor() {
@@ -402,21 +420,21 @@ class BigNumberUtil {
     }
 
     /**
-    * 
-    * @param {string | number} a 
-    * @param {string | number} b 
-    * @returns {string}
-    */
+     *
+     * @param {string | number} a
+     * @param {string | number} b
+     * @returns {string}
+     */
     static divide(a, b) {
         return new BigNumber(a).dividedBy(new BigNumber(b)).toString();
     }
 
     /**
-    * 
-    * @param {string | number} a 
-    * @param {string | number} b 
-    * @returns {number}
-    */
+     *
+     * @param {string | number} a
+     * @param {string | number} b
+     * @returns {number}
+     */
     static compare(a, b) {
         return new BigNumber(a).comparedTo(new BigNumber(b));
     }
@@ -485,6 +503,24 @@ function test() {
     const v4 = '100av';
     assert(!BigNumberUtil.check_decimal_string(v4));
 }
-*/
 
-// test();
+
+function test_calc_points() {
+    const score = Util.calc_point(1024 * 1024, 1);
+    console.log(`score ${score}`);
+
+    const score1 = Util.calc_point(1024 * 1024 * 1024, 1);
+    console.log(`score1 ${score1}`);
+
+    const score2 = Util.calc_point(1024 * 1024, 100);
+    console.log(`score2 ${score2}`);
+
+    const score3 = Util.calc_point(1024 * 1024 * 1024, 100);
+    console.log(`score3 ${score3}`);
+}
+
+test_calc_points();
+
+test();
+
+*/

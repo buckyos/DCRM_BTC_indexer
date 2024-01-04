@@ -313,6 +313,7 @@ class ETHIndex {
             }
 
             target_block_height = block_height;
+            console.info(`query eth block with timestamp ${timestamp} success: ${target_block_height}`);
             break;
         }
 

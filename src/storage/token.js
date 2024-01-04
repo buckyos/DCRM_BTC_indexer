@@ -2022,7 +2022,7 @@ class TokenIndexStorage {
 
         const sql = `
                 INSERT INTO inscribe_data (hash, address, block_height, timestamp, text, price, resonance_count)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
 
         return new Promise((resolve) => {
