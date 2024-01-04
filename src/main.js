@@ -21,7 +21,6 @@ async function main() {
     log.enable_console_target(true);
     log.set_level('info');
 
-    console.info("test log");
 
     const eth_index = new ETHIndex(config.config);
     const inscription_index = new InscriptionIndex(config.config);

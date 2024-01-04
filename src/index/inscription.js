@@ -109,7 +109,7 @@ class InscriptionIndex {
                         ? height
                         : this.config.token.genesis_block_height;
                 console.info(
-                    `sync will start at block height ${this.current_block_height}`,
+                    `btc inscriptions sync will start at block height ${this.current_block_height}`,
                 );
             }
 

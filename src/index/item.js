@@ -345,17 +345,17 @@ class InscriptionContentLoader {
                 content = JSON.parse(data);
             } catch (err) {
                 console.debug(
-                    `invalid json format inscription content ${data}, ${err}`,
+                    `invalid json format inscription content ${inscription_id} ${data}, ${err}`,
                 );
                 return {
                     ret: 0,
                     valid: false,
                 };
             }
-        } else if (typeof data === 'object') {
+        } else if (data != null && typeof data === 'object') {
             content = data;
         } else {
-            console.debug(`invalid inscription content ${data}`);
+            console.debug(`invalid inscription content ${inscription_id} ${data}`);
             return {
                 ret: 0,
                 valid: false,
@@ -391,7 +391,7 @@ class InscriptionContentLoader {
      * @returns {{ret: number, valid: boolean, item: object}}
      */
     static parse_content(inscription_id, content, config) {
-        if (content.p == null) {
+        if (content == null || content.p == null) {
             return { ret: 0, valid: false };
         }
 

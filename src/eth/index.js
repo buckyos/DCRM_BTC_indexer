@@ -119,7 +119,7 @@ class ETHIndex {
                         : this.config.eth.genesis_block_height;
 
                 console.info(
-                    `sync will start at block height ${this.current_block_height}`,
+                    `eth sync will start at block height ${this.current_block_height}`,
                 );
             }
 
@@ -216,6 +216,8 @@ class ETHIndex {
             }
         }
 
+        console.log(`insert eth blocks from ${begin} to ${end} success`);
+        
         // read all point change events
         let events;
         try {

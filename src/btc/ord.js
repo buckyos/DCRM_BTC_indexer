@@ -86,7 +86,7 @@ class OrdClient {
                 data: response.data,
             };
         } catch (error) {
-            console.error(error);
+            console.error(`failed to get content ${inscription_id} ${error}`);
             return {
                 ret: -1,
                 data: {},
