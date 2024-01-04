@@ -43,7 +43,7 @@ const INDEX_CONFIG = {
 
     token: {
         account: {
-            foundation_address: '0x0',
+            foundation_address: '0x100',
         },
 
         genesis_block_height: 779832,

@@ -129,9 +129,45 @@ class InscriptionIndex {
         }
     }
 
+    /**
+     * @comment get the latest block height of btc and ord, use the smaller one
+     * @returns {Promise<{ret: number, height: number}>}
+     */
+    async _get_latest_block_height() {
+        const { ret, height } = await this.btc_client.get_latest_block_height();
+        if (ret !== 0) {
+            console.error(`failed to get latest block height`);
+            return { ret };
+        }
+
+        assert(_.isNumber(height), `invalid block height ${height}`);
+        // get ord latest block height
+        const { ret: ord_ret, height: ord_height } = await this.ord_client.get_latest_block_height();
+        if (ord_ret !== 0) {
+            console.error(`failed to get ord latest block height`);
+            return { ret: ord_ret };
+        }
+
+        assert(_.isNumber(ord_height), `invalid ord block height ${ord_height}`);
+
+        // if block height diff is too large, we should warn
+        if (Math.abs(height - ord_height) > 10) {
+            console.warn(
+                `btc block height ${height} and ord block height ${ord_height} diff is too large`,
+            );
+        }
+        
+        // use the smaller one
+        if (height > ord_height) {
+            return { ret: 0, height: ord_height };
+        } else {
+            return { ret: 0, height };
+        }
+    }
+
     // sync once
     async sync_once() {
-        const { ret, height } = await this.btc_client.get_latest_block_height();
+        const { ret, height } = await this._get_latest_block_height();
         if (ret !== 0) {
             console.error(`failed to get latest block height`);
             return { ret };

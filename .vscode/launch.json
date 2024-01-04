@@ -56,6 +56,10 @@
             "type": "node",
             "request": "launch",
             "name": "main",
+            "args": [
+                "--config",
+                "test"
+            ],
             "skipFiles": [
                 "<node_internals>/**"
             ],

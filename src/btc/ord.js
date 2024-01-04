@@ -15,6 +15,25 @@ class OrdClient {
     }
 
     /**
+     * @command get the latest block height for ord service
+     */
+    async get_latest_block_height() {
+        try {
+            const response = await this.client.get('/blockheight');
+            return {
+                ret: 0,
+                height: response.data,
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                ret: -1,
+                height: 0,
+            };
+        }
+    }
+
+    /**
      *
      * @param {string} inscription_id
      * @returns {Promise<{ret: number, inscription: object}>}

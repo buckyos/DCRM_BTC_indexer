@@ -41,11 +41,11 @@ const INDEX_CONFIG = {
 
     token: {
         account: {
-            foundation_address: '0x0',
+            foundation_address: '0x100',
         },
 
-        genesis_block_height: 2543000,
-        token_name: 'TTTT',
+        genesis_block_height: 2570577,
+        token_name: 'dmcs',
     },
 };
 
