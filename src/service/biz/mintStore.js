@@ -2,6 +2,11 @@ const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../index/ops/state');
 const { BigNumberUtil } = require('../../util');
+const {
+    TOKEN_MINT_POOL_INIT_AMOUNT,
+    TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS
+} = require('../../constants');
 
 class MintStore {
     constructor() {
@@ -117,6 +122,40 @@ class MintStore {
 
         } catch (error) {
             logger.error('queryTotalMintByTime failed:', error);
+
+            return makeReponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryMintProgress() {
+        try {
+            const stmt = store.indexDB.prepare(
+                `SELECT * FROM ${TABLE_NAME.BALANCE} 
+                WHERE address = ? or address = ?`
+            );
+            const ret = stmt.all(
+                TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+                TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS
+            );
+            const result = {
+                total: TOKEN_MINT_POOL_INIT_AMOUNT,
+                service_charged: '0',
+                pool_balance: '0',
+            };
+            if (ret && ret.length > 0) {
+                for (const item of ret) {
+                    if (item.address == TOKEN_MINT_POOL_VIRTUAL_ADDRESS) {
+                        result.pool_balance = item.amount;
+                    } else if (item.address == TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS) {
+                        result.service_charged = item.amount;
+                    }
+                }
+            }
+
+            return makeSuccessReponse(result);
+
+        } catch (error) {
+            logger.error('queryBalanceByAddress failed:', error);
 
             return makeReponse(ERR_CODE.DB_ERROR, error);
         }

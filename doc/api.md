@@ -430,3 +430,23 @@
         }
     }
     ```
+
+17. 查询mint进度
+
+    /mint_progress
+
+    GET
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            total,              // string 总量
+            service_charged,    // string 通过手续费返回mintpool的量
+            pool_balance        // string mint pool余额
+        }
+    }
+    ```

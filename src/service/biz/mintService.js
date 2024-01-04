@@ -98,6 +98,10 @@ class MintService {
         );
     }
 
+    async _getMingProgress(ctx) {
+        return this.m_store.queryMintProgress();
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -111,6 +115,10 @@ class MintService {
 
         router.get("/luck_mint/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getLuckyMintRecord(ctx);
+        });
+
+        router.get("/mint_progress", async (ctx) => {
+            ctx.response.body = await this._getMingProgress(ctx);
         });
 
         router.get("/mint_remain", async (ctx) => {
