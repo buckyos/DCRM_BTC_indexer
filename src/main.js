@@ -1,6 +1,8 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+const yargs = require('yargs/yargs');
+const { hideBin } = require('yargs/helpers');
 const { ETHIndex } = require('./eth/index');
 const { InscriptionIndex } = require('./index/inscription');
 const { Config } = require('./config');
@@ -8,10 +10,23 @@ const { LogHelper } = require('./log/log');
 
 global._ = require('underscore');
 
-
 async function main() {
+    // first parse args
+    
+    const argv = yargs(hideBin(process.argv))
+        .option('config', {
+            alias: 'c',
+            type: 'string',
+            description: 'Select the configuration of bitcoin ethereum network',
+            choices: ['formal', 'test'],
+            default: 'formal',
+        })
+        .help().argv;
+    const config_name = argv.config;
+    console.log(`config name: ${config_name}`);
+
     // first load config
-    const config_path = path.resolve(__dirname, '../config/formal.js');
+    const config_path = path.resolve(__dirname, `../config/${config_name}.js`);
     assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
     const config = new Config(config_path);
 
@@ -20,7 +35,6 @@ async function main() {
     log.path_console();
     log.enable_console_target(true);
     log.set_level('info');
-
 
     const eth_index = new ETHIndex(config.config);
     const inscription_index = new InscriptionIndex(config.config);

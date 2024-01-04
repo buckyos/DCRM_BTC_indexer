@@ -23,7 +23,8 @@ const INDEX_CONFIG = {
 
     
     eth: {
-        rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
+        // rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
+        rpc_url: 'http://127.0.0.1:8545',
         genesis_block_height: 16757234,
         contract_address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
         contract_abi: 'contract.json',

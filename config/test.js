@@ -13,7 +13,7 @@ const INDEX_CONFIG = {
         network: 'testnet',
         host: '127.0.0.1',
         auth: {
-            cookie_file: '/btc/.cookie',
+            cookie_file: '/btc/testnet/testnet3/.cookie',
             // cookie: username:password
             // username: "",
             // password: ""
@@ -28,7 +28,7 @@ const INDEX_CONFIG = {
     },
 
     ord: {
-        rpc_url: 'http://127.0.0.1:80',
+        rpc_url: 'http://127.0.0.1:8071',
     },
 
     db: {
