@@ -195,7 +195,7 @@ class ChantOperator {
 
         if (get_mint_pool_ret !== 0) {
             console.error(
-                `failed to get mint pool balance ${inscription_item.inscription_id} ${this.config.token.account.mint_pool_address}`,
+                `failed to get mint pool balance ${inscription_item.inscription_id} ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
             );
             return { ret: get_mint_pool_ret };
         }

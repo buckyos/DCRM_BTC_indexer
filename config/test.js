@@ -36,12 +36,11 @@ const INDEX_CONFIG = {
     },
 
     service: {
-        port: 13020,
+        port: 8081,
     },
 
     token: {
         account: {
-            mint_pool_address: '0x0',
             foundation_address: '0x0',
         },
 

@@ -14,10 +14,9 @@ const INDEX_CONFIG = {
 
     btc: {
         network: 'mainnet',
-        // host: '75.4.200.194',
         host: '127.0.0.1',
         auth: {
-            cookie: "dcrm_test:dcrm_test_123456",
+            cookie_file: "/btc/.cookie",
         },
     },
 
@@ -31,8 +30,7 @@ const INDEX_CONFIG = {
     },
 
     ord: {
-        // rpc_url: 'http://75.4.200.194:8081',
-        rpc_url: 'http://127.0.0.1:8081',
+        rpc_url: 'http://127.0.0.1:8070',
     },
 
     db: {
@@ -45,7 +43,6 @@ const INDEX_CONFIG = {
 
     token: {
         account: {
-            mint_pool_address: '0x0',
             foundation_address: '0x0',
         },
 

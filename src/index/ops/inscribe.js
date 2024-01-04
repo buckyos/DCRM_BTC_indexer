@@ -378,10 +378,6 @@ class InscribeDataOperator {
         const service_charge = BigNumberUtil.subtract(amt, mint_amt); // amt - mint_amt;
 
         assert(
-            _.isString(this.config.token.account.mint_pool_address),
-            `mint_pool_address should be string`,
-        );
-        assert(
             _.isString(this.config.token.account.foundation_address),
             `foundation_address should be string`,
         );

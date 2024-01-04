@@ -166,7 +166,7 @@ class TransferOperator {
 
         // 1. check if the address is the same as the output address
         if (inscription_item.from_address === inscription_item.to_address) {
-            console.warn(
+            console.info(
                 `ignore transfer to self ${inscription_item.inscription_id} ${inscription_item.to_address}`,
             );
             return { ret: 0, state: 0 };
