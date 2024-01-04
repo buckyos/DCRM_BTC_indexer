@@ -273,7 +273,7 @@ class ETHIndex {
 
         // update latest block height
         {
-            const { ret } = await this.state_storage.update_eth_latest_block_height(end);
+            const { ret } = await this.state_storage.update_eth_latest_block_height(begin, end);
             if (ret !== 0) {
                 console.error(
                     `failed to update latest block height ${end}`,
