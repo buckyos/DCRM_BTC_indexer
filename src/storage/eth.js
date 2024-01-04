@@ -228,10 +228,10 @@ class ETHIndexStorage {
 
         return new Promise((resolve) => {
             this.db.run(
-                `INSERT OR REPLACE INTO blocks (block_height, timestamp) VALUES (?, ?)`,
+                `INSERT OR FAIL INTO blocks (block_height, timestamp) VALUES (?, ?)`,
                 [block_height, timestamp],
                 (err) => {
-                    if (err) {
+                    warnif (err) {
                         console.error(
                             `failed to insert block: ${block_height} ${timestamp} ${err}`,
                         );
@@ -239,7 +239,7 @@ class ETHIndexStorage {
                         return;
                     }
 
-                    console.info(
+                    console.debug(
                         `insert eth block: ${block_height} ${timestamp}`,
                     );
                     resolve({ ret: 0 });
