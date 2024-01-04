@@ -283,7 +283,72 @@ class ResonanceOp {
     }
 }
 
+// check content type at first
+const valid_content_types = [
+    'text/plain;charset=utf-8',
+    'text/plain',
+    'application/json',
+];
+
 class InscriptionContentLoader {
+    static async _load_content_data_with_test(
+        ord_client,
+        inscription_id,
+        content_type,
+    ) {
+        let data;
+        if (
+            content_type == null ||
+            !valid_content_types.includes(content_type.toLowerCase())
+        ) {
+            console.debug(
+                `invalid inscription content type ${content_type} ${inscription_id}`,
+            );
+
+            const { InscribeDataOpGenerator } = require('../test/ops_gen');
+            const gen = new InscribeDataOpGenerator();
+            data = gen.gen_content(null);
+        } else {
+            // fetch inscription content
+            const { ret, data: _data } =
+                await ord_client.get_content_by_inscription(inscription_id);
+            if (ret !== 0) {
+                console.error(`failed to get content ${inscription_id}`);
+                return { ret };
+            }
+
+            data = _data;
+        }
+
+        return { ret: 0, valid: true, data };
+    }
+
+    static async _load_content_data(ord_client, inscription_id, content_type) {
+
+        // check content type at first
+        if (
+            content_type == null ||
+            !valid_content_types.includes(content_type.toLowerCase())
+        ) {
+            console.debug(
+                `invalid inscription content type ${content_type} ${inscription_id}`,
+            );
+
+            return { ret: 0, valid: false };
+        }
+
+        // fetch inscription content
+        const { ret, data } = await ord_client.get_content_by_inscription(
+            inscription_id,
+        );
+        if (ret !== 0) {
+            console.error(`failed to get content ${inscription_id}`);
+            return { ret };
+        }
+
+        return { ret: 0, valid: true, data };
+    }
+
     /**
      *
      * @param {OrdClient} ord_client
@@ -309,33 +374,23 @@ class InscriptionContentLoader {
         );
         assert(_.isObject(config), `config should be object`);
 
-        // check content type at first
-        const valid_content_types = [
-            'text/plain;charset=utf-8',
-            'text/plain',
-            'application/json',
-        ];
 
-        if (
-            content_type == null ||
-            !valid_content_types.includes(content_type.toLowerCase())
-        ) {
-            console.debug(
-                `invalid inscription content type ${content_type} ${inscription_id}`,
-            );
-            return {
-                ret: 0,
-                valid: false,
-            };
+        const {
+            ret: load_content_ret,
+            valid: load_content_valid,
+            data,
+        } = await this._load_content_data(
+            ord_client,
+            inscription_id,
+            content_type,
+        );
+        if (load_content_ret !== 0) {
+            console.error(`failed to load inscription content ${inscription_id}`);
+            return { ret: load_content_ret };
         }
 
-        // fetch inscription content
-        const { ret, data } = await ord_client.get_content_by_inscription(
-            inscription_id,
-        );
-        if (ret !== 0) {
-            console.error(`failed to get content ${inscription_id}`);
-            return { ret };
+        if (!load_content_valid) {
+            return { ret: 0, valid: false };
         }
 
         // data that is object or string that parsed as valid object is valid
@@ -355,7 +410,9 @@ class InscriptionContentLoader {
         } else if (data != null && typeof data === 'object') {
             content = data;
         } else {
-            console.debug(`invalid inscription content ${inscription_id} ${data}`);
+            console.debug(
+                `invalid inscription content ${inscription_id} ${data}`,
+            );
             return {
                 ret: 0,
                 valid: false,

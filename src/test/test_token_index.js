@@ -9,11 +9,11 @@ const assert = require('assert');
 const { TokenIndex } = require('../index/token');
 const { ETHIndex } = require('../eth/index');
 const { Config } = require('../config');
+const {Util} = require('../util');
 
-class TestInscriptionsGenerator {
-    constructor(config) {
-        assert(_.isObject(config), `invalid config`);
-        this.config = config;
+class InscribeDataOpGenerator{
+    constructor(address) {
+        this.address = address;
     }
 
     // gen hash 32bytes len with random data, in hex code string
@@ -21,28 +21,51 @@ class TestInscriptionsGenerator {
      *
      * @returns {string}
      */
-    gen_random_hash(last_bytes_in_hex) {
+    gen_random_hash() {
         const len = 32;
         const buf = Buffer.alloc(len);
         for (let i = 0; i < len; ++i) {
             buf[i] = Math.floor(Math.random() * 256);
         }
 
-        if (last_bytes_in_hex) {
-            assert(
-                _.isString(last_bytes_in_hex),
-                `last_bytes_in_hex should be string`,
-            );
-            const last_bytes = Buffer.from(last_bytes_in_hex, 'hex');
-            assert(
-                last_bytes.length <= len,
-                `last_bytes should not longer than 32`,
-            );
-            last_bytes.copy(buf, len - last_bytes.length);
-        }
-
         return buf.toString('hex');
     }
+
+    // (txid - hash) % 32 == 0
+    gen_random_hash_with_check_valid(txid) {
+        assert(_.isString(txid), `invalid txid ${txid}`);
+
+        
+        // eslint-disable-next-line no-constant-condition
+        while(true) {
+            const hash = this.gen_random_hash()
+
+            if (Util.check_inscribe_hash_and_txid(hash, txid)) {
+                return hash;
+            }
+        }
+    }
+
+    gen_content(commit_txid) {
+        const content = {
+            p: 'pdi',
+            op: 'inscribe',
+            ph: this.gen_random_hash_with_check_valid(commit_txid),
+            text: 'inscribe_data_1',
+            amt: '1000',
+            price: '100',
+        };
+
+        return content;
+    }
+}
+
+class TestInscriptionsGenerator {
+    constructor(config) {
+        assert(_.isObject(config), `invalid config`);
+        this.config = config;
+    }
+
 
     // gen some random inscriptions
     gen() {

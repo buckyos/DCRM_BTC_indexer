@@ -55,10 +55,26 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "main",
+            "name": "main-test",
             "args": [
                 "--config",
                 "test"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/main.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "main",
+            "args": [
+                "--config",
+                "formal"
             ],
             "skipFiles": [
                 "<node_internals>/**"
