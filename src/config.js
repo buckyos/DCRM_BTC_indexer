@@ -4,6 +4,7 @@ const assert = require('assert');
 const {
     DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD,
     DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
+    DIFFICULTY_CHANT_BLOCK_THRESHOLD,
 } = require('./constants');
 
 class Config {
@@ -45,6 +46,17 @@ class Config {
             ) {
                 console.warn(
                     `<<<<WARN>>>> difficulty.lucky_mint_block_threshold changed! ${DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD} -> ${this.config.token.difficulty.lucky_mint_block_threshold}`,
+                );
+            }
+        }
+
+        if (this.config.token.difficulty.chant_block_threshold != null) {
+            if (
+                this.config.token.difficulty.chant_block_threshold !==
+                DIFFICULTY_CHANT_BLOCK_THRESHOLD
+            ) {
+                console.warn(
+                    `<<<<WARN>>>> difficulty.chant_block_threshold changed! ${DIFFICULTY_CHANT_BLOCK_THRESHOLD} -> ${this.config.token.difficulty.chant_block_threshold}`,
                 );
             }
         }

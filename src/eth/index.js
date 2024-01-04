@@ -187,7 +187,7 @@ class ETHIndex {
         }
 
         console.log(
-            `sync eth blocks  [${sync_begin}, ${latest_block_number}] success`,
+            `sync eth blocks [${sync_begin}, ${latest_block_number}] success`,
         );
         return { ret: 0 };
     }

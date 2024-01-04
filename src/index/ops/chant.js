@@ -7,7 +7,7 @@ const {
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem } = require('../item');
-const { TOKEN_MINT_POOL_VIRTUAL_ADDRESS } = require('../../constants');
+const { TOKEN_MINT_POOL_VIRTUAL_ADDRESS, DIFFICULTY_CHANT_BLOCK_THRESHOLD } = require('../../constants');
 
 class ChantOperator {
     constructor(config, storage, hash_helper) {
@@ -27,6 +27,15 @@ class ChantOperator {
 
         // The same user can only successfully chant once in a block
         this.user_chant_ops = new Map();
+
+        // load difficulty of chant block threshold from config
+        this.chant_block_threshold =
+            DIFFICULTY_CHANT_BLOCK_THRESHOLD;
+        if (config.token.difficulty.chant_block_threshold != null) {
+            this.chant_block_threshold =
+                config.token.difficulty.chant_block_threshold;
+            assert(_.isNumber(this.chant_block_threshold));
+        }
     }
 
     /**
@@ -123,7 +132,7 @@ class ChantOperator {
 
             if (data == null) {
                 console.warn(
-                    `user not have resonate the hash ${inscription_item.inscription_id} ${inscription_item.address} ${hash}`,
+                    `user not have resonate the hash yet ${inscription_item.inscription_id} ${inscription_item.address} ${hash}`,
                 );
 
                 return { ret: 0, state: InscriptionOpState.PERMISSION_DENIED };
@@ -136,7 +145,7 @@ class ChantOperator {
 
         // 2. check hash relation
         const hash_num = Util.address_number(hash);
-        if (Math.abs(hash_num - inscription_item.block_height) % 64 !== 0) {
+        if (Math.abs(hash_num - inscription_item.block_height) % this.chant_block_threshold !== 0) {
             console.warn(
                 `invalid hash relation ${inscription_item.inscription_id} hash: ${hash} block: ${inscription_item.block_height}`,
             );
