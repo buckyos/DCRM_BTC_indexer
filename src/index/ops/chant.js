@@ -74,6 +74,10 @@ class ChantOperator {
     async _chant(inscription_item) {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
+        // should be init to zero on start
+        inscription_item.user_bonus = '0';
+        inscription_item.owner_bonus = '0';
+
         // first check if hash field is exists
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
@@ -97,7 +101,7 @@ class ChantOperator {
         }
 
         if (data == null) {
-            console.error(
+            console.warn(
                 `chant hash not found ${inscription_item.inscription_id} ${hash}`,
             );
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };

@@ -17,7 +17,16 @@ class HashCollector {
 
         return this.hash_set.has(hash);
     }
+
+    select_random_one() {
+        const arr = Array.from(this.hash_set);
+        const index = Math.floor(Math.random() * arr.length);
+        return arr[index];
+    }
 }
+
+const hash_collector = new HashCollector();
+
 class InscribeDataOpGenerator{
     constructor() {
     }
@@ -60,6 +69,8 @@ class InscribeDataOpGenerator{
             ph = this.gen_random_hash_with_check_valid(commit_txid);
         }
 
+        hash_collector.add(ph);
+
         const content = {
             p: 'pdi',
             op: 'inscribe',
@@ -73,6 +84,25 @@ class InscribeDataOpGenerator{
     }
 }
 
+class SetPriceOpGenerator {
+    constructor() {
+    }
+
+    gen_content(ph) {
+        if (ph == null) {
+            ph = this.gen_random_hash();
+        }
+
+        const content = {
+            p: 'pdi',
+            op: 'set',
+            price: '100',
+            ph,
+        };
+
+        return content;
+    }
+}
 module.exports = {
     InscribeDataOpGenerator,
 };

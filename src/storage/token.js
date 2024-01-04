@@ -876,18 +876,18 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof txid === 'string', `txid should be string`);
         assert(typeof content === 'string', `content should be string`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof hash === 'string', `hash should be string ${hash}`);
         assert(
             BigNumberUtil.is_positive_number_string(user_bonus),
-            `user_bonus should be positive number string`,
+            `user_bonus should be positive number string ${user_bonus}`,
         );
         assert(
             BigNumberUtil.is_positive_number_string(owner_bonus),
-            `owner_bonus should be positive number string`,
+            `owner_bonus should be positive number string ${owner_bonus}`,
         );
         assert(
             Number.isInteger(state) && state >= 0,
-            `state should be non-negative integer`,
+            `state should be non-negative integer ${state}`,
         );
 
         return new Promise((resolve) => {

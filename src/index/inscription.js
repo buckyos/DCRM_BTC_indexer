@@ -90,7 +90,7 @@ class InscriptionIndex {
         while (true) {
             if (this.current_block_height === 0) {
                 // get latest block height already synced
-                const { ret, height } =
+                let { ret, height } =
                     await this.state_storage.get_btc_latest_block_height();
                 if (ret !== 0) {
                     console.error(`failed to get latest block height`);
@@ -103,6 +103,9 @@ class InscriptionIndex {
                     _.isNumber(this.config.token.genesis_block_height),
                     `invalid start block height`,
                 );
+
+                // should skip the last synced block height, so we add 1
+                height += 1;
 
                 this.current_block_height =
                     height > this.config.token.genesis_block_height
@@ -229,6 +232,8 @@ class InscriptionIndex {
                 }
             }
         }
+
+        return { ret: 0 };
     }
 
     async sync_block(block_height) {
@@ -353,7 +358,7 @@ class InscriptionIndex {
         }
 
         if (inscriptions.length === 0) {
-            console.info(`no inscription in block ${block_height}`);
+            console.info(`no inscriptions in block ${block_height}`);
             return { ret: 0 };
         }
 
