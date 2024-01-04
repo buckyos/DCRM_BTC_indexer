@@ -28,6 +28,13 @@ const TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS = '0x3';
 // the decimal of our token
 const TOKEN_DECIMAL = 18;
 
+
+// difficulty of inscribe data hash
+const DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD = 32;
+
+// difficulty of inscribe lucky mint block height
+const DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD = 64;
+
 module.exports = {
     STATE_DB_FILE,
     TOKEN_INDEX_DB_FILE,
@@ -45,4 +52,6 @@ module.exports = {
     TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
 
     TOKEN_DECIMAL,
+    DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD,
+    DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
 };

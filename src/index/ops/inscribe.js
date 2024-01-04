@@ -7,6 +7,7 @@ const {
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem, InscriptionTransferItem } = require('../item');
+const { DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD } = require('../../constants');
 
 class PendingInscribeOp {
     constructor(inscription_item, state, hash_distance) {
@@ -31,6 +32,13 @@ class InscribeDataOperator {
         this.config = config;
         this.storage = storage;
         this.hash_helper = hash_helper;
+
+        // load difficulty of inscribe data hash threshold from config
+        this.inscribe_data_hash_threshold = DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD;
+        if (config.token.difficulty.inscribe_data_hash_threshold != null) {
+            this.inscribe_data_hash_threshold = config.token.difficulty.inscribe_data_hash_threshold;
+            assert(_.isNumber(this.inscribe_data_hash_threshold));
+        }
 
         // pending operations that with some restrictions in the same block
         this.pending_inscribe_ops = [];
@@ -201,13 +209,14 @@ class InscribeDataOperator {
             !Util.check_inscribe_hash_and_txid(
                 hash,
                 inscription_item.commit_txid,
+                this.inscribe_data_hash_threshold,
             )
         ) {
             console.info(
                 `hash and txid not match ${inscription_item.inscription_id} ${hash} ${inscription_item.commit_txid}`,
             );
 
-            // not match (hash - commit_txid) % 32 != 0, so this inscription will failed
+            // not match (hash - commit_txid) % hash_th != 0, so this inscription will failed
             const op = new PendingInscribeOp(
                 inscription_item,
                 InscriptionOpState.HASH_UNMATCHED,

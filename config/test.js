@@ -46,6 +46,12 @@ const INDEX_CONFIG = {
 
         genesis_block_height: 2570577,
         token_name: 'dmcs',
+
+        // difficulty for token ops
+        difficulty : {
+            lucky_mint_block_threshold: 4,
+            inscribe_data_hash_threshold: 1,
+        }
     },
 };
 

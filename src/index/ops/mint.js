@@ -7,6 +7,9 @@ const {
 const constants = require('../../constants');
 const { InscriptionNewItem } = require('../item');
 const { InscriptionOpState } = require('./state');
+const {
+    DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
+} = require('../../constants');
 
 class MintOperator {
     constructor(config, storage) {
@@ -18,6 +21,15 @@ class MintOperator {
 
         this.config = config;
         this.storage = storage;
+
+        // load lucky mint block threshold from config
+        this.lucky_mint_block_threshold =
+            DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD;
+        if (config.token.difficulty.lucky_mint_block_threshold != null) {
+            this.lucky_mint_block_threshold =
+                config.token.difficulty.lucky_mint_block_threshold;
+            assert(_.isNumber(this.lucky_mint_block_threshold));
+        }
     }
 
     /*
@@ -171,8 +183,8 @@ class MintOperator {
         // Get the number of the address
         const address_num = Util.address_number(address);
 
-        // Check if the sum of the block height and the ASCII value is divisible by 64
-        if ((block_height + address_num) % 64 === 0) {
+        // Check if the sum of the block height and the ASCII value is divisible by block_threshold
+        if ((block_height + address_num) % this.lucky_mint_block_threshold === 0) {
             // Special handling for this inscription_item
             return true;
         } else {

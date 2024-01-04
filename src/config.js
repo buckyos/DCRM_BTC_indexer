@@ -1,6 +1,10 @@
 const path = require('path');
 const fs = require('fs');
 const assert = require('assert');
+const {
+    DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD,
+    DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
+} = require('./constants');
 
 class Config {
     constructor(config_file) {
@@ -21,6 +25,29 @@ class Config {
         );
         assert(fs.existsSync(abi_file));
         this.config.eth.contract_abi = require(abi_file);
+
+        // check the difficulty and give warning if changed
+        if (this.config.token.difficulty.inscribe_data_hash_threshold != null) {
+            if (
+                this.config.token.difficulty.inscribe_data_hash_threshold !==
+                DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD
+            ) {
+                console.warn(
+                    `<<<<WARN>>>> difficulty.inscribe_data_hash_threshold changed! ${DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD} -> ${this.config.token.difficulty.inscribe_data_hash_threshold}`,
+                );
+            }
+        }
+
+        if (this.config.token.difficulty.lucky_mint_block_threshold != null) {
+            if (
+                this.config.token.difficulty.lucky_mint_block_threshold !==
+                DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD
+            ) {
+                console.warn(
+                    `<<<<WARN>>>> difficulty.lucky_mint_block_threshold changed! ${DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD} -> ${this.config.token.difficulty.lucky_mint_block_threshold}`,
+                );
+            }
+        }
     }
 }
 

@@ -333,13 +333,15 @@ class Util {
      * @param {string} txid in hex
      * @returns {boolean}
      */
-    static check_inscribe_hash_and_txid(hash, txid) {
+    static check_inscribe_hash_and_txid(hash, txid, hash_threshold) {
         assert(_.isString(hash), `hash should be string ${hash}`);
         assert(_.isString(txid), `txid should be string ${txid}`);
+        assert(hash_threshold > 0, `hash_threshold should be greater than 0 ${hash_threshold}`);
 
         const hash_number = this.address_number(hash);
         const txid_number = this.address_number(txid);
-        const ret = Math.abs(hash_number - txid_number) % 32;
+        const ret = Math.abs(hash_number - txid_number) % hash_threshold;
+        
         return ret === 0;
     }
 

@@ -40,7 +40,7 @@ class InscribeDataOpGenerator{
         while(true) {
             const hash = this.gen_random_hash()
 
-            if (Util.check_inscribe_hash_and_txid(hash, txid)) {
+            if (Util.check_inscribe_hash_and_txid(hash, txid, 32)) {
                 return hash;
             }
         }
