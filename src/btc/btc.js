@@ -162,7 +162,7 @@ class BTCClient {
      */
     async get_transaction_batch(txids) {
 
-        // call _get_transaction_batch in 256 batch
+        // call _get_transaction_batch in 64 batch
         const batch_size = 64;
         const txs = [];
         for (let i = 0; i < txids.length; i += batch_size) {

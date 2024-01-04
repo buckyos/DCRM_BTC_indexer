@@ -15,17 +15,36 @@ class OrdClient {
     }
 
     /**
+     * @command check if response is successful by status code
+     * @param {object} response
+     * @returns {boolean}
+     */
+    _is_successful_response(response) {
+        return response.status >= 200 && response.status < 300;
+    }
+
+    /**
      * @command get the latest block height for ord service
      */
     async get_latest_block_height() {
         try {
             const response = await this.client.get('/blockheight');
+            if (!this._is_successful_response(response)) {
+                console.error(
+                    `failed to get latest block height ${response.status}`,
+                );
+                return {
+                    ret: -1,
+                    height: 0,
+                };
+            }
+
             return {
                 ret: 0,
                 height: response.data,
             };
         } catch (error) {
-            console.error(error);
+            console.error(`failed to get latest btc block height ${error}`);
             return {
                 ret: -1,
                 height: 0,
@@ -43,27 +62,126 @@ class OrdClient {
             const response = await this.client.get(
                 `/inscription/${inscription_id}`,
             );
+            if (!this._is_successful_response(response)) {
+                console.error(
+                    `failed to get inscription ${inscription_id} ${response.status}`,
+                );
+                return {
+                    ret: -1,
+                };
+            }
+
             return {
                 ret: 0,
                 inscription: response.data,
             };
         } catch (error) {
-            console.error(error);
+            console.error(
+                `failed to get inscription ${inscription_id} ${error}`,
+            );
             return {
                 ret: -1,
-                inscription: {},
             };
         }
     }
 
     /**
-     * 
-     * @param {number} block_height 
+     *
+     * @param {Array<string>} inscription_ids
+     * @returns {Promise<{ret: number, inscriptions: Array<object>}>}
+     */
+    async get_inscription_batch(inscription_ids) {
+        // call _get_inscription_batch in 64 batch
+        const batch_size = 64;
+        const inscriptions = [];
+        for (let i = 0; i < inscription_ids.length; i += batch_size) {
+            let end = i + batch_size;
+            if (end > inscription_ids.length) {
+                end = inscription_ids.length;
+            }
+
+            const batch_inscription_ids = inscription_ids.slice(i, end);
+            const { ret, inscriptions: batch_inscriptions } =
+                await this._get_inscription_batch(batch_inscription_ids);
+            if (ret !== 0) {
+                return { ret };
+            }
+
+            inscriptions.push(...batch_inscriptions);
+        }
+
+        assert(
+            inscription_ids.length === inscriptions.length,
+            `invalid inscriptions length: ${inscriptions.length} !== ${inscription_ids.length}`,
+        );
+
+        // verify the order
+        for (let i = 0; i < inscriptions.length; i++) {
+            const inscription = inscriptions[i];
+            assert(
+                inscription.inscription_id === inscription_ids[i],
+                `invalid inscription id ${inscription.inscription_id} !== ${inscription_ids[i]}`,
+            );
+        }
+
+        return { ret: 0, inscriptions };
+    }
+
+    /**
+     *
+     * @param {Array<string>} inscription_ids
+     * @returns {Promise<{ret: number, inscriptions: Array<object>}>}
+     */
+    async _get_inscription_batch(inscription_ids) {
+        assert(_.isArray(inscription_ids), `inscription_ids should be array`);
+        assert(
+            inscription_ids.length > 0,
+            `inscription_ids should not be empty`,
+        );
+
+        // get all inscriptions use get_inscription
+        const promises = inscription_ids.map((inscription_id) =>
+            this.client.get(`/inscription/${inscription_id}`),
+        );
+
+        try {
+            const responses = await Promise.all(promises);
+
+            // check all responses
+            const inscriptions = [];
+            for (let i = 0; i < responses.length; i++) {
+                const response = responses[i];
+                if (!this._is_successful_response(response)) {
+                    console.error(
+                        `failed to get inscription ${inscription_ids[i]} ${response.status}`,
+                    );
+                    return {
+                        ret: -1,
+                    };
+                }
+
+                inscriptions.push(response.data);
+            }
+
+            return {
+                ret: 0,
+                inscriptions,
+            };
+        } catch (error) {
+            console.error(`failed to get inscriptions ${error}`);
+            return {
+                ret: -1,
+            };
+        }
+    }
+
+    /**
+     *
+     * @param {number} block_height
      * @returns {Promise<{ret: number, data: object}>}
      */
     async get_inscription_by_block(block_height) {
         try {
-            
             // get by pages
             let page = 0;
             let inscriptions = [];
@@ -73,7 +191,15 @@ class OrdClient {
                 const response = await this.client.get(
                     `/inscriptions/block/${block_height}/${page}`,
                 );
-                
+                if (!this._is_successful_response(response)) {
+                    console.error(
+                        `failed to get inscriptions by block ${block_height} ${page} ${response.status}`,
+                    );
+                    return {
+                        ret: -1,
+                    };
+                }
+
                 inscriptions = inscriptions.concat(response.data.inscriptions);
                 if (!response.data.more) {
                     break;
@@ -87,10 +213,9 @@ class OrdClient {
                 data: inscriptions,
             };
         } catch (error) {
-            console.error(error);
+            console.error(`failed to get inscriptions by block ${error}`);
             return {
                 ret: -1,
-                data: {},
             };
         }
     }
@@ -100,6 +225,16 @@ class OrdClient {
             const response = await this.client.get(
                 `/content/${inscription_id}`,
             );
+
+            if (!this._is_successful_response(response)) {
+                console.error(
+                    `failed to get content ${inscription_id} ${response.status}`,
+                );
+                return {
+                    ret: -1,
+                };
+            }
+
             return {
                 ret: 0,
                 data: response.data,
@@ -108,7 +243,6 @@ class OrdClient {
             console.error(`failed to get content ${inscription_id} ${error}`);
             return {
                 ret: -1,
-                data: {},
             };
         }
     }
@@ -116,6 +250,15 @@ class OrdClient {
     async get_output_by_outpoint(outpoint) {
         try {
             const response = await this.client.get(`/output/${outpoint}`);
+            if (!this._is_successful_response(response)) {
+                console.error(
+                    `failed to get output ${outpoint} ${response.status}`,
+                );
+                return {
+                    ret: -1,
+                };
+            }
+
             return {
                 ret: 0,
                 data: response.data,
@@ -124,7 +267,6 @@ class OrdClient {
             console.error(`failed to get output ${outpoint}`, error);
             return {
                 ret: -1,
-                data: {},
             };
         }
     }

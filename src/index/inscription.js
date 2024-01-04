@@ -145,13 +145,17 @@ class InscriptionIndex {
 
         assert(_.isNumber(height), `invalid block height ${height}`);
         // get ord latest block height
-        const { ret: ord_ret, height: ord_height } = await this.ord_client.get_latest_block_height();
+        const { ret: ord_ret, height: ord_height } =
+            await this.ord_client.get_latest_block_height();
         if (ord_ret !== 0) {
             console.error(`failed to get ord latest block height`);
             return { ret: ord_ret };
         }
 
-        assert(_.isNumber(ord_height), `invalid ord block height ${ord_height}`);
+        assert(
+            _.isNumber(ord_height),
+            `invalid ord block height ${ord_height}`,
+        );
 
         // if block height diff is too large, we should warn
         if (Math.abs(height - ord_height) > 10) {
@@ -159,7 +163,7 @@ class InscriptionIndex {
                 `btc block height ${height} and ord block height ${ord_height} diff is too large`,
             );
         }
-        
+
         // use the smaller one
         if (height > ord_height) {
             return { ret: 0, height: ord_height };
@@ -185,7 +189,9 @@ class InscriptionIndex {
         if (this.current_block_height > height) {
             if (this.current_block_height > height + 1) {
                 console.warn(
-                    `current block height ${this.current_block_height} > latest block height ${height + 1}`,
+                    `current block height ${
+                        this.current_block_height
+                    } > latest block height ${height + 1}`,
                 );
             }
 
@@ -347,7 +353,7 @@ class InscriptionIndex {
             `invalid collector`,
         );
 
-        const { ret, data: inscriptions } =
+        const { ret, data: inscription_ids } =
             await this.ord_client.get_inscription_by_block(block_height);
 
         if (ret !== 0) {
@@ -357,22 +363,32 @@ class InscriptionIndex {
             return { ret };
         }
 
-        if (inscriptions.length === 0) {
+        if (inscription_ids.length === 0) {
             console.info(`no inscriptions in block ${block_height}`);
             return { ret: 0 };
         }
 
+        // get inscriptions by batch
+        const { ret: batch_get_inscriptions_ret, inscriptions } =
+            await this.ord_client.get_inscription_batch(inscription_ids);
+        if (batch_get_inscriptions_ret !== 0) {
+            console.error(`failed to get inscriptions by batch`);
+            return { ret: batch_get_inscriptions_ret };
+        }
+
+        assert(
+            inscription_ids.length === inscriptions.length,
+            `invalid inscriptions length`,
+        );
+
         // process inscriptions in block
         for (let i = 0; i < inscriptions.length; i++) {
-            const inscription_id = inscriptions[i];
-
-            // fetch inscription by id
-            const { ret: get_ret, inscription } =
-                await this.ord_client.get_inscription(inscription_id);
-            if (get_ret !== 0) {
-                console.error(`failed to get inscription ${inscription_id}`);
-                return { ret: get_ret };
-            }
+            const inscription = inscriptions[i];
+            const inscription_id = inscription_ids[i];
+            assert(
+                inscription.inscription_id == inscription_id,
+                `invalid inscription id ${inscription.inscription_id} !== ${inscription_id}`,
+            );
 
             assert(
                 inscription.genesis_height === block_height,
