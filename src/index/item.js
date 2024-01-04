@@ -108,33 +108,33 @@ class InscribeDataOp {
 
         // check ph
         if (!_.isString(ph)) {
-            console.error(`invalid inscribe content ph ${ph}`);
+            console.warn(`invalid inscribe content ph ${ph}`);
             return { ret: 0, valid: false };
         }
 
         if (!Util.is_valid_mixhash(ph)) {
-            console.error(`invalid inscribe content ph ${ph}`);
+            console.warn(`invalid inscribe content ph ${ph}`);
             return { ret: 0, valid: false };
         }
 
         // check text
         if (text != null) {
             if (!_.isString(text)) {
-                console.error(`invalid inscribe content text ${text}`);
+                console.warn(`invalid inscribe content text ${text}`);
                 return { ret: 0, valid: false };
             }
         }
 
         // check amt
         if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(`invalid inscribe content amt ${amt}`);
+            console.warn(`invalid inscribe content amt ${amt}`);
             return { ret: 0, valid: false };
         }
 
         // check price
         if (price != null) {
             if (!BigNumberUtil.is_positive_number_string(price)) {
-                console.error(`invalid inscribe content price ${price}`);
+                console.warn(`invalid inscribe content price ${price}`);
                 return { ret: 0, valid: false };
             }
         } else {

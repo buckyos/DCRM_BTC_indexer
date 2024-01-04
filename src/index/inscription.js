@@ -182,10 +182,10 @@ class InscriptionIndex {
             `invalid block height ${this.current_block_height}`,
         );
 
-        if (this.current_block_height >= height) {
-            if (this.current_block_height > height) {
+        if (this.current_block_height > height) {
+            if (this.current_block_height > height + 1) {
                 console.warn(
-                    `current block height ${this.current_block_height} > latest block height ${height}`,
+                    `current block height ${this.current_block_height} > latest block height ${height + 1}`,
                 );
             }
 

@@ -99,7 +99,7 @@ class ETHIndex {
             if (this.current_block_height === 0) {
  
                 // get latest block height already synced
-                const { ret, height } =
+                let { ret, height } =
                     await this.state_storage.get_eth_latest_block_height();
                 if (ret !== 0) {
                     console.error(`failed to get latest block height`);
@@ -112,6 +112,9 @@ class ETHIndex {
                     _.isNumber(this.config.eth.genesis_block_height),
                     `invalid eth start block height`,
                 );
+
+                // we should skip the latest synced block height
+                height += 1;
 
                 this.current_block_height =
                     height > this.config.eth.genesis_block_height
@@ -139,6 +142,7 @@ class ETHIndex {
         }
     }
 
+    // sync range [this.current_block_height, latest_block_number]
     async sync_once() {
         let { ret: get_ret, height: latest_block_number } =
             await this.get_latest_block_number();
@@ -151,21 +155,18 @@ class ETHIndex {
             return { ret: 0 };
         }
 
-        latest_block_number += 1;
-
         // sync block in chunk of 100
         const chunk_size = this.eth_blocks_process_step;
         assert(chunk_size > 0, `chunk size should be positive`);
 
+        const sync_begin = this.current_block_height;
+
+        // sync blocks in chunk during [this.current_block_height, latest_block_number]
         // eslint-disable-next-line no-constant-condition
         while (true) {
             let end = this.current_block_height + chunk_size;
             if (end > latest_block_number) {
                 end = latest_block_number;
-            }
-
-            if (end <= this.current_block_height) {
-                break;
             }
 
             const { ret } = await this.sync_blocks(
@@ -179,25 +180,25 @@ class ETHIndex {
                 return { ret };
             }
 
-            this.current_block_height = end;
+            this.current_block_height = end + 1;
             if (this.current_block_height >= latest_block_number) {
                 break;
             }
         }
 
         console.log(
-            `sync eth blocks from ${this.current_block_height} to ${latest_block_number} success`,
+            `sync eth blocks  [${sync_begin}, ${latest_block_number}] success`,
         );
         return { ret: 0 };
     }
 
-    // try sync block for range [begin, end)
+    // try sync block for range [begin, end]
     async sync_blocks(begin, end) {
         // console.log(`sync eth blocks from ${begin} to ${end}`);
-        assert(begin < end, `begin should be less than end`);
+        assert(begin <= end, `begin should be less than end`);
 
         // insert all blocks with timestamp
-        for (let i = begin; i < end; i++) {
+        for (let i = begin; i <= end; i++) {
             let block;
             try {
                 block = await this.web3.eth.getBlock(i, false);
@@ -216,7 +217,7 @@ class ETHIndex {
             }
         }
 
-        console.log(`insert eth blocks from ${begin} to ${end} success`);
+        console.log(`insert eth blocks [${begin}, ${end}] success`);
         
         // read all point change events
         let events;
@@ -225,7 +226,7 @@ class ETHIndex {
                 'DataPointAdded', // the point change event name
                 {
                     fromBlock: begin,
-                    toBlock: end - 1,
+                    toBlock: end,
                 },
             );
         } catch (error) {
@@ -275,7 +276,7 @@ class ETHIndex {
             const { ret } = await this.state_storage.update_eth_latest_block_height(end);
             if (ret !== 0) {
                 console.error(
-                    `failed to update latest block height ${end - 1}`,
+                    `failed to update latest block height ${end}`,
                 );
                 return { ret };
             }

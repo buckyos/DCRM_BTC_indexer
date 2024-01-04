@@ -239,7 +239,7 @@ class ETHIndexStorage {
                         return;
                     }
 
-                    console.debug(
+                    console.info(
                         `insert eth block: ${block_height} ${timestamp}`,
                     );
                     resolve({ ret: 0 });
