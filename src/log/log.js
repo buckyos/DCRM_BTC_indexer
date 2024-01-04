@@ -5,7 +5,7 @@ const fs = require('fs');
 class LogHelper {
     constructor(config) {
         const base_dir = process.platform === 'win32' ? 'C:\\logs' : '/var/log';
-        let log_dir = path.join(base_dir, 'dcrm_brc_index');
+        let log_dir = path.join(base_dir, 'dcrm');
         if (config.isolate) {
             log_dir = path.join(log_dir, config.isolate);
         }
@@ -15,7 +15,7 @@ class LogHelper {
         }
 
         blog.enable_file_log({
-            name: 'dcrm_brc_index',
+            name: 'dcrm_btc_index',
             dir: log_dir,
             file_max_size: 20 * 1024 * 1024,
             file_max_count: 100,
