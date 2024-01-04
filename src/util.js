@@ -45,10 +45,13 @@ class Util {
         return sb.toSatoshi(btc);
     }
 
-    // the last 5 bytes of the address sum to 0x00
+    // the last 8 bytes of the address sum to 0x00
     static address_number(address) {
+        assert(_.isString(address), `address should be string ${address}`);
+        assert(address.length >= 8, `address length should >= 8 ${address}`);
+
         let sum = 0;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 8; i++) {
             sum += address.charCodeAt(address.length - 1 - i);
         }
 
