@@ -231,7 +231,7 @@ class ETHIndexStorage {
                 `INSERT OR FAIL INTO blocks (block_height, timestamp) VALUES (?, ?)`,
                 [block_height, timestamp],
                 (err) => {
-                    warnif (err) {
+                    if (err) {
                         console.error(
                             `failed to insert block: ${block_height} ${timestamp} ${err}`,
                         );

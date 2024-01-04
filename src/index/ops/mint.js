@@ -6,7 +6,7 @@ const {
 } = require('../../storage/token');
 const constants = require('../../constants');
 const { InscriptionNewItem } = require('../item');
-const { InscriptionOpState } = require('./state');
+const { InscriptionOpState, MintType } = require('./state');
 const {
     DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
 } = require('../../constants');
@@ -153,6 +153,8 @@ class MintOperator {
             }
         }
 
+        const mint_type = is_lucky_mint? MintType.LuckyMint : MintType.NormalMint;
+
         // then add mint record
         const { ret: mint_ret } = await this.storage.add_mint_record(
             inscription_item.inscription_id,
@@ -163,6 +165,7 @@ class MintOperator {
             JSON.stringify(content),
             amt,
             content.lucky,
+            mint_type,
             state,
         );
         if (mint_ret !== 0) {

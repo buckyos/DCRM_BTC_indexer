@@ -40,4 +40,11 @@ const InscriptionOpState = {
     OUT_ADDRESS_IS_NOT_OWNER: 12,
 };
 
-module.exports = { InscriptionOpState, InscriptionStage };
+
+const MintType = {
+    NormalMint: 0,
+    LuckyMint: 1,
+    BurnMint: 2,
+};
+
+module.exports = { InscriptionOpState, InscriptionStage, MintType };

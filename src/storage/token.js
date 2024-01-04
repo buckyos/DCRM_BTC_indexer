@@ -109,6 +109,7 @@ class TokenIndexStorage {
                         content TEXT,   
                         amount TEXT,
                         lucky TEXT DEFAULT NULL,
+                        mint_type INTEGER,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -636,6 +637,7 @@ class TokenIndexStorage {
         content,
         amount,
         lucky,
+        mint_type,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -659,6 +661,7 @@ class TokenIndexStorage {
             lucky == null || typeof lucky === 'string',
             `lucky should be string or null`,
         );
+        assert(_.isNumber(mint_type), `mint_type should be string ${mint_type}`);
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
@@ -675,9 +678,10 @@ class TokenIndexStorage {
                     content, 
                     amount, 
                     lucky,
+                    mint_type,
                     state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -687,6 +691,7 @@ class TokenIndexStorage {
                     content,
                     amount,
                     lucky,
+                    mint_type,
                     state,
                 ],
                 (err) => {
