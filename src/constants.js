@@ -12,6 +12,9 @@ const NORMAL_MINT_MAX_AMOUNT = '210';
 // the token init amount in mint pool: 210 million.
 const TOKEN_MINT_POOL_INIT_AMOUNT = '210000000'; 
 
+// the token amount burned from eth network, will migrated to btc network
+const TOKEN_MINT_POOL_BURN_INIT_AMOUNT = '40000000';
+
 // the virtual address of mint pool and unmint pool
 const TOKEN_MINT_POOL_VIRTUAL_ADDRESS = '0x0';
 
@@ -24,6 +27,8 @@ const TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS = '0x2';
 // the virtual address of mint pool's chant token amount
 const TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS = '0x3';
 
+// the virtual address of mint pool's burn mint token amount
+const TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS = '0x4';
 
 // the decimal of our token
 const TOKEN_DECIMAL = 18;
@@ -49,10 +54,12 @@ module.exports = {
     NORMAL_MINT_MAX_AMOUNT,
 
     TOKEN_MINT_POOL_INIT_AMOUNT,
+    TOKEN_MINT_POOL_BURN_INIT_AMOUNT,
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
 
     TOKEN_DECIMAL,
     

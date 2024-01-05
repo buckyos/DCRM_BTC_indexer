@@ -10,17 +10,20 @@ const { InscriptionOpState, MintType } = require('./state');
 const {
     DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
 } = require('../../constants');
+const { ETHIndex } = require('../../eth/index');
 
 class MintOperator {
-    constructor(config, storage) {
+    constructor(config, storage, eth_index) {
         assert(_.isObject(config), `config should be object`);
         assert(
             storage instanceof TokenIndexStorage,
             `storage should be TokenIndexStorage`,
         );
+        assert(eth_index instanceof ETHIndex, `eth_index should be ETHIndex`);
 
         this.config = config;
         this.storage = storage;
+        this.eth_index = eth_index;
 
         // load lucky mint block threshold from config
         this.lucky_mint_block_threshold =
@@ -69,33 +72,53 @@ class MintOperator {
         }
 
         let amt;
-        let is_lucky_mint = false;
-        if (
-            content.lucky != null &&
-            this._is_lucky_block_mint(inscription_item)
-        ) {
-            console.log(
-                `lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.lucky}`,
-            );
-
-            // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT
-            if (
-                BigNumberUtil.compare(
-                    content.amt,
-                    constants.LUCKY_MINT_MAX_AMOUNT,
-                ) > 0
-            ) {
-                console.warn(
-                    `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
+        let mint_type = MintType.NormalMint;
+        if (content.lucky != null) {
+            // first query is if the burn mint from eth
+            const {
+                ret,
+                valid,
+                amount: burn_amount,
+            } = await this._query_burn_mint(inscription_item);
+            if (ret !== 0) {
+                console.error(
+                    `failed to query lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.lucky}`,
                 );
-                content.origin_amt = amt;
-                amt = constants.LUCKY_MINT_MAX_AMOUNT;
-            } else {
-                amt = content.amt;
+                return { ret };
             }
 
-            is_lucky_mint = true;
-        } else {
+            if (valid) {
+                mint_type = MintType.BurnMint;
+                amt = burn_amount;
+            } else {
+                // not burn mint, now check if it is lucky mint
+                if (this._is_lucky_block_mint(inscription_item)) {
+                    mint_type = MintType.LuckyMint;
+
+                    console.log(
+                        `lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.lucky}`,
+                    );
+
+                    // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT
+                    if (
+                        BigNumberUtil.compare(
+                            content.amt,
+                            constants.LUCKY_MINT_MAX_AMOUNT,
+                        ) > 0
+                    ) {
+                        console.warn(
+                            `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
+                        );
+                        content.origin_amt = amt;
+                        amt = constants.LUCKY_MINT_MAX_AMOUNT;
+                    } else {
+                        amt = content.amt;
+                    }
+                }
+            }
+        }
+
+        if (mint_type === MintType.NormalMint) {
             console.log(
                 `mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.amount}`,
             );
@@ -118,9 +141,25 @@ class MintOperator {
         }
 
         // first update mint pool balance
-        const update_pool_op = is_lucky_mint
-            ? UpdatePoolBalanceOp.LuckyMint
-            : UpdatePoolBalanceOp.Mint;
+        let update_pool_op;
+        switch (mint_type) {
+            case MintType.NormalMint: {
+                update_pool_op = UpdatePoolBalanceOp.Mint;
+                break;
+            }
+            case MintType.LuckyMint: {
+                update_pool_op = UpdatePoolBalanceOp.LuckyMint;
+                break;
+            }
+            case MintType.BurnMint: {
+                update_pool_op = UpdatePoolBalanceOp.BurnMint;
+                break;
+            }
+            default: {
+                assert(false, `invalid mint_type ${mint_type}`);
+            }
+        }
+
         const { ret: update_mint_pool_balance_ret } =
             await this.storage.update_pool_balance_on_ops(update_pool_op, amt);
         if (update_mint_pool_balance_ret < 0) {
@@ -153,8 +192,6 @@ class MintOperator {
             }
         }
 
-        const mint_type = is_lucky_mint? MintType.LuckyMint : MintType.NormalMint;
-
         // then add mint record
         const { ret: mint_ret } = await this.storage.add_mint_record(
             inscription_item.inscription_id,
@@ -178,6 +215,57 @@ class MintOperator {
         return { ret: 0 };
     }
 
+    /**
+     * @comment check if the mint is burn mint: 1. should exists on eth contract 2. should not exists on mint records
+     * @param {object} inscription_item
+     * @returns {Promise<{ret: number, valid: boolean, amount: string}>}
+     */
+    async _query_burn_mint(inscription_item) {
+        const { ret, exists, amount } = await this.eth_index.query_lucky_mint(
+            inscription_item.address,
+            inscription_item.content.lucky,
+        );
+        if (ret !== 0) {
+            console.error(
+                `failed to query burn mint ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.content.burn}`,
+            );
+            return { ret };
+        }
+
+        if (!exists) {
+            return { ret: 0, valid: false };
+        }
+        assert(_.isString(amount), `amount should be string ${amount}`);
+
+        // can only mint once!
+        const { ret: query_ret, data } = await this.storage.query_lucky_mint(
+            inscription_item.address,
+            inscription_item.content.lucky,
+        );
+        if (query_ret !== 0) {
+            console.error(
+                `failed to query lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.content.lucky}`,
+            );
+            return { ret: query_ret };
+        }
+
+        if (data == null) {
+            return { ret: 0, valid: true, amount };
+        }
+
+        if (data.mint_type === MintType.BurnMint) {
+            console.warn(
+                `already burn mint ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.content.lucky}`,
+            );
+            return { ret: 0, valid: false };
+        } else {
+            console.info(
+                `lucky mint exists but not burn mint! ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.content.lucky}`,
+            );
+            return { ret: 0, valid: true, amount };
+        }
+    }
+
     _is_lucky_block_mint(inscription_item) {
         const { block_height, address } = inscription_item;
         assert(_.isNumber(block_height), `block_height should be number`);
@@ -187,7 +275,10 @@ class MintOperator {
         const address_num = Util.address_number(address);
 
         // Check if the sum of the block height and the ASCII value is divisible by block_threshold
-        if ((block_height + address_num) % this.lucky_mint_block_threshold === 0) {
+        if (
+            (block_height + address_num) % this.lucky_mint_block_threshold ===
+            0
+        ) {
             // Special handling for this inscription_item
             return true;
         } else {

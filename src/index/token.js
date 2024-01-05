@@ -58,13 +58,14 @@ class TokenIndex {
             this.hash_helper,
             block_height,
             block_collector,
+            this.eth_index,
         );
         return await block_indexer.process_inscriptions();
     }
 }
 
 class TokenBlockIndex {
-    constructor(storage, config, hash_helper, block_height, block_collector) {
+    constructor(storage, config, hash_helper, block_height, block_collector, eth_index) {
         assert(
             storage instanceof TokenIndexStorage,
             `storage should be TokenIndexStorage`,
@@ -79,19 +80,21 @@ class TokenBlockIndex {
             block_collector instanceof BlockInscriptionCollector,
             `block_collector should be BlockInscriptionCollector`,
         );
+        assert(eth_index instanceof ETHIndex, `eth_index should be ETHIndex`);
 
         this.storage = storage;
         this.config = config;
         this.hash_helper = hash_helper;
         this.block_height = block_height;
         this.block_collector = block_collector;
+        this.eth_index = eth_index;
 
         this.inscribe_operator = new InscribeDataOperator(
             config,
             storage,
             hash_helper,
         );
-        this.mint_operator = new MintOperator(config, storage);
+        this.mint_operator = new MintOperator(config, storage, eth_index);
         this.transfer_operator = new TransferOperator(storage);
         this.chant_operator = new ChantOperator(config, storage, hash_helper);
         this.resonance_operator = new ResonanceOperator(

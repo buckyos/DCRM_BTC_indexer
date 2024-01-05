@@ -10,6 +10,7 @@ const {
     TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
 } = require('../constants');
 const { InscriptionOpState } = require('../index/ops/state');
 const { InscriptionOp } = require('../index/item');
@@ -18,6 +19,7 @@ const { InscriptionOp } = require('../index/item');
 const UpdatePoolBalanceOp = {
     Mint: 'mint',
     LuckyMint: 'lucky_mint',
+    BurnMint: 'burn_mint',
     Chant: 'chant',
     InscribeData: 'inscribe_data',
 };
@@ -1998,7 +2000,7 @@ class TokenIndexStorage {
                     );
                     if (update_ret != 0) {
                         console.error(
-                            `Could not update pool balance on mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
+                            `Could not update pool balance on mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${amount}`,
                         );
                         return { ret: update_ret };
                     }
@@ -2013,7 +2015,7 @@ class TokenIndexStorage {
                     );
                     if (ret != 0) {
                         console.error(
-                            `Could not update lucky mint balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS}`,
+                            `Could not update lucky mint balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS} ${amount}`,
                         );
                         return { ret };
                     }
@@ -2024,13 +2026,29 @@ class TokenIndexStorage {
                     );
                     if (update_ret != 0) {
                         console.error(
-                            `Could not update pool balance on lucky mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
+                            `Could not update pool balance on lucky mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${amount}`,
                         );
                         return { ret: update_ret };
                     }
                 }
 
                 break;
+            case UpdatePoolBalanceOp.BurnMint: {
+                {
+                    const { ret } = await this.update_balance(
+                        TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
+                        amount,
+                    );
+                    if (ret != 0) {
+                        console.error(
+                            `Could not update burn mint balance ${TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS} ${amount}`,
+                        );
+                        return { ret };
+                    }
+                }
+
+                break;
+            }
             case UpdatePoolBalanceOp.Chant:
                 {
                     const { ret } = await this.update_balance(
