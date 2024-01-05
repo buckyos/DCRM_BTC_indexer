@@ -325,7 +325,7 @@ class Util {
             .plus(1);
 
         const score = baseScore.times(baseRate).times(2);
-        return score.toString();
+        return score.toDecimalPlaces(TOKEN_DECIMAL).toString();
     }
 
     /*
@@ -396,7 +396,7 @@ class BigNumberUtil {
      * @returns {string}
      */
     static add(a, b) {
-        return new BigNumber(a).plus(new BigNumber(b)).toString();
+        return new BigNumber(a).plus(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
     }
 
     /**
@@ -406,7 +406,7 @@ class BigNumberUtil {
      * @returns {string}
      */
     static subtract(a, b) {
-        return new BigNumber(a).minus(new BigNumber(b)).toString();
+        return new BigNumber(a).minus(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
     }
 
     /**
@@ -416,7 +416,7 @@ class BigNumberUtil {
      * @returns {string}
      */
     static multiply(a, b) {
-        return new BigNumber(a).times(new BigNumber(b)).toString();
+        return new BigNumber(a).times(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
     }
 
     /**
@@ -426,7 +426,7 @@ class BigNumberUtil {
      * @returns {string}
      */
     static divide(a, b) {
-        return new BigNumber(a).dividedBy(new BigNumber(b)).toString();
+        return new BigNumber(a).dividedBy(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
     }
 
     /**
