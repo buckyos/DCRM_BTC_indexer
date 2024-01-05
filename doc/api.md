@@ -1,4 +1,44 @@
-1. 根据公共数据hash获取铭文信息：
+### 状态码定义：
+```javascript
+const InscriptionOpState = {
+    OK: 0,
+
+    ALREADY_EXISTS: 1,
+
+    HASH_UNMATCHED: 2,
+
+    // competition failed in same block
+    COMPETITION_FAILED: 3,
+
+    // amt is invalid
+    INVALID_AMT: 4,
+
+    // balance not enough
+    INSUFFICIENT_BALANCE: 5,
+
+    // hash not found
+    HASH_NOT_FOUND: 6,
+
+    // permission denied
+    PERMISSION_DENIED: 7,
+
+    // invalid params
+    INVALID_PARAMS: 8,
+
+    // invalid price
+    INVALID_PRICE: 9,
+
+    OUT_OF_RESONANCE_LIMIT: 10,
+
+    HAS_NO_VALID_CHANT: 11,
+
+    OUT_ADDRESS_IS_NOT_OWNER: 12,
+};
+```
+
+### 接口
+
+#### 根据公共数据hash获取铭文信息：
 
     /inscription/:hash
 
@@ -26,7 +66,7 @@
     }
     ```
 
-2. 获取某地址拥有的铭文：
+#### 获取某地址拥有的铭文：
 
     /inscription_by_address/:address/:limit?/:offset?/:order?
 
@@ -55,7 +95,7 @@
     }
     ```
 
-3. 获取区块范围内的新增的铭文 [begin, end)：
+#### 获取区块范围内的新增的铭文 [begin, end)：
 
     /inscription_by_block/:begin_block/:end_block?/:limit?/:offset?/:order?
 
@@ -86,7 +126,7 @@
     }
     ```
 
-4. 获取铭文总数：
+#### 获取铭文总数：
 
     /inscription_count
 
@@ -102,9 +142,9 @@
     }
     ```
 
-5. 获取某数据的共鸣记录：
+#### 获取某数据的铭刻记录：
 
-    /resonance_by_hash/:hash/:limit?/:offset?/:order?
+    /inscribe_by_hash/:hash/:limit?/:offset?/:state?/:order?
 
     GET
 
@@ -115,6 +155,108 @@
     limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list: [
+                {
+                    inscription_id,         // string 铭文id
+                    block_height,           // 所在区块
+                    address,                // 铭刻地址
+                    timestamp,              // 铭刻时间
+                    txid,                   // 铭刻交易tx
+                    content,                // 铭刻text
+                    hash,                   // 公共数据hash
+                    mint_amount,
+                    service_charge,         // 手续费 string
+                    text,
+                    price,
+                    hash_point,
+                    hash_weight,
+                    state                   //状态，状态码见统一说明
+                }
+            ]
+        }
+    }
+    ```
+
+#### 获取某地址的铭刻记录：
+
+    /inscribe_by_address/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    address: 查询地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list:               // item说明同上
+        }
+    }
+    ```
+
+#### 根据交易hash获取铭刻记录：
+
+    /inscribe_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid 交易hash
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: info        // 说明同上item
+    }
+    ```
+
+
+### 获取某数据的共鸣记录：
+
+    /resonance_by_hash/:hash/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    hash： 数据hash
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -141,15 +283,16 @@
                     genesis_block_height,
                     genesis_timestamp,
                     genesis_txid,
+                    state,              // 状态码，见统一说明
                 }
             ]
         }
     }
     ```
 
-6. 获取某地址的共鸣记录：
+#### 获取某地址的共鸣记录：
 
-    /resonance_by_address/:address/:limit?/:offset?/:order?
+    /resonance_by_address/:address/:limit?/:offset?/:state?/:order?
 
     GET
 
@@ -160,6 +303,8 @@
     limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -176,9 +321,29 @@
     }
     ```
 
-7. 获取某数据的吟唱记录：
+#### 根据交易hash获取共鸣记录：
 
-    /chant_by_hash/:hash/:limit?/:offset?/:order?
+    /resonance_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid 交易hash
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: info        // 说明同上item
+    }
+    ```
+
+### 获取某数据的吟唱记录：
+
+    /chant_by_hash/:hash/:limit?/:offset?/:state?/:order?
 
     GET
 
@@ -189,6 +354,8 @@
     limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -210,15 +377,19 @@
                     timestamp,
                     user_bouns,         // 吟唱人奖励 string
                     owner_bouns,        // 数据owner奖励 string
+                    txid,
+                    hash_point,
+                    hash_weight,
+                    state,
                 }
             ]
         }
     }
     ```
 
-8. 获取某数据的吟唱记录：
+### 获取某数据的吟唱记录：
 
-    /chant_by_address/:address/:limit?/:offset?/:order?
+    /chant_by_address/:address/:limit?/:offset?/:state?/:order?
 
     GET
 
@@ -229,6 +400,8 @@
     limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -245,9 +418,125 @@
     }
     ```
 
-9. 获取某地址的mint记录：
+#### 根据交易hash获取吟唱记录：
 
-    /mint_record_by_address/:address/:limit?/:offset?/:order?
+    /chant_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid 交易hash
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: info        // 说明同上item
+    }
+    ```
+
+#### 获取某数据的SetPrice记录：
+
+    /set_price_by_hash/:hash/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    hash： 数据hash
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list: [
+                {
+                    inscription_id,         // string 铭文id
+                    block_height,           // 所在区块
+                    address,                // 发起地址
+                    timestamp,              // 时间
+                    txid,                   // 交易tx
+                    content,                // 铭文内容
+                    hash,                   // 公共数据hash
+                    price,                  // string
+                    hash_point,
+                    hash_weight,
+                    state                   //状态，状态码见统一说明
+                }
+            ]
+        }
+    }
+    ```
+
+#### 获取某地址的SetPrice记录：
+
+    /set_price_by_address/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    address: 查询地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list:               // item说明同上
+        }
+    }
+    ```
+
+#### 根据交易hash获取铭刻记录：
+
+    /set_price_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid 交易hash
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: info        // 说明同上item
+    }
+    ```
+
+#### 获取某地址的mint记录：
+
+    /mint_record_by_address/:address/:limit?/:offset?/:state?/:order?
 
     GET
 
@@ -258,6 +547,8 @@
     limit: 返回的列表的长度限制，默认为0
 
     offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -277,14 +568,16 @@
                     timestamp,          // 时间
                     address,            // mint地址
                     amount,             // mint金额 string
-                    lucky               // 幸运字串
+                    lucky,              // 幸运字串
+                    mint_type,          // int 0 -- 普通mint 1 -- 幸运mint
+                    state,
                 }
             ]
         }
     }
     ```
 
-10. 获取幸运铭刻列表：
+#### 获取幸运铭刻列表：
 
     /luck_mint/:limit?/:offset?/:order?
 
@@ -311,7 +604,7 @@
     }
     ```
 
-11. 获取过去24小时mint总量：
+#### 获取过去24小时mint总量：
 
     /mint_last_24
 
@@ -327,7 +620,7 @@
     }
     ```
     
-12. 获取某地址余额：
+#### 获取某地址余额：
 
     /balance/:address
 
@@ -347,7 +640,7 @@
     }
     ```
 
-13. 获取当前index服务的同步状态：
+#### 获取当前index服务的同步状态：
 
     /indexer/state
 
@@ -366,7 +659,7 @@
     }
     ```
 
-14. 获取当前btc链最新的块号：
+#### 获取当前btc链最新的块号：
 
     /block_height/btc
 
@@ -382,7 +675,7 @@
     }
     ```
 
-15. 获取某地址在时间段内的收益：
+#### 获取某地址在时间段内的收益：
 
     /income/:address/:begin_time/:end_time?
 
@@ -408,7 +701,7 @@
     }
     ```
 
-16. 根据txid搜索：
+#### 根据txid搜索：
 
     /search/:txid
 
@@ -431,7 +724,7 @@
     }
     ```
 
-17. 查询mint进度
+#### 查询mint进度
 
     /mint_progress
 
