@@ -517,12 +517,14 @@ class TokenIndexStorage {
                 // Create user_ops table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS user_ops (
-                        address TEXT PRIMARY KEY,
+                        address TEXT,
                         inscription_id TEXT,
                         block_height INTEGER,
                         timestamp INTEGER,
+                        txid TEXT,
                         op TEXT,
-                        state INTEGER
+                        state INTEGER,
+                        PRIMARY KEY (address, inscription_id, txid)
                     );`,
                     (err) => {
                         if (err) {
@@ -701,6 +703,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             UserOp.Mint,
             state,
         );
@@ -864,6 +867,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             UserOp.InscribeData,
             state,
         );
@@ -1021,6 +1025,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             InscriptionOp.Chant,
             state,
         );
@@ -1149,6 +1154,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             UserOp.InscribeTransfer,
             state,
         );
@@ -1282,6 +1288,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             UserOp.Transfer,
             state,
         );
@@ -1436,6 +1443,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             UserOp.SetPrice,
             state,
         );
@@ -1534,6 +1542,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             UserOp.InscribeResonance,
             state,
         );
@@ -1695,6 +1704,7 @@ class TokenIndexStorage {
             inscription_id,
             block_height,
             timestamp,
+            txid,
             UserOp.Resonance,
             state,
         );
@@ -2471,11 +2481,12 @@ class TokenIndexStorage {
      * @param {string} inscription_id 
      * @param {number} block_height 
      * @param {number} timestamp 
+     * @param {string} txid
      * @param {string} op 
      * @param {number} state 
      * @returns {ret: number}
      */
-    async add_user_op(address, inscription_id, block_height, timestamp, op, state) {
+    async add_user_op(address, inscription_id, block_height, timestamp, txid, op, state) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
         assert(
@@ -2487,6 +2498,7 @@ class TokenIndexStorage {
             `block_height should be non-negative integer`,
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
         assert(typeof op === 'string', `op should be string`);
         assert(
             Number.isInteger(state) && state >= 0,
@@ -2494,14 +2506,14 @@ class TokenIndexStorage {
         );
 
         const sql = `
-            INSERT OR REPLACE INTO user_ops (address, inscription_id, block_height, timestamp, op, state)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO user_ops (address, inscription_id, block_height, timestamp, txid, op, state)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
 
         return new Promise((resolve) => {
             this.db.run(
                 sql,
-                [address, inscription_id, block_height, timestamp, op, state],
+                [address, inscription_id, block_height, timestamp, txid, op, state],
                 function (err) {
                     if (err) {
                         console.error(

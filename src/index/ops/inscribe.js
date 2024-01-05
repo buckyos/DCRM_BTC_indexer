@@ -149,6 +149,7 @@ class InscribeDataOperator {
             inscription_transfer_item.inscription_id,
             inscription_transfer_item.block_height,
             inscription_transfer_item.timestamp,
+            inscription_transfer_item.txid,
             UserOp.TransferData,
             0,
         );
