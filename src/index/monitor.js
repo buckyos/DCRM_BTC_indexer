@@ -128,12 +128,13 @@ class MultiMap {
      * @param {string} key
      * @returns {Array<object>}
      */
-    get_array(key) {
+    get_and_remove_array(key) {
         const value = this.map.get(key);
         if (value == null) {
             return null;
         }
 
+        this.map.delete(key);
         if (Array.isArray(value)) {
             return value;
         } else {
@@ -416,7 +417,9 @@ class InscriptionTransferMonitor {
             for (let j = 0; j < tx_item.vin.length; ++j) {
                 const outpoint_str = tx_item.vin[j];
 
-                const inscriptions = this.inscriptions.get_array(outpoint_str);
+                // check if current outpoint is included in this tx's input, if exists, 
+                // then it's a transfer, we should update the transfer record and remove it from monitor list
+                const inscriptions = this.inscriptions.get_and_remove_array(outpoint_str);
                 if (inscriptions == null) {
                     continue;
                 }
