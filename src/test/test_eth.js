@@ -64,6 +64,10 @@ async function test_eth() {
 
     client.run();
 
+    const {ret, amount} = await client.query_lucky_mint('tb1pwz5tzu2pn2ewq5t46erhtxaxacg6d8m54289pe0gf60a7e58n7pq6wpxfr', 'abcd');
+    assert(ret === 0);
+    assert(amount === 21000);
+
     await client.query_hash_point(1439800483, "0x80000000059671f61d06b37cf3769b5a35548d4db9496aed632b876e40469bdd");
 }
 

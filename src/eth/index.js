@@ -3,6 +3,7 @@ const { Web3 } = require('web3');
 const { ETHIndexStorage } = require('../storage/eth');
 const { Util } = require('../util');
 const { StateStorage } = require('../storage/state');
+const BigNumber = require('bignumber.js');
 
 class ETHIndex {
     constructor(config) {
@@ -358,7 +359,7 @@ class ETHIndex {
      * 
      * @param {string} address 
      * @param {string} lucky 
-     * @returns 
+     * @returns {Promise<{ret: number, exists: boolean, amount: string}>}
      */
     async query_lucky_mint(address, lucky) {
         assert(_.isString(address), `invalid address ${address}`);
@@ -369,8 +370,17 @@ class ETHIndex {
                 .getBurnedMintCount(address, lucky)
                 .call()
                 .then((result) => {
-                    console.log(result);
-                    resolve({ ret: 0, amount: result });
+                    const amount = new BigNumber(result).toString();
+                    if (amount === '0') {
+                        console.info(
+                            `no burn lucky mint found ${address} ${lucky}`);
+                        resolve({ ret: 0, exists: false });
+                    } else {
+                        console.info(
+                            `found burn lucky mint ${address} ${lucky} ${amount}`,
+                        );
+                        resolve({ ret: 0, exists: true, amount });
+                    }
                 })
                 .catch((error) => {
                     console.error(
