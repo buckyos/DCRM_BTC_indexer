@@ -3,6 +3,7 @@ const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
 const {
     InscriptionOpState,
     InscriptionStage,
+    MintType
 } = require('../../index/ops/state');
 const { BigNumberUtil } = require('../../util');
 const {
@@ -11,8 +12,11 @@ const {
     TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS
 } = require('../../constants');
 
+const SUCCESS = "SUCCESS";
+const FAILED = "FAILED";
+
 class MintStore {
-    constructor() {}
+    constructor() { }
 
     // return null or data
     queryMintRecordByHash(hash) {
@@ -24,8 +28,7 @@ class MintStore {
         return null;
     }
 
-    //return {count, list}
-    queryMintRecordByAddress(address, limit, offset, order) {
+    queryMintRecordByAddress(address, limit, offset, state, order) {
         if (!address) {
             return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
@@ -35,20 +38,30 @@ class MintStore {
         let list = [];
 
         try {
-            const countStmt = store.indexDB.prepare(
-                `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.MINT_RECORDS} WHERE address = ?`,
-            );
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.MINT_RECORDS}
+                WHERE address = ?`;
+            if (state == SUCCESS) {
+                sql += ` AND state = ${InscriptionOpState.OK}`;
+            } else if (state == FAILED) {
+                sql += ` AND state != ${InscriptionOpState.OK}`;
+            }
+            const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(
-                    `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} 
-                    WHERE address = ? 
-                    ORDER BY timestamp ${order} 
-                    LIMIT ? OFFSET ?`,
-                );
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.MINT_RECORDS}
+                    WHERE address = ?`;
+                if (state == SUCCESS) {
+                    sql += ` AND state = ${InscriptionOpState.OK}`;
+                } else if (state == FAILED) {
+                    sql += ` AND state != ${InscriptionOpState.OK}`;
+                }
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+                const pageStmt = store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -59,7 +72,6 @@ class MintStore {
                 limit,
                 'ret:',
                 count,
-                list,
             );
         } catch (error) {
             logger.error('queryMintRecordByAddress failed:', error);
@@ -68,6 +80,27 @@ class MintStore {
         }
 
         return makeSuccessReponse({ count, list });
+    }
+
+    queryMintRecordByTx(txid) {
+        if (!txid) {
+            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+        }
+
+        try {
+            const stmt = store.indexDB.prepare(
+                `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} WHERE txid = ?`,
+            );
+            const ret = stmt.get(txid);
+
+            logger.debug('queryMintRecordByTx:', txid, 'ret:', ret);
+
+            return ret ? makeSuccessReponse(ret) : makeReponse(ERR_CODE.NOT_FOUND);
+        } catch (error) {
+            logger.error('queryMintRecordByTx failed:', error);
+
+            return makeReponse(ERR_CODE.DB_ERROR, error);
+        }
     }
 
     queryLuckyMintRecord(limit, offset, order) {
@@ -79,19 +112,19 @@ class MintStore {
             const countStmt = store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.MINT_RECORDS} 
-                WHERE lucky is not null`,
+                WHERE mint_type = ? AND state = ?`,
             );
-            const countResult = countStmt.get();
+            const countResult = countStmt.get(MintType.LuckyMint, InscriptionOpState.OK);
             count = countResult.count;
 
             if (count > 0) {
                 const pageStmt = store.indexDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} 
-                    WHERE lucky is not null 
+                    WHERE mint_type = ? AND state = ?
                     ORDER BY timestamp ${order} 
                     LIMIT ? OFFSET ?`,
                 );
-                list = pageStmt.all(limit, offset);
+                list = pageStmt.all(MintType.LuckyMint, InscriptionOpState.OK, limit, offset);
             }
 
             logger.debug(
@@ -100,7 +133,6 @@ class MintStore {
                 limit,
                 'ret:',
                 count,
-                list,
             );
         } catch (error) {
             logger.error('queryLuckyMintRecord failed:', error);
@@ -120,9 +152,9 @@ class MintStore {
             const stmt = store.indexDB.prepare(
                 `SELECT amount
                 FROM ${TABLE_NAME.MINT_RECORDS} 
-                WHERE timestamp >= ? AND timestamp < ?`,
+                WHERE timestamp >= ? AND timestamp < ? AND state = ?`,
             );
-            const ret = stmt.all(beginTime, endTime);
+            const ret = stmt.all(beginTime, endTime, InscriptionOpState.OK);
 
             let total = '0';
             for (const item of ret) {

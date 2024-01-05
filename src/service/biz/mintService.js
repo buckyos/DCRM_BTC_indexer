@@ -36,13 +36,23 @@ class MintService {
         const offset = ctx.params.offset;
         const limit = ctx.params.limit;
         const order = ctx.params.order;
+        const state = ctx.params.state;
 
         return this.m_store.queryMintRecordByAddress(
             address,
             //limit == 0 || limit == null ? Number.MAX_SAFE_INTEGER : limit,
             limit || 0,
             offset || 0,
+            state ? state.toUpperCase() : "ALL",
             order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getMintRecordByTx(ctx) {
+        const txid = ctx.params.txid;
+
+        return this.m_store.queryMintRecordByTx(
+            txid
         );
     }
 
@@ -109,7 +119,7 @@ class MintService {
         //     ctx.response.body = await this._getMintRecordByHash(ctx);
         // });
 
-        router.get("/mint_record_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
+        router.get("/mint_record_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
             ctx.response.body = await this._getMintRecordByAddress(ctx);
         });
 

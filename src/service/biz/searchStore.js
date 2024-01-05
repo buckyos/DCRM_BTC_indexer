@@ -15,9 +15,9 @@ class SearchStore {
             let stmt = store.indexDB.prepare(
                 `SELECT * 
                 FROM ${TABLE_NAME.MINT_RECORDS} 
-                WHERE txid = ? AND state = ?`
+                WHERE txid = ?`
             );
-            let ret = stmt.get(txid, InscriptionOpState.OK);
+            let ret = stmt.get(txid);
 
             logger.debug('queryByTxid:', txid, " find mint records, ret:", ret);
             if (ret) {
@@ -28,9 +28,9 @@ class SearchStore {
             stmt = store.indexDB.prepare(
                 `SELECT * 
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
-                WHERE txid = ? AND state = ?`
+                WHERE txid = ?`
             );
-            ret = stmt.get(txid, InscriptionOpState.OK);
+            ret = stmt.get(txid);
             logger.debug('queryByTxid:', txid, " find inscribe records, ret:", ret);
             if (ret) {
                 ret.type = "inscribe";
@@ -40,9 +40,9 @@ class SearchStore {
             stmt = store.indexDB.prepare(
                 `SELECT * 
                 FROM ${TABLE_NAME.RESONANCE_RECORDS} 
-                WHERE txid = ? AND state = ?`
+                WHERE txid = ?`
             );
-            ret = stmt.get(txid, InscriptionOpState.OK);
+            ret = stmt.get(txid);
             logger.debug('queryByTxid:', txid, " find resonance records, ret:", ret);
             if (ret) {
                 ret.type = "resonance";
@@ -52,9 +52,9 @@ class SearchStore {
             stmt = store.indexDB.prepare(
                 `SELECT * 
                 FROM ${TABLE_NAME.CHANT_RECORDS} 
-                WHERE txid = ? AND state = ?`
+                WHERE txid = ?`
             );
-            ret = stmt.get(txid, InscriptionOpState.OK);
+            ret = stmt.get(txid);
             logger.debug('queryByTxid:', txid, " find chant records, ret:", ret);
             if (ret) {
                 ret.type = "chant";
@@ -64,9 +64,9 @@ class SearchStore {
             stmt = store.indexDB.prepare(
                 `SELECT * 
                 FROM ${TABLE_NAME.TRANSFER_RECORDS} 
-                WHERE txid = ? AND state = ?`
+                WHERE txid = ?`
             );
-            ret = stmt.get(txid, InscriptionOpState.OK);
+            ret = stmt.get(txid);
             logger.debug('queryByTxid:', txid, " find transfer records, ret:", ret);
             if (ret) {
                 ret.type = "transfer";
@@ -76,9 +76,9 @@ class SearchStore {
             stmt = store.indexDB.prepare(
                 `SELECT * 
                 FROM ${TABLE_NAME.SET_PRICE_RECORDS} 
-                WHERE txid = ? AND state = ?`
+                WHERE txid = ?`
             );
-            ret = stmt.get(txid, InscriptionOpState.OK);
+            ret = stmt.get(txid);
             logger.debug('queryByTxid:', txid, " find set price records, ret:", ret);
             if (ret) {
                 ret.type = "set_price";
