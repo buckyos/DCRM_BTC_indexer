@@ -199,29 +199,30 @@ class InscriptionIndex {
         }
 
         {
+            const begin = this.current_block_height;
             const { ret } = await this.sync_blocks(
-                this.current_block_height,
-                height + 1,
+                begin,
+                height,
             );
             if (ret !== 0) {
                 console.error(
-                    `failed to sync blocks [${this.current_block_height}, ${
-                        height + 1
-                    })`,
+                    `failed to sync blocks [${begin}, ${
+                        height
+                    }])`,
                 );
                 return { ret };
             }
         }
 
-        this.current_block_height = height + 1;
+        assert(this.current_block_height == height + 1, `invalid synced block height ${this.current_block_height} != ${height + 1}`);
         return { ret: 0 };
     }
 
-    // try sync block for range [begin, end)
+    // try sync block for range [begin, end]
     async sync_blocks(begin, end) {
-        console.assert(begin < end, `invalid block range [${begin}, ${end})`);
+        console.assert(begin <= end, `invalid block range [${begin}, ${end})`);
 
-        for (let i = begin; i < end; i++) {
+        for (let i = begin; i <= end; i++) {
             const { ret } = await this.sync_block(i);
             if (ret !== 0) {
                 console.error(`failed to sync block ${i}`);
@@ -237,6 +238,9 @@ class InscriptionIndex {
                     return { ret };
                 }
             }
+
+            // update current block height immediately after synced
+            this.current_block_height = i + 1;
         }
 
         return { ret: 0 };
