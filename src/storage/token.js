@@ -1737,7 +1737,7 @@ class TokenIndexStorage {
                     owner_bonus,
                     service_charge,
 
-                    state,
+                    state
                 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
                     inscription_id,
@@ -1758,7 +1758,7 @@ class TokenIndexStorage {
                     owner_bonus,
                     service_charge,
 
-                    state,
+                    state
                 ],
                 (err) => {
                     if (err) {

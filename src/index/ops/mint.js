@@ -192,7 +192,7 @@ class MintOperator {
             }
         }
 
-        // then add mint record
+        // at last add mint record for any state
         const { ret: mint_ret } = await this.storage.add_mint_record(
             inscription_item.inscription_id,
             inscription_item.block_height,

@@ -52,7 +52,7 @@ class ChantOperator {
             return { ret };
         }
 
-        // record chant op
+        // record chant op for any state
         const { ret: record_ret } = await this.storage.add_chant_record(
             inscription_item.inscription_id,
             inscription_item.block_height,

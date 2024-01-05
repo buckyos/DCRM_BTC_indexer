@@ -34,7 +34,7 @@ class SetPriceOperator {
             return { ret };
         }
 
-        // record set price op
+        // record set price op for any state
         const { ret: record_ret } = await this.storage.add_set_price_record(
             inscription_item.inscription_id,
             inscription_item.block_height,

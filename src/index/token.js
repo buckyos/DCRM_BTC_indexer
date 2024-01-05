@@ -65,7 +65,14 @@ class TokenIndex {
 }
 
 class TokenBlockIndex {
-    constructor(storage, config, hash_helper, block_height, block_collector, eth_index) {
+    constructor(
+        storage,
+        config,
+        hash_helper,
+        block_height,
+        block_collector,
+        eth_index,
+    ) {
         assert(
             storage instanceof TokenIndexStorage,
             `storage should be TokenIndexStorage`,
@@ -157,6 +164,10 @@ class TokenBlockIndex {
 
         // process new inscriptions
         for (const inscription_item of this.block_collector.new_inscriptions) {
+            console.log(
+                `will process new inscription ${inscription_item.inscription_id} ${inscription_item.op.op}`,
+            );
+
             if (inscription_item.op.op === InscriptionOp.Mint) {
                 const { ret } = await this.on_mint(inscription_item);
                 if (ret !== 0) {
@@ -227,6 +238,11 @@ class TokenBlockIndex {
         // process transfer inscriptions
         for (const inscription_transfer_item of this.block_collector
             .inscription_transfers) {
+
+            console.log(
+                `will process transfer inscription ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.op.op}`,
+            );
+
             if (inscription_transfer_item.op.op === InscriptionOp.Mint) {
                 console.warn(
                     `mint op should not be transferred ${inscription_transfer_item.inscription_id}`,
@@ -257,7 +273,8 @@ class TokenBlockIndex {
                     `chant op should not be transferred ${inscription_transfer_item.inscription_id}`,
                 );
             } else if (
-                inscription_transfer_item.op.op === InscriptionOp.Resonance
+                inscription_transfer_item.op.op ===
+                InscriptionOp.Resonance
             ) {
                 const { ret } = await this.on_transfer_resonance(
                     inscription_transfer_item,

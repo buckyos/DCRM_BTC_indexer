@@ -169,7 +169,7 @@ class TransferOperator {
             console.info(
                 `ignore transfer to self ${inscription_item.inscription_id} ${inscription_item.to_address}`,
             );
-            return { ret: 0, state: 0 };
+            return { ret: 0, state: InscriptionOpState.OK };
         }
 
         // 2. check if has enough balance

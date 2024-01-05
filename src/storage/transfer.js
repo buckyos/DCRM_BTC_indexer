@@ -177,9 +177,16 @@ class InscriptionTransferStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
-                        console.log(
-                            `inserted inscription transfer: ${inscription_id} ${block_height} ${timestamp} ${satpoint} ${from_address} -> ${to_address} ${value}`,
-                        );
+                        if (from_address == null) {
+                            console.log(
+                                `inserted inscription create: ${inscription_id} ${block_height} ${timestamp} ${satpoint} ${to_address} ${op}`,
+                            );
+                        } else {
+                            console.log(
+                                `inserted inscription transfer: ${inscription_id} ${block_height} ${timestamp} ${satpoint} ${from_address} -> ${to_address} ${op}`,
+                            );
+                        }
+                        
                         resolve({ ret: 0 });
                     }
                 },

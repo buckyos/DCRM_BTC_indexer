@@ -181,7 +181,6 @@ class InscribeDataOperator {
         // set to default value on start
         inscription_item.hash_point = 0;
         inscription_item.hash_weight = '0';
-        
 
         // first check if hash and amt field is exists
         const hash = inscription_item.content.ph;
@@ -254,11 +253,14 @@ class InscribeDataOperator {
 
         // 3. check weight with amt, amt must be greater than hash weight
         // calc hash weight
-        const { ret: calc_ret, weight: hash_weight, point: hash_point } =
-            await this.hash_helper.query_hash_weight(
-                inscription_item.timestamp,
-                hash,
-            );
+        const {
+            ret: calc_ret,
+            weight: hash_weight,
+            point: hash_point,
+        } = await this.hash_helper.query_hash_weight(
+            inscription_item.timestamp,
+            hash,
+        );
         if (calc_ret !== 0) {
             console.error(
                 `failed to calc hash weight ${inscription_item.inscription_id} ${hash}`,
@@ -376,23 +378,69 @@ class InscribeDataOperator {
 
     async process_pending_inscribe_ops() {
         for (const op of this.pending_inscribe_ops) {
+            let mint_amt = '0';
+            let service_charge = '0';
+
             if (
                 op.state === InscriptionOpState.OK ||
                 op.state === InscriptionOpState.COMPETITION_FAILED
             ) {
-                const { ret } = await this._inscribe(op);
+                const {
+                    ret,
+                    mint_amt: mint_amt1,
+                    service_charge: service_charge1,
+                } = await this._inscribe(op);
                 if (ret !== 0) {
                     console.error(
                         `failed to process pending inscribe data op ${op.inscription_item.inscription_id}`,
                     );
                     return { ret };
                 }
+
+                assert(_.isString(mint_amt1), `invalid mint_amt ${mint_amt1}`);
+                assert(
+                    _.isString(service_charge1),
+                    `invalid service_charge ${service_charge1}`,
+                );
+
+                mint_amt = mint_amt1;
+                service_charge = service_charge1;
+            }
+
+            // record inscribe data record for any state
+            const { ret: record_ret } =
+                await this.storage.add_inscribe_data_record(
+                    op.inscription_item.inscription_id,
+                    op.inscription_item.block_height,
+                    op.inscription_item.address,
+                    op.inscription_item.timestamp,
+                    op.inscription_item.txid,
+                    op.inscription_item.content.ph,
+                    JSON.stringify(op.inscription_item.content),
+                    mint_amt,
+                    service_charge,
+                    op.inscription_item.content.text,
+                    op.inscription_item.content.price,
+                    op.inscription_item.hash_point,
+                    op.inscription_item.hash_weight,
+                    op.state,
+                );
+            if (record_ret !== 0) {
+                console.error(
+                    `failed to record inscribe op ${op.inscription_item.inscription_id}`,
+                );
+                return { ret: record_ret };
             }
         }
 
         return { ret: 0 };
     }
 
+    /**
+     *
+     * @param {object} op
+     * @returns {Promise<{ret: number, mint_amt: string, service_charge: string}>}
+     */
     async _inscribe(op) {
         assert(
             op instanceof PendingInscribeOp,
@@ -467,31 +515,7 @@ class InscribeDataOperator {
             `new inscribe record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.content.price}`,
         );
 
-        // 4. record inscribe op
-        const { ret: record_ret } = await this.storage.add_inscribe_data_record(
-            op.inscription_item.inscription_id,
-            op.inscription_item.block_height,
-            op.inscription_item.address,
-            op.inscription_item.timestamp,
-            op.inscription_item.txid,
-            op.inscription_item.content.ph,
-            JSON.stringify(op.inscription_item.content),
-            mint_amt,
-            service_charge,
-            op.inscription_item.content.text,
-            op.inscription_item.content.price,
-            op.inscription_item.hash_point,
-            op.inscription_item.hash_weight,
-            op.state,
-        );
-        if (record_ret !== 0) {
-            console.error(
-                `failed to record inscribe op ${op.inscription_item.inscription_id}`,
-            );
-            return { ret: record_ret };
-        }
-
-        // 3. update inscribe_data table if ready
+        // 4. update inscribe_data table if ready
         if (op.state === InscriptionOpState.OK) {
             const { ret } = await this.storage.add_inscribe_data(
                 op.inscription_item.content.ph,
@@ -511,7 +535,7 @@ class InscribeDataOperator {
             }
         }
 
-        return { ret: 0 };
+        return { ret: 0, mint_amt, service_charge };
     }
 }
 
