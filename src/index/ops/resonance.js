@@ -11,7 +11,10 @@ class PendingResonanceOp {
         assert(_.isObject(content), `content should be string`);
 
         assert(_.isString(hash), `hash should be string`);
-        assert(_.isNumber(hash_distance), `hash_distance should be number`);
+        if (state === InscriptionOpState.OK) {
+            assert(_.isNumber(hash_distance), `hash_distance should be number`);
+        }
+        
         assert(_.isNumber(state), `state should be number`);
 
         this.inscription_item = inscription_item;
@@ -261,10 +264,10 @@ class ResonanceOperator {
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
-        // 5. check if output address is the hash's owner
-        if (inscription_item.owner_address !== data.owner) {
+        // 5. check if output address is the hash's address
+        if (inscription_item.owner_address !== data.address) {
             console.warn(
-                `output address ${inscription_item.owner_address} is not the hash ${hash} owner ${data.owner}, ${inscription_item.inscription_id}`,
+                `target address ${inscription_item.owner_address} is not the hash ${hash} owner ${data.address}, ${inscription_item.inscription_id}`,
             );
             return {
                 ret: 0,

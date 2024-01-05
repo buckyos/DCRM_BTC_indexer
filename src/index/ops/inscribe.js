@@ -112,9 +112,9 @@ class InscribeDataOperator {
             _.isNumber(data.block_height),
             `invalid inscribe data block_height ${inscription_transfer_item.inscription_id} ${hash}`,
         );
-        if (inscription_transfer_item.block_height <= data.block_height) {
+        if (inscription_transfer_item.block_height < data.block_height) {
             console.error(
-                `invalid inscribe data block_height ${inscription_transfer_item.inscription_id} ${hash} ${inscription_transfer_item.block_height} <= ${data.block_height}`,
+                `invalid inscribe data block_height ${inscription_transfer_item.inscription_id} ${hash} ${inscription_transfer_item.block_height} < ${data.block_height}`,
             );
             return { ret: 0 };
         }

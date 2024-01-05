@@ -2404,17 +2404,17 @@ class TokenIndexStorage {
                 (err) => {
                     if (err) {
                         console.error(
-                            `Could not update inscribe data owner ${hash}`,
+                            `Could not update inscribe data owner ${hash} ${current_block_height} ${new_owner} ${new_block_height} ${new_timestamp}`,
                             err,
                         );
                         resolve({ ret: -1 });
                     } else if (this.changes === 0) {
                         console.error(
-                            `Could not update inscribe data owner ${hash}, block_height is not match`,
+                            `Could not update inscribe data ${hash} owner to ${new_owner}, block_height is not match`,
                         );
                         resolve({ ret: 1 });
                     } else {
-                        console.log(`update inscribe data owner ${hash}`);
+                        console.log(`update inscribe data ${hash} owner to ${new_owner}`);
                         resolve({ ret: 0 });
                     }
                 },

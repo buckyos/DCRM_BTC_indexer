@@ -43,6 +43,7 @@ class SetPriceOperator {
             JSON.stringify(inscription_item.content),
             inscription_item.content.ph,
             inscription_item.address,
+            inscription_item.content.price,
             inscription_item.hash_point,
             inscription_item.hash_weight,
             state,
@@ -139,6 +140,7 @@ class SetPriceOperator {
             console.warn(
                 `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
             );
+            content.origin_price = price;
             price = max_price;
         }
 
