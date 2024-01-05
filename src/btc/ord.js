@@ -240,6 +240,14 @@ class OrdClient {
                 data: response.data,
             };
         } catch (error) {
+            if (error.response.status === 404) {
+                console.warn(`get content but not found ${inscription_id}`);
+                return {
+                    ret: 0,
+                    data: null,
+                };
+            }
+
             console.error(`failed to get content ${inscription_id} ${error}`);
             return {
                 ret: -1,

@@ -329,6 +329,10 @@ class InscriptionContentLoader {
                 return { ret };
             }
 
+            if (data == null) {
+                return { ret: 0, valid: false };
+            }
+
             data = _data;
         }
 
@@ -356,6 +360,10 @@ class InscriptionContentLoader {
         if (ret !== 0) {
             console.error(`failed to get content ${inscription_id}`);
             return { ret };
+        }
+
+        if (data == null) {
+            return { ret: 0, valid: false };
         }
 
         return { ret: 0, valid: true, data };
