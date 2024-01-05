@@ -12,6 +12,7 @@ const {
     TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
 } = require('../constants');
 const { InscriptionOpState } = require('../index/ops/state');
+const { InscriptionOp } = require('../index/item');
 
 // the ops that can update pool balance
 const UpdatePoolBalanceOp = {
@@ -19,6 +20,23 @@ const UpdatePoolBalanceOp = {
     LuckyMint: 'lucky_mint',
     Chant: 'chant',
     InscribeData: 'inscribe_data',
+};
+
+// the user ops
+const UserOp = {
+    Mint: 'mint',
+    Chant: 'chant',
+
+    InscribeData: 'inscribe_data',
+    TransferData: 'transfer_data',
+
+    InscribeResonance: 'inscribe_res',
+    Resonance: 'res',
+    
+    InscribeTransfer: 'inscribe_transfer',
+    Transfer: 'transfer',
+
+    SetPrice: 'set_price',
 };
 
 class TokenIndexStorage {
@@ -496,11 +514,12 @@ class TokenIndexStorage {
                 // Create user_ops table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS user_ops (
-                        address TEXT,
+                        address TEXT PRIMARY KEY,
                         inscription_id TEXT,
                         block_height INTEGER,
+                        timestamp INTEGER,
                         op TEXT,
-                        PRIMARY KEY (address, inscription_id)
+                        state INTEGER
                     );`,
                     (err) => {
                         if (err) {
@@ -673,6 +692,22 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            UserOp.Mint,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user mint op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
         return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO mint_records (
@@ -787,6 +822,22 @@ class TokenIndexStorage {
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            UserOp.InscribeData,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user inscribe data op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
 
         return new Promise((resolve) => {
             this.db.run(
@@ -929,6 +980,22 @@ class TokenIndexStorage {
             `state should be non-negative integer ${state}`,
         );
 
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            InscriptionOp.Chant,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user chant op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
         return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO chant_records (
@@ -1040,6 +1107,22 @@ class TokenIndexStorage {
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            UserOp.InscribeTransfer,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user inscribe transfer op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
 
         return new Promise((resolve) => {
             this.db.run(
@@ -1157,6 +1240,22 @@ class TokenIndexStorage {
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            from_address,
+            inscription_id,
+            block_height,
+            timestamp,
+            UserOp.Transfer,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user transfer op ${inscription_id} ${from_address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
 
         return new Promise((resolve) => {
             this.db.run(
@@ -1296,6 +1395,22 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            UserOp.SetPrice,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user set price op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
         return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO set_price_records (
@@ -1377,6 +1492,22 @@ class TokenIndexStorage {
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            UserOp.InscribeResonance,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user inscribe res op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
 
         return new Promise((resolve) => {
             this.db.run(
@@ -1522,6 +1653,22 @@ class TokenIndexStorage {
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
         );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            UserOp.Resonance,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user resonance op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
 
         return new Promise((resolve) => {
             this.db.run(
@@ -2267,7 +2414,17 @@ class TokenIndexStorage {
         });
     }
 
-    async append_user_op(address, inscription_id, block_height, op) {
+    /**
+     * 
+     * @param {string} address 
+     * @param {string} inscription_id 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {string} op 
+     * @param {number} state 
+     * @returns {ret: number}
+     */
+    async add_user_op(address, inscription_id, block_height, timestamp, op, state) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
         assert(
@@ -2278,21 +2435,26 @@ class TokenIndexStorage {
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof op === 'string', `op should be string`);
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
 
         const sql = `
-            INSERT OR REPLACE INTO user_ops (address, inscription_id, block_height, op)
-            VALUES (?, ?, ?, ?)
+            INSERT OR REPLACE INTO user_ops (address, inscription_id, block_height, timestamp, op, state)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
 
         return new Promise((resolve) => {
             this.db.run(
                 sql,
-                [address, inscription_id, block_height, op],
+                [address, inscription_id, block_height, timestamp, op, state],
                 function (err) {
                     if (err) {
                         console.error(
-                            `Could not append user op ${address} ${inscription_id} ${block_height} ${op}`,
+                            `Could not append user op ${address} ${inscription_id} ${block_height} ${op} ${state}`,
                             err,
                         );
                         resolve({ ret: -1 });
@@ -2308,4 +2470,4 @@ class TokenIndexStorage {
     }
 }
 
-module.exports = { UpdatePoolBalanceOp, TokenIndexStorage };
+module.exports = { UpdatePoolBalanceOp, TokenIndexStorage, UserOp };

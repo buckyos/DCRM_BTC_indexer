@@ -3,6 +3,7 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
+    UserOp,
 } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -140,6 +141,22 @@ class InscribeDataOperator {
                 );
                 return { ret: update_owner_ret };
             }
+        }
+
+        // record user ops
+        const { ret: record_user_ops_ret } = await this.storage.add_user_op(
+            inscription_transfer_item.from_address,
+            inscription_transfer_item.inscription_id,
+            inscription_transfer_item.block_height,
+            inscription_transfer_item.timestamp,
+            UserOp.TransferData,
+            0,
+        );
+        if (record_user_ops_ret !== 0) {
+            console.error(
+                `failed to record user transfer data op ${inscription_transfer_item.inscription_id} ${hash}`,
+            );
+            return { ret: record_user_ops_ret };
         }
 
         console.log(
