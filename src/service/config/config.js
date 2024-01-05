@@ -18,7 +18,7 @@ class Config {
         console.log(JSON.stringify(this.m_config));
     }
 
-    get btc() {
+    get btcConfig() {
         if (!this.m_config) {
             throw new Error(`config not loaded`);
         }

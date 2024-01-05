@@ -18,7 +18,8 @@ const { hideBin } = require('yargs/helpers');
 
 
 class Service {
-    constructor() {
+    constructor(conf) {
+        this.m_config = conf;
         this.m_router = new Router();
     }
 
@@ -33,7 +34,7 @@ class Service {
         const mintService = new MintService();
         mintService.registerRouter(this.m_router);
 
-        const chainService = new ChainService();
+        const chainService = new ChainService(this.m_config);
         chainService.registerRouter(this.m_router);
 
         const searchService = new SearchService();
@@ -83,7 +84,7 @@ function main() {
     config.init(configPath);
     store.init(config);
 
-    const service = new Service();
+    const service = new Service(config);
     service.start();
 }
 

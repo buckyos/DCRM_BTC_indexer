@@ -1,15 +1,16 @@
 const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
 const { BTCClient } = require('../../btc/btc');
-const config = require('../config/config');
 
 class ChainService {
-    constructor() {
+    constructor(config) {
+        this.m_config = config;
         this.m_btcClient = null;
     }
 
     _init() {
         if (!this.m_btcClient) {
-            const { host, network, auth } = config.btc;
+            const { host, network, auth } = this.m_config.btcConfig;
+
             this.m_btcClient = new BTCClient(
                 host,
                 network,
