@@ -2,7 +2,7 @@ const assert = require('assert');
 const { Web3 } = require('web3');
 const { ETHIndexStorage } = require('../storage/eth');
 const { Util } = require('../util');
-const {StateStorage} = require('../storage/state');
+const { StateStorage } = require('../storage/state');
 
 class ETHIndex {
     constructor(config) {
@@ -17,6 +17,9 @@ class ETHIndex {
 
         this.current_block_height = 0;
         this.eth_blocks_process_step = 64;
+
+        this.contract = undefined;
+        this.lucky_mint_contract = undefined;
     }
 
     /**
@@ -70,6 +73,11 @@ class ETHIndex {
                 this.config.eth.contract_address,
             );
 
+            this.lucky_mint_contract = new this.web3.eth.Contract(
+                this.config.eth.lucky_mint_contract_abi,
+                this.config.eth.lucky_mint_contract_address,
+            );
+
             console.info(`init web3 success`);
             return { ret: 0 };
         } catch (error) {
@@ -97,7 +105,6 @@ class ETHIndex {
         // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.current_block_height === 0) {
- 
                 // get latest block height already synced
                 let { ret, height } =
                     await this.state_storage.get_eth_latest_block_height();
@@ -218,7 +225,7 @@ class ETHIndex {
         }
 
         console.log(`insert eth blocks [${begin}, ${end}] success`);
-        
+
         // read all point change events
         let events;
         try {
@@ -244,17 +251,22 @@ class ETHIndex {
             // check params
             if (!_.isString(hash) || typeof point !== 'bigint') {
                 // should not happen?
-                console.error(`invalid eth event params ${block_height} ${hash} ${point}`);
-                return {ret: -1};
+                console.error(
+                    `invalid eth event params ${block_height} ${hash} ${point}`,
+                );
+                return { ret: -1 };
             }
 
-            const {ret: convert_ret, hash_str} = Util.hex_to_base58(hash);
+            const { ret: convert_ret, hash_str } = Util.hex_to_base58(hash);
             if (convert_ret !== 0) {
                 console.error(`failed to convert hash ${hash} to base58`);
                 return { ret: convert_ret };
             }
 
-            assert(_.isString(hash_str), `hash should be string after convert to base58 ${hash_str}`);
+            assert(
+                _.isString(hash_str),
+                `hash should be string after convert to base58 ${hash_str}`,
+            );
 
             point = Number(point);
 
@@ -273,11 +285,13 @@ class ETHIndex {
 
         // update latest block height
         {
-            const { ret } = await this.state_storage.update_eth_latest_block_height(begin, end);
-            if (ret !== 0) {
-                console.error(
-                    `failed to update latest block height ${end}`,
+            const { ret } =
+                await this.state_storage.update_eth_latest_block_height(
+                    begin,
+                    end,
                 );
+            if (ret !== 0) {
+                console.error(`failed to update latest block height ${end}`);
                 return { ret };
             }
         }
@@ -292,7 +306,6 @@ class ETHIndex {
      * @returns {ret: number, point: number}
      */
     async query_hash_point(timestamp, hash) {
-        
         // find target block height for timestamp
         // if now found, we should wait for the block and retry
         let target_block_height;
@@ -307,13 +320,17 @@ class ETHIndex {
             }
 
             if (block_height == null) {
-                console.warn(`no block found for timestamp ${timestamp}, now wait and retry...`);
+                console.warn(
+                    `no block found for timestamp ${timestamp}, now wait and retry...`,
+                );
                 await Util.sleep(1000 * 5);
                 continue;
             }
 
             target_block_height = block_height;
-            console.info(`found eth block with timestamp ${timestamp}: ${target_block_height}`);
+            console.info(
+                `found eth block with timestamp ${timestamp}: ${target_block_height}`,
+            );
             break;
         }
 
@@ -335,6 +352,33 @@ class ETHIndex {
 
         console.log(`query point ${hash} success ${point}`);
         return { ret: 0, point };
+    }
+
+    /**
+     * 
+     * @param {string} address 
+     * @param {string} lucky 
+     * @returns 
+     */
+    async query_lucky_mint(address, lucky) {
+        assert(_.isString(address), `invalid address ${address}`);
+        assert(_.isString(lucky), `invalid lucky ${lucky}`);
+
+        return new Promise((resolve) => {
+            this.lucky_mint_contract.methods
+                .getBurnedMintCount(address, lucky)
+                .call()
+                .then((result) => {
+                    console.log(result);
+                    resolve({ ret: 0, amount: result });
+                })
+                .catch((error) => {
+                    console.error(
+                        `failed to query lucky mint ${address} ${lucky} ${error}`,
+                    );
+                    resolve({ ret: -1 });
+                });
+        });
     }
 }
 

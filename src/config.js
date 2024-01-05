@@ -27,6 +27,15 @@ class Config {
         assert(fs.existsSync(abi_file));
         this.config.eth.contract_abi = require(abi_file);
 
+
+        const lucky_mint_abi_file = path.join(
+            path.dirname(config_file),
+            this.config.eth.lucky_mint_contract_abi,
+        );
+        assert(fs.existsSync(lucky_mint_abi_file));
+        this.config.eth.lucky_mint_contract_abi = require(lucky_mint_abi_file);
+
+
         // check the difficulty and give warning if changed
         if (this.config.token.difficulty.inscribe_data_hash_threshold != null) {
             if (

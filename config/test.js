@@ -25,6 +25,9 @@ const INDEX_CONFIG = {
         genesis_block_height: 1,
         contract_address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
         contract_abi: 'contract.json',
+
+        lucky_mint_contract_address: '0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf',
+        lucky_mint_contract_abi: 'lucky_mint_contract.json',
     },
 
     ord: {

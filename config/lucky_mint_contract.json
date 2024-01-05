@@ -1,0 +1,50 @@
+[
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "btcaddr",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "cookie",
+          "type": "string"
+        }
+      ],
+      "name": "getBurnedMintCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "btcaddr",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "cookie",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "setBurnedMintCount",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+  

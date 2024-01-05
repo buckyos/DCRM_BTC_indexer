@@ -151,6 +151,7 @@ class TokenIndexStorage {
                 this.db.exec(
                     `CREATE INDEX IF NOT EXISTS idx_mint_records_txid ON mint_records (txid);
                      CREATE INDEX IF NOT EXISTS idx_mint_records_address ON mint_records (address);
+                     CREATE INDEX IF NOT EXISTS idx_mint_records_address_lucky ON mint_records (address, lucky);
                      `,
                     (err) => {
                         if (err) {
@@ -746,6 +747,38 @@ class TokenIndexStorage {
                     }
                 },
             );
+        });
+    }
+
+    /**
+     * 
+     * @param {string} address 
+     * @param {string} lucky 
+     * @returns {ret: number, data: object}
+     */
+    async query_lucky_mint(address, lucky) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof address === 'string', `address should be string`);
+        assert(typeof lucky === 'string', `lucky should be string`);
+
+        const sql = `
+            SELECT * 
+            FROM mint_records 
+            WHERE address = ? AND lucky = ?
+            LIMIT 1
+        `;
+
+        return new Promise((resolve) => {
+            this.db.get(sql, [address, lucky], (err, row) => {
+                if (err) {
+                    console.error(
+                        `Could not query lucky mint ${address} ${lucky} ${err}`,
+                    );
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, data: row });
+                }
+            });
         });
     }
 
@@ -1531,7 +1564,7 @@ class TokenIndexStorage {
                     owner_bonus,
                     service_charge,
 
-                    state,
+                    state
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
@@ -1552,7 +1585,7 @@ class TokenIndexStorage {
                     0,
                     0,
 
-                    state,
+                    state
                 ],
                 (err) => {
                     if (err) {
