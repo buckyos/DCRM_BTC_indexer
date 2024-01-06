@@ -5,7 +5,7 @@ const {
     UpdatePoolBalanceOp,
 } = require('../../storage/token');
 const constants = require('../../constants');
-const { InscriptionNewItem } = require('../item');
+const { InscriptionNewItem } = require('../../index/item');
 const { InscriptionOpState, MintType } = require('./state');
 const {
     DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,

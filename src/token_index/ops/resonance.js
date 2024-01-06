@@ -3,7 +3,7 @@ const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState, InscriptionStage } = require('./state');
-const { InscriptionTransferItem, InscriptionNewItem } = require('../item');
+const { InscriptionTransferItem, InscriptionNewItem } = require('../../index/item');
 
 class PendingResonanceOp {
     constructor(inscription_item, content, hash, hash_distance, state) {

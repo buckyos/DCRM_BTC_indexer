@@ -2,7 +2,6 @@ const assert = require('assert');
 const { BTCClient } = require('../btc/btc');
 const { OrdClient } = require('../btc/ord');
 const { Util } = require('../util');
-const { TokenIndex } = require('./token');
 const { ETHIndex } = require('../eth/index');
 const { InscriptionTransferMonitor } = require('./monitor');
 const { InscriptionsManager } = require('../storage/manager');
@@ -38,7 +37,6 @@ class InscriptionIndex {
         );
 
         this.current_block_height = 0;
-        this.token_index = new TokenIndex(config);
     }
 
     /**
@@ -62,15 +60,6 @@ class InscriptionIndex {
         if (init_inscription_manager_ret !== 0) {
             console.error(`failed to init inscription manager`);
             return { ret: init_inscription_manager_ret };
-        }
-
-        // then init token index
-        const { ret: init_token_index_ret } = await this.token_index.init(
-            eth_index,
-        );
-        if (init_token_index_ret !== 0) {
-            console.error(`failed to init token index`);
-            return { ret: init_token_index_ret };
         }
 
         // then init monitor
@@ -694,13 +683,13 @@ class InscriptionIndex {
             await this.inscription_storage.add_new_inscription(
                 inscription_new_item.inscription_id,
                 inscription_new_item.inscription_number,
-                
+
                 inscription_new_item.block_height,
                 inscription_new_item.timestamp,
                 inscription_new_item.satpoint.to_string(),
                 inscription_new_item.commit_txid,
                 inscription_new_item.value,
-                
+
                 JSON.stringify(inscription_new_item.content),
                 inscription_new_item.op.op,
 
@@ -746,13 +735,10 @@ class InscriptionIndex {
      */
     async _on_block_inscriptions_and_transfers(block_height, collector) {
         console.info(
-            `indexing inscriptions and transfers at block ${block_height} inscriptions count ${collector.new_inscriptions.length}, transfers count ${collector.inscription_transfers.length}`,
+            `found inscriptions and transfers at block ${block_height} inscriptions count ${collector.new_inscriptions.length}, transfers count ${collector.inscription_transfers.length}`,
         );
 
-        return await this.token_index.process_block_inscriptions(
-            block_height,
-            collector,
-        );
+        return { ret: 0 };
     }
 }
 

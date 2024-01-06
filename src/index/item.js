@@ -574,6 +574,14 @@ class InscriptionNewItem {
         op,
         commit_txid, // the txid in the inscription commit transaction (two phase commit and reveal)
     ) {
+        assert(_.isString(inscription_id), `inscription_id should be string`);
+        assert(
+            _.isNumber(inscription_number),
+            `inscription_number should be number`,
+        );
+        assert(_.isNumber(block_height), `block_height should be number`);
+        assert(_.isNumber(timestamp), `timestamp should be number`);
+
         assert(_.isObject(content), `content should be object`);
         assert(_.isObject(op), `op should be object`);
         assert(satpoint instanceof SatPoint, `satpoint should be SatPoint`);
@@ -636,7 +644,7 @@ class InscriptionTransferItem {
         );
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(_.isNumber(timestamp), `timestamp should be number`);
-        assert(satpoint instanceof SatPoint, `satpoint should be SatPoint`);
+        assert(satpoint instanceof SatPoint, `satpoint should be SatPoint ${satpoint}`);
         assert(
             from_address == null || _.isString(from_address),
             `from_address should be string or null`,
@@ -700,6 +708,12 @@ class BlockInscriptionCollector {
         );
 
         this.new_inscriptions.push(new_inscription);
+    }
+
+    add_new_inscriptions(new_inscriptions) {
+        assert(_.isArray(new_inscriptions), `invalid new_inscriptions`);
+
+        this.new_inscriptions.push(...new_inscriptions);
     }
 
     add_inscription_transfer(inscription_transfer) {

@@ -3,8 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
-const { ETHIndex } = require('./eth/index');
-const { InscriptionIndex } = require('./index/inscription');
+const { InscriptionIndexExecutor } = require('./index/index');
+const { TokenIndexExecutor } = require('./token_index/index');
 const { Config } = require('./config');
 const { LogHelper } = require('./log/log');
 
@@ -12,7 +12,7 @@ global._ = require('underscore');
 
 async function main() {
     // first parse args
-    
+
     const argv = yargs(hideBin(process.argv))
         .option('config', {
             alias: 'c',
@@ -20,6 +20,12 @@ async function main() {
             description: 'Select the configuration of bitcoin ethereum network',
             choices: ['formal', 'test'],
             default: 'formal',
+        })
+        .option('mode', {
+            type: 'string',
+            demandOption: true,
+            describe: 'Mode of operation',
+            choices: ['sync', 'index', 'both'],
         })
         .help().argv;
     const config_name = argv.config;
@@ -36,29 +42,27 @@ async function main() {
     log.enable_console_target(true);
     log.set_level('info');
 
-    const eth_index = new ETHIndex(config.config);
-    const inscription_index = new InscriptionIndex(config.config);
-
-    // then init eth index
-    const { ret: init_eth_index_ret } = await eth_index.init();
-    if (init_eth_index_ret !== 0) {
-        console.error(`failed to init eth index`);
-        return { ret: init_eth_index_ret };
+    
+    if (argv.mode === 'sync' || argv.mode === 'both') {
+        const executor = new InscriptionIndexExecutor(config.config);
+        const { ret } = await executor.init();
+        if (ret !== 0) {
+            console.error(`failed to init inscription index executor`);
+            return { ret };
+        }
+        await executor.run();
+    } else if (argv.mode === 'index' || argv.mode === 'both') {
+        const executor = new TokenIndexExecutor(config.config);
+        const { ret } = await executor.init();
+        if (ret !== 0) {
+            console.error(`failed to init token index executor`);
+            return { ret };
+        }
+        await executor.run();
+    } else {
+        console.error(`unknown mode: ${argv.mode}`);
+        return { ret: -1 };
     }
-
-    // then init inscription index
-    const { ret: init_inscription_index_ret } = await inscription_index.init(
-        eth_index,
-    );
-    if (init_inscription_index_ret !== 0) {
-        console.error(`failed to init inscription index`);
-        return { ret: init_inscription_index_ret };
-    }
-
-    // run both eth index and inscription index forever
-    const eth_index_promise = eth_index.run();
-    const inscription_index_promise = inscription_index.run();
-    await Promise.all([eth_index_promise, inscription_index_promise]);
 }
 
 main()

@@ -3,7 +3,7 @@ const { BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
-const { InscriptionNewItem } = require('../item');
+const { InscriptionNewItem } = require('../../index/item');
 
 class SetPriceOperator {
     constructor(storage, hash_helper) {

@@ -46,6 +46,8 @@ class InscriptionTransferStorage {
 
         return new Promise((resolve) => {
             this.db.serialize(() => {
+                let has_error = false;
+
                 // Create inscription_transfers table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS inscription_transfers (
@@ -67,14 +69,33 @@ class InscriptionTransferStorage {
                                 `failed to create inscription_transfers table: ${err}`,
                             );
                             
+                            has_error = true;
                             resolve({ ret: -1 });
                             return;
                         }
-                        console.log(`created eth inscription_transfers table`);
+                        console.log(`created inscription_transfers table`);
+                    },
+                );
 
+                if (has_error) {
+                    return;     
+                }
+                // create index on block_height
+                this.db.run(
+                    `CREATE INDEX IF NOT EXISTS idx_inscription_transfers_block_height ON inscription_transfers (block_height);`,
+                    (err) => {
+                        if (err) {
+                            console.error(`failed to create index on inscription_transfers table: ${err}`);
+
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created index on inscription_transfers table`);
                         resolve({ ret: 0 });
                     },
                 );
+
             });
         });
     }
@@ -316,6 +337,38 @@ class InscriptionTransferStorage {
                     resolve({ ret: -1 });
                 } else {
                     resolve({ ret: 0, data: rows });
+                }
+            });
+        });
+    }
+    
+
+    /**
+     * 
+     * @param {number} block_height 
+     * @returns {Promise<{ret: number, transfers: Array<object>}>}
+     */
+    async get_inscription_transfer_by_block(block_height) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof block_height === 'number',
+            `block_height should be number: ${block_height}`,
+        );
+
+        return new Promise((resolve) => {
+            const sql = `
+                SELECT * FROM inscription_transfers
+                WHERE block_height = ? AND idx > 0
+            `;
+
+            this.db.all(sql, [block_height], (err, rows) => {
+                if (err) {
+                    console.error(
+                        `failed to get inscription transfers by block: ${block_height} ${err}`,
+                    );
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, transfers: rows });
                 }
             });
         });

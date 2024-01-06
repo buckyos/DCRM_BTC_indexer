@@ -1,6 +1,6 @@
 const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
-const { InscriptionOpState, InscriptionStage } = require('../../index/ops/state');
+const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
 
 class SearchStore {
     constructor() {

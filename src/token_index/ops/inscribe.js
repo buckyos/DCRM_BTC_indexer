@@ -3,11 +3,10 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
-    UserOp,
 } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
-const { InscriptionNewItem, InscriptionTransferItem } = require('../item');
+const { InscriptionNewItem, InscriptionTransferItem } = require('../../index/item');
 const { DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD } = require('../../constants');
 
 class PendingInscribeOp {
@@ -60,7 +59,7 @@ class InscribeDataOperator {
 
         assert(
             inscription_transfer_item.index > 0,
-            `invalid transfer index ${inscription_transfer_item.inscription_id}`,
+            `invalid transfer index ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.index}`,
         );
 
         // first query the inscribe record

@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
-const { InscriptionStage } = require('../index/ops/state');
+const { InscriptionStage, InscriptionOpState } = require('../token_index/ops/state');
 const { BigNumberUtil } = require('../util');
 const {
     TOKEN_INDEX_DB_FILE,
@@ -12,7 +12,6 @@ const {
     TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
 } = require('../constants');
-const { InscriptionOpState } = require('../index/ops/state');
 const { InscriptionOp } = require('../index/item');
 
 // the ops that can update pool balance

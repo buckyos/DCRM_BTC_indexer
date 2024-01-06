@@ -2,7 +2,7 @@ const { BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const assert = require('assert');
 const { InscriptionOpState, InscriptionStage } = require('./state');
-const { InscriptionTransferItem, InscriptionNewItem } = require('../item');
+const { InscriptionTransferItem, InscriptionNewItem } = require('../../index/item');
 
 class TransferOperator {
     constructor(storage) {

@@ -6,7 +6,7 @@ const {
 } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
-const { InscriptionNewItem } = require('../item');
+const { InscriptionNewItem } = require('../../index/item');
 const { TOKEN_MINT_POOL_VIRTUAL_ADDRESS, DIFFICULTY_CHANT_BLOCK_THRESHOLD } = require('../../constants');
 
 class ChantOperator {

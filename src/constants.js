@@ -1,5 +1,6 @@
 // sqlite db file name
 const STATE_DB_FILE = 'state.db';
+const TOKEN_STATE_DB_FILE = 'token_state.db';
 const TOKEN_INDEX_DB_FILE = 'index.db';
 const ETH_INDEX_DB_FILE = 'eth_index.db';
 const INSCRIPTION_DB_FILE = 'inscriptions.db';
@@ -45,6 +46,7 @@ const DIFFICULTY_CHANT_BLOCK_THRESHOLD = 64;
 
 module.exports = {
     STATE_DB_FILE,
+    TOKEN_STATE_DB_FILE,
     TOKEN_INDEX_DB_FILE,
     ETH_INDEX_DB_FILE,
     INSCRIPTION_DB_FILE,

@@ -289,7 +289,7 @@ class InscriptionsStorage {
     /**
      * 
      * @param {number} block_height 
-     * @returns {Promise<{ret: number, data: Array<object[]>}>}
+     * @returns {Promise<{ret: number, inscriptions: Array<object[]>}>}
      */
     async get_inscriptions_by_block(block_height) {
         assert(this.db != null, `db should not be null`);
@@ -307,7 +307,34 @@ class InscriptionsStorage {
                     );
                     resolve({ ret: -1 });
                 } else {
-                    resolve({ ret: 0, data: rows });
+                    resolve({ ret: 0, inscriptions: rows });
+                }
+            });
+        });
+    }
+
+    /**
+     * 
+     * @param {string} inscription_id 
+     * @returns {Promise<{ret: number, content: string}>}
+     */
+    async get_inscription_content(inscription_id) {
+        assert(this.db != null, `db should not be null`);
+        assert(_.isString(inscription_id), `inscription_id should be string`);
+
+        return new Promise((resolve) => {
+            const sql = `
+                SELECT content FROM inscriptions WHERE inscription_id = ?
+            `;
+            this.db.get(sql, [inscription_id], (err, row) => {
+                if (err) {
+                    console.error(
+                        `failed to get inscription content ${inscription_id}`,
+                        err,
+                    );
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, content: row.content });
                 }
             });
         });

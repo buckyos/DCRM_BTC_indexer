@@ -9,7 +9,7 @@ const { TransferOperator } = require('./ops/transfer');
 const { ChantOperator } = require('./ops/chant');
 const { ResonanceOperator } = require('./ops/resonance');
 const { SetPriceOperator } = require('./ops/set_price');
-const { BlockInscriptionCollector, InscriptionOp } = require('./item');
+const { BlockInscriptionCollector, InscriptionOp } = require('../index/item');
 
 class TokenIndex {
     constructor(config) {
