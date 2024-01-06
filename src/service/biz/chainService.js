@@ -37,13 +37,36 @@ class ChainService {
         }
     }
 
+    async _getTx(ctx) {
+        try {
+            this._init();
+            const { txid } = ctx.params;
+            const { ret, tx } = await this.m_btcClient.get_transaction(txid);
+            if (ret !== 0) {
+                logger.warn('get btc tx failed. ret:', ret);
+                return makeReponse(ERR_CODE.UNKNOWN_ERROR);
+            }
+
+            return makeSuccessReponse(tx);
+
+        } catch (error) {
+            logger.error('get btc tx failed:', error);
+
+            return makeReponse(ERR_CODE.UNKNOWN_ERROR, error.message);
+        }
+    }
+
     registerRouter(router) {
-        router.get("/block_height/btc", async (ctx) => {
+        router.get("/btc/block_height", async (ctx) => {
             ctx.response.body = await this._getLastBtcBlockHeight();
         });
 
         router.get("/block_height/eth", async (ctx) => {
             ctx.response.body = makeReponse(ERR_CODE.NOT_IMPLEMENTED);
+        });
+
+        router.get("/btc/tx/:txid", async (ctx) => {
+            ctx.response.body = await this._getTx(ctx);
         });
     }
 }
