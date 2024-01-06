@@ -128,13 +128,12 @@ class MultiMap {
      * @param {string} key
      * @returns {Array<object>}
      */
-    get_and_remove_array(key) {
+    get_array(key) {
         const value = this.map.get(key);
         if (value == null) {
             return null;
         }
 
-        this.map.delete(key);
         if (Array.isArray(value)) {
             return value;
         } else {
@@ -152,12 +151,21 @@ class MultiMap {
     }
 
     /**
+     * 
+     * @param {string} key 
+     * @returns {boolean}
+     */
+    delete(key) {
+        return this.map.delete(key);
+    }
+
+    /**
      *
      * @param {string} key
      * @param {object} value
      * @returns {boolean}
      */
-    delete(key, value) {
+    delete_with_value(key, value) {
         const stored_value = this.map.get(key);
         if (stored_value == null) {
             return false;
@@ -267,6 +275,19 @@ class InscriptionTransferMonitor {
         return { ret: 0 };
     }
 
+    remove_inscriptions_on_block_complete(inscription_transfer_items) {
+        assert(Array.isArray(inscription_transfer_items), `invalid items`);
+
+        for (let i = 0; i < inscription_transfer_items.length; ++i) {
+            const item = inscription_transfer_items[i];
+            const outpoint_str = item.satpoint.outpoint.to_string();
+
+            const ret = this.inscriptions.delete(outpoint_str);
+            assert(ret, `failed to remove inscription from transfer monitor ${item.inscription_id} ${outpoint_str}`);
+
+            console.log(`remove inscription from transfer monitor ${item.inscription_id} ${outpoint_str}`);
+        }
+    }
     /**
      * add new inscription on inscription index scanner, then we can monitor it
      * it's the first step to monitor a new inscription, and it's the first transfer record
@@ -419,7 +440,7 @@ class InscriptionTransferMonitor {
 
                 // check if current outpoint is included in this tx's input, if exists, 
                 // then it's a transfer, we should update the transfer record and remove it from monitor list
-                const inscriptions = this.inscriptions.get_and_remove_array(outpoint_str);
+                const inscriptions = this.inscriptions.get_array(outpoint_str);
                 if (inscriptions == null) {
                     continue;
                 }

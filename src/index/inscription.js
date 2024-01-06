@@ -200,21 +200,19 @@ class InscriptionIndex {
 
         {
             const begin = this.current_block_height;
-            const { ret } = await this.sync_blocks(
-                begin,
-                height,
-            );
+            const { ret } = await this.sync_blocks(begin, height);
             if (ret !== 0) {
-                console.error(
-                    `failed to sync blocks [${begin}, ${
-                        height
-                    }])`,
-                );
+                console.error(`failed to sync blocks [${begin}, ${height}])`);
                 return { ret };
             }
         }
 
-        assert(this.current_block_height == height + 1, `invalid synced block height ${this.current_block_height} != ${height + 1}`);
+        assert(
+            this.current_block_height == height + 1,
+            `invalid synced block height ${this.current_block_height} != ${
+                height + 1
+            }`,
+        );
         return { ret: 0 };
     }
 
@@ -282,6 +280,9 @@ class InscriptionIndex {
             return { ret: 0 };
         }
 
+        const inscriptions_transfer_count =
+            collector.inscription_transfers.length;
+
         // process all inscriptions and transfers in block degree
         const { ret } = await this._on_block_inscriptions_and_transfers(
             block_height,
@@ -294,7 +295,21 @@ class InscriptionIndex {
             return { ret };
         }
 
-        console.info(`synced block with inscriptions: ${collector.new_inscriptions.length}, transfers: ${collector.inscription_transfers.length } ${block_height}`);
+        // only remove inscriptions from transfer monitor on block complete
+        if (inscriptions_transfer_count > 0) {
+            assert(
+                inscriptions_transfer_count ===
+                    collector.inscription_transfers.length,
+                `invalid inscriptions transfer count ${inscriptions_transfer_count} !== ${collector.inscription_transfers.length}`,
+            );
+            this.monitor.remove_inscriptions_on_block_complete(
+                collector.inscription_transfers,
+            );
+        }
+
+        console.info(
+            `synced block with inscriptions: ${collector.new_inscriptions.length}, transfers: ${collector.inscription_transfers.length} ${block_height}`,
+        );
 
         return { ret: 0 };
     }
@@ -513,14 +528,14 @@ class InscriptionIndex {
         );
 
         // load inscriptions content in batch
-        const {ret: load_content, results} = await this._load_inscriptions_content(inscriptions);
+        const { ret: load_content, results } =
+            await this._load_inscriptions_content(inscriptions);
         if (load_content !== 0) {
             console.error(`failed to load inscriptions content`);
             return { ret: load_content };
         }
 
         for (let i = 0; i < results.length; i++) {
-  
             const {
                 ret: load_ret,
                 valid,
@@ -589,12 +604,11 @@ class InscriptionIndex {
     }
 
     /**
-     * 
-     * @param {Array<object} inscriptions 
+     *
+     * @param {Array<object} inscriptions
      * @returns {Promise<{ret: number, results: Array<object>}>}
      */
     async _load_inscriptions_content(inscriptions) {
-
         // process in batch size 64
         const batch_size = 64;
         const content = [];
@@ -648,7 +662,9 @@ class InscriptionIndex {
 
             return { ret: 0, results };
         } catch (error) {
-            console.error(`failed to load inscription content in batch ${error}`);
+            console.error(
+                `failed to load inscription content in batch ${error}`,
+            );
             return { ret: -1 };
         }
     }
