@@ -694,10 +694,17 @@ class InscriptionIndex {
             await this.inscription_storage.add_new_inscription(
                 inscription_new_item.inscription_id,
                 inscription_new_item.inscription_number,
+                
+                inscription_new_item.block_height,
+                inscription_new_item.timestamp,
+                inscription_new_item.satpoint.to_string(),
+                inscription_new_item.commit_txid,
+                inscription_new_item.value,
+                
                 JSON.stringify(inscription_new_item.content),
                 inscription_new_item.op.op,
+
                 inscription_new_item.address,
-                block_height,
             );
         if (add_new_inscription_ret !== 0) {
             console.error(

@@ -53,11 +53,18 @@ class InscriptionsStorage {
                     inscription_id TEXT PRIMARY KEY,
                     inscription_number INTEGER,
                     
+                    genesis_block_height INTEGER,
+                    genesis_timestamp INTEGER,
+                    genesis_satpoint TEXT,
+                    commit_txid TEXT,
+                    value INTEGER,
+
                     content TEXT,
                     op TEXT,
 
                     creator TEXT,
                     owner TEXT,
+
                     last_block_height INTEGER,  /* last block height that this inscription transferred to new owner */
 
                     transfer_count INTEGER
@@ -81,7 +88,7 @@ class InscriptionsStorage {
 
                 // Create index on inscriptions table
                 this.db.run(
-                    `CREATE INDEX IF NOT EXISTS idx_inscription ON inscriptions (inscription_id)`,
+                    `CREATE INDEX IF NOT EXISTS idx_block_height ON inscriptions (genesis_block_height)`,
                     (err) => {
                         if (err) {
                             console.error(
@@ -104,6 +111,10 @@ class InscriptionsStorage {
      *
      * @param {string} inscription_id
      * @param {string} inscription_number
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} satpoint
+     * @param {string} commit_txid
      * @param {string} content
      * @param {string} op
      * @param {string} creator
@@ -113,10 +124,17 @@ class InscriptionsStorage {
     async add_new_inscription(
         inscription_id,
         inscription_number,
+
+        block_height,
+        timestamp,
+        satpoint,
+        commit_txid,
+        value,
+
         content,
         op,
+
         creator,
-        block_height,
     ) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(inscription_id), `inscription_id should be string`);
@@ -124,16 +142,27 @@ class InscriptionsStorage {
             _.isNumber(inscription_number),
             `inscription_number should be number`,
         );
+        assert(_.isNumber(block_height), `block_height should be number`);
+        assert(_.isNumber(timestamp), `timestamp should be number ${timestamp}`);
+        assert(_.isString(satpoint), `satpoint should be string ${satpoint}`);
+        assert(_.isString(commit_txid), `commit_txid should be string`);
+        assert(_.isNumber(value), `value should be number`);
         assert(_.isString(content), `content should be string`);
         assert(_.isString(op), `op should be string`);
         assert(_.isString(creator), `creator should be string`);
-        assert(_.isNumber(block_height), `block_height should be number`);
+        
 
         return new Promise((resolve) => {
             const sql = `
                 INSERT OR REPLACE INTO inscriptions(
                     inscription_id,
                     inscription_number,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_satpoint,
+                    commit_txid,
+                    value,
 
                     content,
                     op,
@@ -142,15 +171,21 @@ class InscriptionsStorage {
                     owner,
 
                     last_block_height,
-
                     transfer_count
-                ) VALUES(?,?,?,?,?,?,?,?)
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
             `;
             this.db.run(
                 sql,
                 [
                     inscription_id,
                     inscription_number,
+
+                    block_height,
+                    timestamp,
+                    satpoint,
+                    commit_txid,
+                    value,
+
                     content,
                     op,
 
@@ -246,6 +281,33 @@ class InscriptionsStorage {
                     resolve({ ret: -1 });
                 } else {
                     resolve({ ret: 0, data: row });
+                }
+            });
+        });
+    }
+    
+    /**
+     * 
+     * @param {number} block_height 
+     * @returns {Promise<{ret: number, data: Array<object[]>}>}
+     */
+    async get_inscriptions_by_block(block_height) {
+        assert(this.db != null, `db should not be null`);
+        assert(_.isNumber(block_height), `block_height should be number`);
+
+        return new Promise((resolve) => {
+            const sql = `
+                SELECT * FROM inscriptions WHERE genesis_block_height = ?
+            `;
+            this.db.all(sql, [block_height], (err, rows) => {
+                if (err) {
+                    console.error(
+                        `failed to get inscriptions ${block_height}`,
+                        err,
+                    );
+                    resolve({ ret: -1 });
+                } else {
+                    resolve({ ret: 0, data: rows });
                 }
             });
         });
