@@ -322,7 +322,7 @@ class ETHIndex {
 
             if (block_height == null) {
                 console.warn(
-                    `no block found for timestamp ${timestamp}, now wait and retry...`,
+                    `no eth block found for timestamp ${timestamp}, now wait and retry...`,
                 );
                 await Util.sleep(1000 * 5);
                 continue;

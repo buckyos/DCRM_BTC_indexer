@@ -58,7 +58,9 @@
             "name": "main-test",
             "args": [
                 "--config",
-                "test"
+                "test",
+                "--mode",
+                "index",
             ],
             "skipFiles": [
                 "<node_internals>/**"
