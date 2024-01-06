@@ -34,7 +34,7 @@ const UserOp = {
 
     InscribeResonance: 'inscribe_res',
     Resonance: 'res',
-    
+
     InscribeTransfer: 'inscribe_transfer',
     Transfer: 'transfer',
 
@@ -172,6 +172,40 @@ class TokenIndexStorage {
                     return;
                 }
 
+                // Create inscribe_data_transfer_records table
+                this.db.run(
+                    `CREATE TABLE IF NOT EXISTS inscribe_data_transfer_records (
+                        inscription_id TEXT,
+                        hash TEXT,
+                        block_height INTEGER,
+                        timestamp INTEGER,
+                        txid TEXT,
+                        satpoint TEXT,
+                        from_address TEXT,
+                        to_address TEXT,
+                        value INTEGER,
+                        state INTEGER DEFAULT 0,
+                        PRIMARY KEY (inscription_id, txid)
+                    )`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create inscribe_data_transfer_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(
+                            `created inscribe_data_transfer_records table`,
+                        );
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
                 // Create inscribe_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS inscribe_records (
@@ -200,29 +234,6 @@ class TokenIndexStorage {
                         }
 
                         console.log(`created inscribe_records table`);
-                    },
-                );
-
-                if (has_error) {
-                    return;
-                }
-
-                // create index for txid/address/hash field on inscribe_records table
-                this.db.exec(
-                    `CREATE INDEX IF NOT EXISTS idx_inscribe_records_txid ON inscribe_records (txid);
-                     CREATE INDEX IF NOT EXISTS idx_inscribe_records_address ON inscribe_records (address);
-                     CREATE INDEX IF NOT EXISTS idx_inscribe_records_hash ON inscribe_records (hash);
-                     `,
-                    (err) => {
-                        if (err) {
-                            console.error(
-                                `failed to create index on inscribe_records table: ${err}`,
-                            );
-                            has_error = true;
-                            resolve({ ret: -1 });
-                        }
-
-                        console.log(`created index on inscribe_records table`);
                     },
                 );
 
@@ -691,7 +702,10 @@ class TokenIndexStorage {
             lucky == null || typeof lucky === 'string',
             `lucky should be string or null`,
         );
-        assert(_.isNumber(mint_type), `mint_type should be string ${mint_type}`);
+        assert(
+            _.isNumber(mint_type),
+            `mint_type should be string ${mint_type}`,
+        );
         assert(
             Number.isInteger(state) && state >= 0,
             `state should be non-negative integer`,
@@ -756,9 +770,9 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} address 
-     * @param {string} lucky 
+     *
+     * @param {string} address
+     * @param {string} lucky
      * @returns {ret: number, data: object}
      */
     async query_lucky_mint(address, lucky) {
@@ -955,6 +969,111 @@ class TokenIndexStorage {
     }
 
     /**
+     * @comment: this function is used to add inscribe data transfer record
+     * @param {string} inscription_id 
+     * @param {string} hash 
+     * @param {number} block_height 
+     * @param {number} timestamp 
+     * @param {string} txid 
+     * @param {string} satpoint 
+     * @param {string} from_address 
+     * @param {string} to_address 
+     * @param {number} value 
+     * @param {number} state 
+     * @returns {ret: number}
+     */
+    async add_inscribe_data_transfer_record(
+        inscription_id,
+        hash,
+        block_height,
+        timestamp,
+        txid,
+        satpoint,
+        from_address,
+        to_address,
+        value,
+        state,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof inscription_id === 'string', `should be string`);
+        assert(typeof hash === 'string', `should be string`);
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            `should be non-negative integer`,
+        );
+        assert(Number.isInteger(timestamp), `should be integer`);
+        assert(typeof txid === 'string', `should be string`);
+        assert(typeof satpoint === 'string', `should be string`);
+        assert(typeof from_address === 'string', `should be string`);
+        assert(typeof to_address === 'string', `should be string`);
+        assert(
+            _.isNumber(value) && value >= 0,
+            `should be positive number ${value}`,
+        );
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `should be non-negative integer`,
+        );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            from_address,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            UserOp.TransferData,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user inscribe data transfer op ${inscription_id} ${from_address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO inscribe_data_transfer_records 
+                    (inscription_id, 
+                    hash,
+                    block_height, 
+                    timestamp, 
+                    txid,
+                    satpoint,
+                    from_address, 
+                    to_address,
+                    value,
+                    state) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    inscription_id,
+                    hash,
+                    block_height,
+                    timestamp,
+                    txid,
+                    satpoint,
+                    from_address,
+                    to_address,
+                    value,
+                    state,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            'failed to add inscribe data transfer record',
+                            err,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
      *
      * @param {string} inscription_id
      * @param {number} block_height
@@ -1069,7 +1188,9 @@ class TokenIndexStorage {
                 ],
                 (err) => {
                     if (err) {
-                        console.error(`failed to add chant record ${inscription_id} ${err}`);
+                        console.error(
+                            `failed to add chant record ${inscription_id} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0 });
@@ -1427,7 +1548,10 @@ class TokenIndexStorage {
             BigNumberUtil.is_positive_number_string(price),
             `price should be positive number string`,
         );
-        assert(_.isNumber(hash_point), `hash_point should be number ${hash_point}`);
+        assert(
+            _.isNumber(hash_point),
+            `hash_point should be number ${hash_point}`,
+        );
         assert(
             BigNumberUtil.is_positive_number_string(hash_weight),
             `hash_weight should be positive number string`,
@@ -1596,7 +1720,7 @@ class TokenIndexStorage {
                     0,
                     0,
 
-                    state
+                    state,
                 ],
                 (err) => {
                     if (err) {
@@ -1758,7 +1882,7 @@ class TokenIndexStorage {
                     owner_bonus,
                     service_charge,
 
-                    state
+                    state,
                 ],
                 (err) => {
                     if (err) {
@@ -2442,7 +2566,9 @@ class TokenIndexStorage {
                         );
                         resolve({ ret: 1 });
                     } else {
-                        console.log(`update inscribe data ${hash} owner to ${new_owner}`);
+                        console.log(
+                            `update inscribe data ${hash} owner to ${new_owner}`,
+                        );
                         resolve({ ret: 0 });
                     }
                 },
@@ -2476,17 +2602,25 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} address 
-     * @param {string} inscription_id 
-     * @param {number} block_height 
-     * @param {number} timestamp 
+     *
+     * @param {string} address
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
      * @param {string} txid
-     * @param {string} op 
-     * @param {number} state 
+     * @param {string} op
+     * @param {number} state
      * @returns {ret: number}
      */
-    async add_user_op(address, inscription_id, block_height, timestamp, txid, op, state) {
+    async add_user_op(
+        address,
+        inscription_id,
+        block_height,
+        timestamp,
+        txid,
+        op,
+        state,
+    ) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
         assert(
@@ -2513,7 +2647,15 @@ class TokenIndexStorage {
         return new Promise((resolve) => {
             this.db.run(
                 sql,
-                [address, inscription_id, block_height, timestamp, txid, op, state],
+                [
+                    address,
+                    inscription_id,
+                    block_height,
+                    timestamp,
+                    txid,
+                    op,
+                    state,
+                ],
                 function (err) {
                     if (err) {
                         console.error(

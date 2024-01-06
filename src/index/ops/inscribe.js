@@ -143,21 +143,25 @@ class InscribeDataOperator {
             }
         }
 
-        // record user ops
-        const { ret: record_user_ops_ret } = await this.storage.add_user_op(
-            inscription_transfer_item.from_address,
-            inscription_transfer_item.inscription_id,
-            inscription_transfer_item.block_height,
-            inscription_transfer_item.timestamp,
-            inscription_transfer_item.txid,
-            UserOp.TransferData,
-            0,
-        );
-        if (record_user_ops_ret !== 0) {
+        // save the record
+        const { ret: add_record_ret } =
+            await this.storage.add_inscribe_data_transfer_record(
+                inscription_transfer_item.inscription_id,
+                hash,
+                inscription_transfer_item.block_height,
+                inscription_transfer_item.timestamp,
+                inscription_transfer_item.txid,
+                inscription_transfer_item.satpoint.to_string(),
+                inscription_transfer_item.from_address,
+                inscription_transfer_item.to_address,
+                inscription_transfer_item.value,
+                0,
+            );
+        if (add_record_ret !== 0) {
             console.error(
                 `failed to record user transfer data op ${inscription_transfer_item.inscription_id} ${hash}`,
             );
-            return { ret: record_user_ops_ret };
+            return { ret: add_record_ret };
         }
 
         console.log(
