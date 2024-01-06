@@ -1,7 +1,10 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
-const { InscriptionStage, InscriptionOpState } = require('../token_index/ops/state');
+const {
+    InscriptionStage,
+    InscriptionOpState,
+} = require('../token_index/ops/state');
 const { BigNumberUtil } = require('../util');
 const {
     TOKEN_INDEX_DB_FILE,
@@ -969,16 +972,16 @@ class TokenIndexStorage {
 
     /**
      * @comment: this function is used to add inscribe data transfer record
-     * @param {string} inscription_id 
-     * @param {string} hash 
-     * @param {number} block_height 
-     * @param {number} timestamp 
-     * @param {string} txid 
-     * @param {string} satpoint 
-     * @param {string} from_address 
-     * @param {string} to_address 
-     * @param {number} value 
-     * @param {number} state 
+     * @param {string} inscription_id
+     * @param {string} hash
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} satpoint
+     * @param {string} from_address
+     * @param {string} to_address
+     * @param {number} value
+     * @param {number} state
      * @returns {ret: number}
      */
     async add_inscribe_data_transfer_record(
@@ -2667,6 +2670,38 @@ class TokenIndexStorage {
                             `append user op ${address} ${inscription_id} ${block_height} ${op}`,
                         );
                         resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     * 
+     * @param {string} address 
+     * @returns {ret: number, txid: string | null}
+     */
+    async query_user_last_mint_and_inscribe_data_ops_txid(address) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof address === 'string', `address should be string`);
+
+        const sql = `
+            SELECT txid FROM user_ops WHERE address = ? AND (op = ? OR op = ?) ORDER BY block_height DESC LIMIT 1
+        `;
+
+        return new Promise((resolve) => {
+            this.db.get(
+                sql,
+                [address, UserOp.Mint, UserOp.InscribeData],
+                (err, row) => {
+                    if (err) {
+                        console.error(
+                            `Could not query user last mint and inscribe data ops ${address}`,
+                            err,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0, txid: row? row.txid: null });
                     }
                 },
             );

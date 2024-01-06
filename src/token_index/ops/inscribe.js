@@ -6,7 +6,10 @@ const {
 } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
-const { InscriptionNewItem, InscriptionTransferItem } = require('../../index/item');
+const {
+    InscriptionNewItem,
+    InscriptionTransferItem,
+} = require('../../index/item');
 const { DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD } = require('../../constants');
 
 class PendingInscribeOp {
@@ -176,6 +179,36 @@ class InscribeDataOperator {
      * @returns {Promise<{ret: number}>}
      */
     async on_inscribe(inscription_item) {
+        const {
+            ret: pre_inscribe_ret,
+            state,
+            distance,
+        } = await this._on_pre_inscribe(inscription_item);
+        if (pre_inscribe_ret !== 0) {
+            console.error(
+                `failed to pre inscribe ${inscription_item.inscription_id}`,
+            );
+            return { ret: pre_inscribe_ret };
+        }
+
+        assert(_.isNumber(state), `invalid state ${state}`);
+        if (state === InscriptionOpState.OK) {
+            assert(_.isNumber(distance), `invalid distance ${distance}`);
+        }
+
+        // add to pending inscribe ops for later process
+        const op = new PendingInscribeOp(inscription_item, state, distance);
+        this.pending_inscribe_ops.push(op);
+
+        return { ret: 0 };
+    }
+
+    /**
+     *
+     * @param {InscriptionNewItem} inscription_item
+     * @returns {Promise<{ret: number, state: number, distance: number}>}
+     */
+    async _on_pre_inscribe(inscription_item) {
         assert(
             inscription_item instanceof InscriptionNewItem,
             `invalid inscription_item`,
@@ -193,7 +226,7 @@ class InscribeDataOperator {
             );
 
             // invalid format, so we should ignore this inscription
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
         const amt = inscription_item.content.amt;
@@ -201,7 +234,7 @@ class InscribeDataOperator {
             console.error(
                 `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
             );
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
         // 1. check if hash already been inscribed
@@ -220,41 +253,46 @@ class InscribeDataOperator {
             );
 
             // hash already been inscribed, so this inscription will failed
-            const op = new PendingInscribeOp(
-                inscription_item,
-                InscriptionOpState.ALREADY_EXISTS,
-                0,
-            );
-            this.pending_inscribe_ops.push(op);
-
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.ALREADY_EXISTS };
         }
 
-        // 2. check hash condition if satisfied
-        assert(inscription_item.commit_txid != null);
+        // 2. query last mint or inscribe data ops txid
+        const { ret: query_last_ret, txid: last_txid } =
+            await this.storage.query_user_last_mint_and_inscribe_data_ops_txid(
+                inscription_item.address,
+            );
+        if (query_last_ret !== 0) {
+            console.error(
+                `failed to query user last mint and inscribe data ops txid ${inscription_item.inscription_id} ${inscription_item.address}`,
+            );
+            return { ret: query_last_ret };
+        }
+
+        if (last_txid == null) {
+            console.warn(
+                `last mint or inscribe txid is null ${inscription_item.inscription_id} ${inscription_item.address}`,
+            );
+            return { ret: 0, state: InscriptionOpState.HASH_UNMATCHED };
+        }
+
+        // 3. check hash condition if satisfied
         if (
             !Util.check_inscribe_hash_and_txid(
                 hash,
-                inscription_item.commit_txid,
+                last_txid,
                 this.inscribe_data_hash_threshold,
             )
         ) {
-            console.info(
-                `hash and txid not match ${inscription_item.inscription_id} ${hash} ${inscription_item.commit_txid}`,
-            );
-
             // not match (hash - commit_txid) % hash_th != 0, so this inscription will failed
-            const op = new PendingInscribeOp(
-                inscription_item,
-                InscriptionOpState.HASH_UNMATCHED,
-                0,
-            );
-            this.pending_inscribe_ops.push(op);
 
-            return { ret: 0 };
+            console.info(
+                `data hash and last txid not match ${inscription_item.inscription_id} ${hash} ${inscription_item.last_txid}`,
+            );
+
+            return { ret: 0, state: InscriptionOpState.HASH_UNMATCHED };
         }
 
-        // 3. check weight with amt, amt must be greater than hash weight
+        // 4. check weight with amt, amt must be greater than hash weight
         // calc hash weight
         const {
             ret: calc_ret,
@@ -304,14 +342,8 @@ class InscribeDataOperator {
             );
 
             // hash weight is less than amt, so this inscription will failed
-            const op = new PendingInscribeOp(
-                inscription_item,
-                InscriptionOpState.INVALID_AMT,
-                0,
-            );
-            this.pending_inscribe_ops.push(op);
 
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.INVALID_AMT };
         }
 
         // 4. check if address balance is enough
@@ -331,14 +363,8 @@ class InscribeDataOperator {
             );
 
             // balance is not enough, so this inscription will failed
-            const op = new PendingInscribeOp(
-                inscription_item,
-                InscriptionOpState.INSUFFICIENT_BALANCE,
-                0,
-            );
-            this.pending_inscribe_ops.push(op);
 
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
         // 5. calc distance of (address, hash)
@@ -347,11 +373,8 @@ class InscribeDataOperator {
             hash,
             inscription_item.address,
         );
-        const new_op = new PendingInscribeOp(
-            inscription_item,
-            InscriptionOpState.OK,
-            distance,
-        );
+
+        let state = InscriptionOpState.OK;
 
         // 6. check if there is any pending inscribe op in the same block with same hash
         for (const op of this.pending_inscribe_ops) {
@@ -359,12 +382,14 @@ class InscribeDataOperator {
                 op.state === InscriptionOpState.OK &&
                 op.inscription_item.content.ph === hash
             ) {
+                assert(_.isNumber(op.hash_distance), `invalid hash distance ${op.hash_distance}`);
                 if (op.hash_distance <= distance) {
                     // competition failed
                     console.warn(
                         `competition failed in same block! new: ${inscription_item.inscription_id} old: ${op.inscription_item.inscription_id}, new ${distance} > old ${op.hash_distance}`,
                     );
-                    new_op.state = InscriptionOpState.COMPETITION_FAILED;
+                    state = InscriptionOpState.COMPETITION_FAILED;
+                    break;
                 } else {
                     console.warn(
                         `competition failed in same block! new: ${inscription_item.inscription_id} old: ${op.inscription_item.inscription_id}, old ${op.hash_distance} > new ${distance}`,
@@ -374,9 +399,7 @@ class InscribeDataOperator {
             }
         }
 
-        this.pending_inscribe_ops.push(new_op);
-
-        return { ret: 0 };
+        return { ret: 0, state, distance };
     }
 
     async process_pending_inscribe_ops() {
