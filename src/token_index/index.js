@@ -5,7 +5,7 @@ const { TokenStateStorage } = require('../storage/token_state');
 const assert = require('assert');
 const { Util } = require('../util');
 const { TokenIndex } = require('./token');
-const { STATE_DB_FILE } = require('../constants');
+const { SYNC_STATE_DB_FILE } = require('../constants');
 const fs = require('fs');
 const path = require('path');
 
@@ -18,7 +18,7 @@ class InscriptionStateMonitor {
             throw new Error(`failed to get data dir`);
         }
 
-        this.db_file_path = path.join(dir, STATE_DB_FILE);
+        this.db_file_path = path.join(dir, SYNC_STATE_DB_FILE);
     }
 
     // if target db file not exist, wait for it

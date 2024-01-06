@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
-const {TOKEN_STATE_DB_FILE} = require('../constants');
+const { INDEX_STATE_DB_FILE } = require('../constants');
 
 // db to store global state
 class TokenStateStorage {
@@ -11,7 +11,7 @@ class TokenStateStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
-        this.db_file_path = path.join(data_dir, TOKEN_STATE_DB_FILE);
+        this.db_file_path = path.join(data_dir, INDEX_STATE_DB_FILE);
         this.db = null;
     }
 
@@ -44,7 +44,6 @@ class TokenStateStorage {
 
         return new Promise((resolve) => {
             this.db.serialize(() => {
-
                 // Create state table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS state (
@@ -56,7 +55,7 @@ class TokenStateStorage {
                             console.error(
                                 `failed to create state table: ${err}`,
                             );
-    
+
                             resolve({ ret: -1 });
                             return;
                         }
@@ -81,7 +80,10 @@ class TokenStateStorage {
                 "SELECT value FROM state WHERE name = 'token_latest_block_height'",
                 (err, row) => {
                     if (err) {
-                        console.error('failed to get token latest block height', err);
+                        console.error(
+                            'failed to get token latest block height',
+                            err,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, height: row ? row.value : 0 });
@@ -93,7 +95,7 @@ class TokenStateStorage {
 
     /**
      * @comment update token latest block height only block_height = current_block_height + 1 or current_block_height = 0
-     * @param {number} block_height 
+     * @param {number} block_height
      * @returns {ret: number}
      */
     async update_token_latest_block_height(block_height) {
@@ -104,23 +106,26 @@ class TokenStateStorage {
             'block_height must be a non-negative integer',
         );
 
-        const { ret: get_ret, height } = await this.get_token_latest_block_height();
+        const { ret: get_ret, height } =
+            await this.get_token_latest_block_height();
         if (get_ret !== 0) {
             console.error(`failed to get token latest block height`);
             return { ret: get_ret };
         }
 
-        if (height !== (block_height - 1) && height !== 0) {
-            console.error(`invalid token block height ${height} + 1 != ${block_height}`);
+        if (height !== block_height - 1 && height !== 0) {
+            console.error(
+                `invalid token block height ${height} + 1 != ${block_height}`,
+            );
             return { ret: -1 };
         }
-        
+
         return await this._update_token_latest_block_height(block_height);
     }
 
     /**
      * @comment update token latest block height anyway
-     * @param {number} block_height 
+     * @param {number} block_height
      * @returns {ret: number}
      */
     async _update_token_latest_block_height(block_height) {

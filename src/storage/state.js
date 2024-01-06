@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
-const {STATE_DB_FILE} = require('../constants');
+const { SYNC_STATE_DB_FILE } = require('../constants');
 
 // db to store global state
 class StateStorage {
@@ -11,7 +11,7 @@ class StateStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
-        this.db_file_path = path.join(data_dir, STATE_DB_FILE);
+        this.db_file_path = path.join(data_dir, SYNC_STATE_DB_FILE);
         this.db = null;
     }
 
@@ -44,7 +44,6 @@ class StateStorage {
 
         return new Promise((resolve) => {
             this.db.serialize(() => {
-
                 // Create state table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS state (
@@ -56,7 +55,7 @@ class StateStorage {
                             console.error(
                                 `failed to create state table: ${err}`,
                             );
-    
+
                             resolve({ ret: -1 });
                             return;
                         }
@@ -81,7 +80,10 @@ class StateStorage {
                 "SELECT value FROM state WHERE name = 'btc_latest_block_height'",
                 (err, row) => {
                     if (err) {
-                        console.error('failed to get btc latest block height', err);
+                        console.error(
+                            'failed to get btc latest block height',
+                            err,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, height: row ? row.value : 0 });
@@ -93,7 +95,7 @@ class StateStorage {
 
     /**
      * @comment update btc latest block height only block_height = current_block_height + 1 or current_block_height = 0
-     * @param {number} block_height 
+     * @param {number} block_height
      * @returns {ret: number}
      */
     async update_btc_latest_block_height(block_height) {
@@ -104,23 +106,26 @@ class StateStorage {
             'block_height must be a non-negative integer',
         );
 
-        const { ret: get_ret, height } = await this.get_btc_latest_block_height();
+        const { ret: get_ret, height } =
+            await this.get_btc_latest_block_height();
         if (get_ret !== 0) {
             console.error(`failed to get btc latest block height`);
             return { ret: get_ret };
         }
 
-        if (height !== (block_height - 1) && height !== 0) {
-            console.error(`invalid block height ${height} + 1 != ${block_height}`);
+        if (height !== block_height - 1 && height !== 0) {
+            console.error(
+                `invalid block height ${height} + 1 != ${block_height}`,
+            );
             return { ret: -1 };
         }
-        
+
         return await this._update_btc_latest_block_height(block_height);
     }
 
     /**
      * @comment update btc latest block height anyway
-     * @param {number} block_height 
+     * @param {number} block_height
      * @returns {ret: number}
      */
     async _update_btc_latest_block_height(block_height) {
@@ -149,7 +154,6 @@ class StateStorage {
         });
     }
 
-
     /**
      *
      * @returns {ret: number, height: number}
@@ -162,7 +166,10 @@ class StateStorage {
                 "SELECT value FROM state WHERE name = 'eth_latest_block_height'",
                 (err, row) => {
                     if (err) {
-                        console.error('failed to get eth latest block height', err);
+                        console.error(
+                            'failed to get eth latest block height',
+                            err,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, height: row ? row.value : 0 });
@@ -174,8 +181,8 @@ class StateStorage {
 
     /**
      * @comment update eth latest block height only begin = current_block_height + 1 or current_block_height = 0
-     * @param {number} begin 
-     * @param {number} end 
+     * @param {number} begin
+     * @param {number} end
      * @returns {ret: number}
      */
     async update_eth_latest_block_height(begin, end) {
@@ -183,23 +190,26 @@ class StateStorage {
         assert(begin <= end, `invalid block height range [${begin} ${end}]`);
 
         // update eth latest block height only begin = current_block_height + 1 or current_block_height = 0
-        const { ret: get_ret, height } = await this.get_eth_latest_block_height();
+        const { ret: get_ret, height } =
+            await this.get_eth_latest_block_height();
         if (get_ret !== 0) {
             console.error(`failed to get eth latest block height`);
             return { ret: get_ret };
         }
 
-        if (height !== (begin - 1) && height !== 0) {
-            console.error(`invalid eth block height ${height} + 1 != ${begin}, target range [${begin} ${end}]`);
+        if (height !== begin - 1 && height !== 0) {
+            console.error(
+                `invalid eth block height ${height} + 1 != ${begin}, target range [${begin} ${end}]`,
+            );
             return { ret: -1 };
         }
-        
+
         return await this._update_eth_latest_block_height(end);
     }
 
     /**
      * @comment update eth latest block height anyway
-     * @param {number} block_height 
+     * @param {number} block_height
      * @returns {ret: number}
      */
     async _update_eth_latest_block_height(block_height) {
@@ -227,7 +237,6 @@ class StateStorage {
             );
         });
     }
-
 }
 
 module.exports = { StateStorage };

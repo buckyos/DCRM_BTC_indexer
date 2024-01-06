@@ -1,17 +1,16 @@
 // sqlite db file name
-const STATE_DB_FILE = 'state.db';
-const TOKEN_STATE_DB_FILE = 'token_state.db';
+const SYNC_STATE_DB_FILE = 'sync_state.db';
+const INDEX_STATE_DB_FILE = 'index_state.db';
 const TOKEN_INDEX_DB_FILE = 'index.db';
 const ETH_INDEX_DB_FILE = 'eth_index.db';
 const INSCRIPTION_DB_FILE = 'inscriptions.db';
 const TRANSFER_DB_FILE = 'transfer.db';
 
-
 const LUCKY_MINT_MAX_AMOUNT = '2100';
 const NORMAL_MINT_MAX_AMOUNT = '210';
 
 // the token init amount in mint pool: 210 million.
-const TOKEN_MINT_POOL_INIT_AMOUNT = '210000000'; 
+const TOKEN_MINT_POOL_INIT_AMOUNT = '210000000';
 
 // the token amount burned from eth network, will migrated to btc network
 const TOKEN_MINT_POOL_BURN_INIT_AMOUNT = '40000000';
@@ -34,7 +33,6 @@ const TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS = '0x4';
 // the decimal of our token
 const TOKEN_DECIMAL = 18;
 
-
 // difficulty of inscribe data hash
 const DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD = 32;
 
@@ -45,8 +43,8 @@ const DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD = 64;
 const DIFFICULTY_CHANT_BLOCK_THRESHOLD = 64;
 
 module.exports = {
-    STATE_DB_FILE,
-    TOKEN_STATE_DB_FILE,
+    SYNC_STATE_DB_FILE,
+    INDEX_STATE_DB_FILE,
     TOKEN_INDEX_DB_FILE,
     ETH_INDEX_DB_FILE,
     INSCRIPTION_DB_FILE,
@@ -64,7 +62,7 @@ module.exports = {
     TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
 
     TOKEN_DECIMAL,
-    
+
     DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD,
     DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
     DIFFICULTY_CHANT_BLOCK_THRESHOLD,
