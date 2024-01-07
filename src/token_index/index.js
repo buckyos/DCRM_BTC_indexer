@@ -221,6 +221,14 @@ class TokenIndexExecutor {
             return { ret };
         }
 
+        if (collector.is_empty()) {
+            console.debug(
+                `indexing inscriptions and transfers at block ${block_height} with empty inscriptions and transfers`,
+            );
+
+            return { ret: 0 };
+        } 
+
         console.info(
             `indexing inscriptions and transfers at block ${block_height} inscriptions count ${collector.new_inscriptions.length}, transfers count ${collector.inscription_transfers.length}`,
         );

@@ -340,7 +340,6 @@ class InscriptionContentLoader {
     }
 
     static async _load_content_data(ord_client, inscription_id, content_type) {
-
         // check content type at first
         if (
             content_type == null ||
@@ -394,7 +393,6 @@ class InscriptionContentLoader {
         );
         assert(_.isObject(config), `config should be object`);
 
-
         const {
             ret: load_content_ret,
             valid: load_content_valid,
@@ -405,7 +403,9 @@ class InscriptionContentLoader {
             content_type,
         );
         if (load_content_ret !== 0) {
-            console.error(`failed to load inscription content ${inscription_id}`);
+            console.error(
+                `failed to load inscription content ${inscription_id}`,
+            );
             return { ret: load_content_ret };
         }
 
@@ -443,6 +443,16 @@ class InscriptionContentLoader {
             typeof content === 'object',
             `invalid inscription content ${content}`,
         );
+
+        // try fix some fields
+        if (_.isString(data.ph)) {
+            const { valid, mixhash } = Util.check_and_fix_mixhash(data.ph);
+            if (valid) {
+                data.ph = mixhash;
+            } else {
+                // FIXME should we stop here and no more process?
+            }
+        }
 
         // parse content
         const {
@@ -644,7 +654,10 @@ class InscriptionTransferItem {
         );
         assert(_.isNumber(block_height), `block_height should be number`);
         assert(_.isNumber(timestamp), `timestamp should be number`);
-        assert(satpoint instanceof SatPoint, `satpoint should be SatPoint ${satpoint}`);
+        assert(
+            satpoint instanceof SatPoint,
+            `satpoint should be SatPoint ${satpoint}`,
+        );
         assert(
             from_address == null || _.isString(from_address),
             `from_address should be string or null`,

@@ -193,7 +193,7 @@ class Util {
         try {
             return bs58.decode(hash_str);
         } catch (err) {
-            console.warn(
+            console.info(
                 `hash str not a base58 string, now try hex ${hash_str} ${err}`,
             );
         }
@@ -212,6 +212,31 @@ class Util {
         throw new Error(
             `Hash is neither a hex string nor a base58 string ${hash_str}`,
         );
+    }
+
+    /**
+     * @comment check if the string is hex string, if encoded in base58, try convert to hex string
+     * @param {string} mixhash
+     * @returns {valid: boolean, mixhash: string}
+     */
+    static check_and_fix_mixhash(mixhash) {
+        // check mixhash is valid and try convert to hex string is base58 encoded
+        assert(_.isString(mixhash), `mixhash should be string ${mixhash}`);
+
+        let hex_str;
+        try {
+            const decoded = this.parse_hash_str(mixhash);
+            if (decoded.length !== 32) {
+                return { valid: false };
+            }
+
+            // encode to hex string
+            hex_str = Buffer.from(decoded).toString('hex');
+        } catch (error) {
+            return { valid: false };
+        }
+
+        return { valid: true, mixhash: hex_str };
     }
 
     /**
@@ -396,7 +421,10 @@ class BigNumberUtil {
      * @returns {string}
      */
     static add(a, b) {
-        return new BigNumber(a).plus(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
+        return new BigNumber(a)
+            .plus(new BigNumber(b))
+            .toFixed(TOKEN_DECIMAL)
+            .toString();
     }
 
     /**
@@ -406,7 +434,10 @@ class BigNumberUtil {
      * @returns {string}
      */
     static subtract(a, b) {
-        return new BigNumber(a).minus(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
+        return new BigNumber(a)
+            .minus(new BigNumber(b))
+            .toFixed(TOKEN_DECIMAL)
+            .toString();
     }
 
     /**
@@ -416,7 +447,10 @@ class BigNumberUtil {
      * @returns {string}
      */
     static multiply(a, b) {
-        return new BigNumber(a).times(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
+        return new BigNumber(a)
+            .times(new BigNumber(b))
+            .toFixed(TOKEN_DECIMAL)
+            .toString();
     }
 
     /**
@@ -426,7 +460,10 @@ class BigNumberUtil {
      * @returns {string}
      */
     static divide(a, b) {
-        return new BigNumber(a).dividedBy(new BigNumber(b)).toFixed(TOKEN_DECIMAL).toString();
+        return new BigNumber(a)
+            .dividedBy(new BigNumber(b))
+            .toFixed(TOKEN_DECIMAL)
+            .toString();
     }
 
     /**
