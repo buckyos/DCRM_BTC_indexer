@@ -256,30 +256,12 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.ALREADY_EXISTS };
         }
 
-        // 2. query last mint or inscribe data ops txid
-        const { ret: query_last_ret, txid: last_txid } =
-            await this.storage.query_user_last_mint_and_inscribe_data_ops_txid(
-                inscription_item.address,
-            );
-        if (query_last_ret !== 0) {
-            console.error(
-                `failed to query user last mint and inscribe data ops txid ${inscription_item.inscription_id} ${inscription_item.address}`,
-            );
-            return { ret: query_last_ret };
-        }
 
-        if (last_txid == null) {
-            console.warn(
-                `last mint or inscribe txid is null ${inscription_item.inscription_id} ${inscription_item.address}`,
-            );
-            return { ret: 0, state: InscriptionOpState.HASH_UNMATCHED };
-        }
-
-        // 3. check hash condition if satisfied
+        // 3. check hash condition if satisfied with user's address
         if (
             !Util.check_inscribe_hash_and_txid(
                 hash,
-                last_txid,
+                inscription_item.address,
                 this.inscribe_data_hash_threshold,
             )
         ) {
