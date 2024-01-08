@@ -661,7 +661,7 @@ const InscriptionOpState = {
 
 #### 获取当前btc链最新的块号：
 
-    /block_height/btc
+    /btc/block_height
 
     GET
 
@@ -675,6 +675,26 @@ const InscriptionOpState = {
     }
     ```
 
+#### 获取btc链上某个交易详情：
+
+    /btc/tx/:txid
+
+    GET
+
+    参数
+
+    txid: 交易id
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: tx info
+    }
+    ```
+
 #### 获取某地址在时间段内的收益：
 
     /income/:address/:begin_time/:end_time?
@@ -684,6 +704,7 @@ const InscriptionOpState = {
     参数
 
     begin_time: 起始时间（UTC）
+
     end_time: 结束时间，默认到当前时间
 
     返回：

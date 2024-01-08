@@ -61,7 +61,7 @@ class ChainService {
             ctx.response.body = await this._getLastBtcBlockHeight();
         });
 
-        router.get("/block_height/eth", async (ctx) => {
+        router.get("/eth/block_height", async (ctx) => {
             ctx.response.body = makeReponse(ERR_CODE.NOT_IMPLEMENTED);
         });
 
