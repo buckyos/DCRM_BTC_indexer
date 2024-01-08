@@ -1,13 +1,14 @@
 const Database = require('better-sqlite3');
 const path = require('path');
-const { SYNC_STATE_DB_FILE, TOKEN_INDEX_DB_FILE } = require('../../constants');
+const { SYNC_STATE_DB_FILE, INDEX_STATE_DB_FILE, TOKEN_INDEX_DB_FILE } = require('../../constants');
 
 class Store {
     constructor() {
         this.m_dataDir = null;
 
         this.m_indexDB = null;
-        this.m_stateDB = null;
+        this.m_syncStateDB = null;
+        this.m_indexStateDB = null;
 
         this.m_inited = false;
     }
@@ -29,8 +30,11 @@ class Store {
         const indexDBPath = path.join(this.m_dataDir, TOKEN_INDEX_DB_FILE);
         this.m_indexDB = new Database(indexDBPath, option);
 
-        const stateDBPath = path.join(this.m_dataDir, SYNC_STATE_DB_FILE);
-        this.m_stateDB = new Database(stateDBPath, option);
+        const syncStateDBPath = path.join(this.m_dataDir, SYNC_STATE_DB_FILE);
+        this.m_syncStateDB = new Database(syncStateDBPath, option);
+
+        const indexStateDBPath = path.join(this.m_dataDir, INDEX_STATE_DB_FILE);
+        this.m_indexStateDB = new Database(indexStateDBPath, option);
 
         logger.info('init db success');
 
@@ -41,8 +45,12 @@ class Store {
         return this.m_indexDB;
     }
 
-    get stateDB() {
-        return this.m_stateDB;
+    get syncStateDB() {
+        return this.m_syncStateDB;
+    }
+
+    get indexStateDB() {
+        return this.m_indexStateDB;
     }
 }
 
