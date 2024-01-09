@@ -5,6 +5,7 @@ const { Util } = require('../util.js');
 const moment = require('moment');
 
 class BugHandler {
+    // eslint-disable-next-line no-unused-vars
     handle(content) {
         throw new Error('Not implemented');
     }

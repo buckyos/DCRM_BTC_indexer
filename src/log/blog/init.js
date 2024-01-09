@@ -7,7 +7,7 @@ blog.console = console;
 global.blog = blog;
 
 function patch_console(log) {
-    // keep oringin console methods
+    // keep origin console methods
     console.origin = {};
     console.origin.trace = console.trace;
     console.origin.debug = console.debug;
