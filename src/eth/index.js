@@ -89,6 +89,37 @@ class ETHIndex {
 
     /**
      *
+     * @returns {Promise<{ret: number, status: object}>}
+     */
+    async status() {
+        const { ret, height: eth } = await this.get_latest_block_number();
+        if (ret !== 0) {
+            console.error(`failed to get latest block number`);
+            return { ret };
+        }
+
+        const { ret: get_local_ret, height: local } =
+            await this.state_storage.get_eth_latest_block_height();
+        if (get_local_ret !== 0) {
+            console.error(`failed to get eth local block height`);
+            return { ret: get_local_ret };
+        }
+
+        const genesis_block_height = this.config.eth.genesis_block_height;
+
+        return {
+            ret: 0,
+
+            status: {
+                eth,
+                local,
+                genesis_block_height,
+            },
+        };
+    }
+
+    /**
+     *
      * @returns {ret: number, height: number}
      */
     async get_latest_block_number() {
@@ -356,9 +387,9 @@ class ETHIndex {
     }
 
     /**
-     * 
-     * @param {string} address 
-     * @param {string} lucky 
+     *
+     * @param {string} address
+     * @param {string} lucky
      * @returns {Promise<{ret: number, exists: boolean, amount: string}>}
      */
     async query_lucky_mint(address, lucky) {
@@ -373,7 +404,8 @@ class ETHIndex {
                     const amount = new BigNumber(result).toString();
                     if (amount === '0') {
                         console.info(
-                            `no burn lucky mint found ${address} ${lucky}`);
+                            `no burn lucky mint found ${address} ${lucky}`,
+                        );
                         resolve({ ret: 0, exists: false });
                     } else {
                         console.info(

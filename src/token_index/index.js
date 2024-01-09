@@ -61,6 +61,7 @@ class TokenIndexExecutor {
         );
         this.ord_client = new OrdClient(config.ord.rpc_url);
 
+
         this.current_block_height = 0;
     }
 
@@ -155,6 +156,12 @@ class TokenIndexExecutor {
                 100;
         }
 
+        const { ret: get_eth_ret, status: eth_status } = await this.eth_index.status();
+        if (get_eth_ret !== 0) {
+            console.error(`failed to get eth status`);
+            return { ret: get_eth_ret };
+        }
+
         const status = {
             ret: 0,
             network: this.config.btc.network,
@@ -169,9 +176,11 @@ class TokenIndexExecutor {
 
             index: {
                 sync: min_height,
-                local: this.current_block_height,
+                local: this.current_block_height - 1,
                 percent: `${index_percent.toFixed(2)}%`,
             },
+
+            eth: eth_status,
         };
 
         return { ret: 0, status };
