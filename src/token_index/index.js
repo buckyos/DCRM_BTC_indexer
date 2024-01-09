@@ -8,6 +8,8 @@ const { TokenIndex } = require('./token');
 const { SYNC_STATE_DB_FILE } = require('../constants');
 const fs = require('fs');
 const path = require('path');
+const { BTCClient } = require('../btc/btc');
+const { OrdClient } = require('../btc/ord');
 
 class InscriptionStateMonitor {
     constructor(config) {
@@ -52,6 +54,13 @@ class TokenIndexExecutor {
 
         this.token_index = new TokenIndex(config);
 
+        this.btc_client = new BTCClient(
+            config.btc.host,
+            config.btc.network,
+            config.btc.auth,
+        );
+        this.ord_client = new OrdClient(config.ord.rpc_url);
+
         this.current_block_height = 0;
     }
 
@@ -89,6 +98,83 @@ class TokenIndexExecutor {
         }
 
         return { ret: 0 };
+    }
+
+    async status() {
+        // first get btc network latest block height
+        const { ret: get_btc_height, height: btc_network_height } =
+            await this.btc_client.get_latest_block_height();
+        if (get_btc_height !== 0) {
+            console.error(`failed to get btc network latest block height`);
+            return { ret: get_btc_height };
+        }
+
+        // then get btc ord latest block height
+        const { ret: get_ord_height, height: btc_ord_height } =
+            await this.ord_client.get_latest_block_height();
+        if (get_ord_height !== 0) {
+            console.error(`failed to get btc ord latest block height`);
+            return { ret: get_ord_height };
+        }
+
+        // get btc local latest block height
+        const { ret, height: btc_local_height } =
+            await this.inscriptions_state_storage.get_btc_latest_block_height();
+        if (ret !== 0) {
+            console.error(`failed to get btc latest block height`);
+            return { ret };
+        }
+
+        assert(
+            _.isNumber(btc_local_height),
+            `invalid btc latest block height ${btc_local_height}`,
+        );
+
+        // calc percent in 100% format
+        const genesis_block_height = this.config.token.genesis_block_height;
+
+        let sync_percent;
+        // get min height for btc and ord
+        const min_height = Math.min(btc_network_height, btc_ord_height);
+        if (btc_local_height >= min_height) {
+            sync_percent = 100;
+        } else {
+            sync_percent =
+                ((btc_local_height - genesis_block_height) /
+                    (min_height - genesis_block_height)) *
+                100;
+        }
+
+        let index_percent;
+        if (btc_local_height <= this.current_block_height) {
+            index_percent = 100;
+        } else {
+            index_percent =
+                ((this.current_block_height - genesis_block_height) /
+                    (btc_local_height - genesis_block_height)) *
+                100;
+        }
+
+        const status = {
+            ret: 0,
+            network: this.config.btc.network,
+            genesis_block_height,
+
+            sync: {
+                btc: btc_network_height,
+                ord: btc_ord_height,
+                local: btc_local_height,
+                percent: `${sync_percent.toFixed(2)}%`,
+            },
+
+            index: {
+                sync: min_height,
+                local: this.current_block_height,
+                percent: `${index_percent.toFixed(2)}%`,
+            },
+        };
+
+        return { ret: 0, status };
     }
 
     async run() {
@@ -227,7 +313,7 @@ class TokenIndexExecutor {
             );
 
             return { ret: 0 };
-        } 
+        }
 
         console.info(
             `indexing inscriptions and transfers at block ${block_height} inscriptions count ${collector.new_inscriptions.length}, transfers count ${collector.inscription_transfers.length}`,

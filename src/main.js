@@ -150,7 +150,7 @@ async function run(config, mode) {
             return { ret };
         }
 
-        const server = new IndexLocalInterface(config);
+        const server = new IndexLocalInterface(config, executor);
         const { ret: server_ret } = await server.start();
         if (server_ret !== 0) {
             console.error(`failed to start local interface`);

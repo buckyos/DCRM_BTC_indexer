@@ -4,12 +4,14 @@ const Router = require('koa-router');
 const { Util } = require('../util.js');
 const { HashHelper } = require('../token_index/ops/hash.js');
 const { ETHIndex } = require('../eth/index');
-const { resolve } = require('path');
 
 class IndexLocalInterface {
-    constructor(config) {
+    constructor(config, executor) {
         assert(_.isObject(config), `invalid config: ${config}`);
+        assert(_.isObject(executor), `invalid executor: ${executor}`);
+
         this.config = config;
+        this.executor = executor;
         
         this.eth_index = new ETHIndex(config);
         this.hash_helper = new HashHelper(this.eth_index);
@@ -96,7 +98,7 @@ class IndexLocalInterface {
 
             const timestamp = Util.get_now_as_timestamp();
             console.log(`will query hash weight ${mixhash} at ${timestamp} for user ${ctx.ip} request`);
-            
+
             const { ret, weight, point } = await this.hash_helper.query_hash_weight(
                 timestamp,
                 mixhash,
@@ -115,6 +117,17 @@ class IndexLocalInterface {
             };
 
             ctx.body = result;
+        });
+
+        router.get('/status', async (ctx) => {
+            const {ret, status} = await this.executor.status();
+            if (ret !== 0) {
+                ctx.status = 500;
+                ctx.body = `Internal server error ${ret}`;
+                return;
+            }
+
+            ctx.body = status;
         });
     }
 }
