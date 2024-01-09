@@ -5,7 +5,7 @@ const { TokenStateStorage } = require('../storage/token_state');
 const assert = require('assert');
 const { Util } = require('../util');
 const { TokenIndex } = require('./token');
-const { SYNC_STATE_DB_FILE } = require('../constants');
+const { SYNC_STATE_DB_FILE, INDEX_VERSION } = require('../constants');
 const fs = require('fs');
 const path = require('path');
 const { BTCClient } = require('../btc/btc');
@@ -164,6 +164,7 @@ class TokenIndexExecutor {
 
         const status = {
             ret: 0,
+            version: INDEX_VERSION,
             network: this.config.btc.network,
             genesis_block_height,
 

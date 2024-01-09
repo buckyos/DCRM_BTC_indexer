@@ -11,9 +11,9 @@ const lockfile = require('proper-lockfile');
 const { Util } = require('./util');
 const { IndexLocalInterface } = require('./interface/local');
 const { BugMonitor } = require('./debug/monitor');
+const { INDEX_VERSION } = require('./constants');
 
 global._ = require('underscore');
-
 
 async function main() {
     // first parse args
@@ -41,6 +41,7 @@ async function main() {
 
     const config_name = argv.config;
     console.log(`config name: ${config_name}`);
+    console.log(`index version: ${INDEX_VERSION}`);
 
     // first load config
     const config_path = path.resolve(__dirname, `../config/${config_name}.js`);
@@ -146,7 +147,7 @@ async function run(config, mode) {
         console.error = function (error) {
             global.bug_monitor.report(new Error(error));
             error_fn(error);
-        }
+        };
     }
 
     const promise_list = [];

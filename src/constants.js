@@ -1,3 +1,5 @@
+const INDEX_VERSION = '0.5.0';
+
 // sqlite db file name
 const SYNC_STATE_DB_FILE = 'sync_state.db';
 const INDEX_STATE_DB_FILE = 'index_state.db';
@@ -43,6 +45,8 @@ const DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD = 32;
 const DIFFICULTY_CHANT_BLOCK_THRESHOLD = 32;
 
 module.exports = {
+    INDEX_VERSION,
+
     SYNC_STATE_DB_FILE,
     INDEX_STATE_DB_FILE,
     TOKEN_INDEX_DB_FILE,
