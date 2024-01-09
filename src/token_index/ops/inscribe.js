@@ -55,6 +55,44 @@ class InscribeDataOperator {
      * @returns {Promise<{ret: number}>}
      */
     async on_transfer(inscription_transfer_item) {
+        const { ret, state } = await this._on_transfer(inscription_transfer_item);
+        if (ret !== 0) {
+            return { ret };
+        }
+
+        assert(_.isNumber(state), `invalid state ${state}`);
+        assert(_.isString(inscription_transfer_item.hash), `invalid hash`);
+
+        // save the record
+        const { ret: add_record_ret } =
+            await this.storage.add_inscribe_data_transfer_record(
+                inscription_transfer_item.inscription_id,
+                inscription_transfer_item.hash,
+                inscription_transfer_item.block_height,
+                inscription_transfer_item.timestamp,
+                inscription_transfer_item.txid,
+                inscription_transfer_item.satpoint.to_string(),
+                inscription_transfer_item.from_address,
+                inscription_transfer_item.to_address,
+                inscription_transfer_item.value,
+                state,
+            );
+        if (add_record_ret !== 0) {
+            console.error(
+                `failed to record user transfer data op ${inscription_transfer_item.inscription_id} ${hash}`,
+            );
+            return { ret: add_record_ret };
+        }
+
+        return { ret: 0 };
+    }
+
+    /**
+     * @comment processed on the inscription transferred
+     * @param {InscriptionTransferItem} inscription_transfer_item
+     * @returns {Promise<{ret: number, state: number}>}
+     */
+    async _on_transfer(inscription_transfer_item) {
         assert(
             inscription_transfer_item instanceof InscriptionTransferItem,
             `invalid inscribe data transfer item`,
@@ -82,7 +120,7 @@ class InscribeDataOperator {
             console.error(
                 `inscribe record not exists ${inscription_transfer_item.inscription_id}`,
             );
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.RECORD_NOT_FOUND };
         }
 
         assert(
@@ -90,6 +128,7 @@ class InscribeDataOperator {
             `invalid inscribe record hash ${inscription_transfer_item.inscription_id}`,
         );
         const hash = record.hash;
+        inscription_transfer_item.hash = hash;
 
         // then query current inscribed data
         const { ret: get_inscribe_data_ret, data } =
@@ -102,11 +141,11 @@ class InscribeDataOperator {
         }
 
         if (data == null) {
-            // FIXME should not reach here
-            console.error(
+            // the inscribe must be failed! so we cant find the inscribe data
+            console.warn(
                 `inscribe data not exists ${inscription_transfer_item.inscription_id} ${hash}`,
             );
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
         }
 
         // check if the block_height is greater than the current block_height
@@ -118,7 +157,7 @@ class InscribeDataOperator {
             console.error(
                 `invalid inscribe data block_height ${inscription_transfer_item.inscription_id} ${hash} ${inscription_transfer_item.block_height} < ${data.block_height}`,
             );
-            return { ret: 0 };
+            return { ret: 0, state: InscriptionOpState.INVALID_STATE };
         }
 
         // update owner with transfer_inscribe_data_owner
@@ -136,7 +175,7 @@ class InscribeDataOperator {
                 console.error(
                     `transfer inscribe data owner but not matched ${inscription_transfer_item.inscription_id} ${hash}`,
                 );
-                return { ret: 0 };
+                return { ret: 0, state: InscriptionOpState.INVALID_STATE };
             } else {
                 console.error(
                     `failed to update inscribe data owner ${inscription_transfer_item.inscription_id} ${hash}`,
@@ -145,32 +184,11 @@ class InscribeDataOperator {
             }
         }
 
-        // save the record
-        const { ret: add_record_ret } =
-            await this.storage.add_inscribe_data_transfer_record(
-                inscription_transfer_item.inscription_id,
-                hash,
-                inscription_transfer_item.block_height,
-                inscription_transfer_item.timestamp,
-                inscription_transfer_item.txid,
-                inscription_transfer_item.satpoint.to_string(),
-                inscription_transfer_item.from_address,
-                inscription_transfer_item.to_address,
-                inscription_transfer_item.value,
-                0,
-            );
-        if (add_record_ret !== 0) {
-            console.error(
-                `failed to record user transfer data op ${inscription_transfer_item.inscription_id} ${hash}`,
-            );
-            return { ret: add_record_ret };
-        }
-
         console.log(
             `transfer inscribe data owner ${inscription_transfer_item.inscription_id} ${hash} ${data.address} -> ${inscription_transfer_item.to_address}`,
         );
 
-        return { ret: 0 };
+        return { ret: 0, state: InscriptionOpState.OK };
     }
 
     /**

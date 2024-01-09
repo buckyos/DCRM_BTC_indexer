@@ -38,6 +38,10 @@ const InscriptionOpState = {
     HAS_NO_VALID_CHANT: 11,
 
     OUT_ADDRESS_IS_NOT_OWNER: 12,
+
+    RECORD_NOT_FOUND: 13,
+
+    INVALID_STATE: 14,
 };
 
 
