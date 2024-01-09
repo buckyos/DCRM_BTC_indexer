@@ -2,7 +2,7 @@ require('./global');
 const Koa = require('koa');
 const Router = require('koa-router');
 const cors = require('koa-cors');
-const logger = require('koa-logger');
+const koaLogger = require('koa-logger');
 const bodyParser = require('koa-bodyparser');
 const { InscribeService } = require('./biz/inscribeService');
 const { MintService } = require('./biz/mintService');
@@ -54,7 +54,7 @@ class Service {
             }
         }));
 
-        app.use(logger());
+        app.use(koaLogger());
         app.use(cors());
 
         app.use(this.m_router.routes());
@@ -82,8 +82,9 @@ function main() {
     assert(fs.existsSync(configPath), `config file not found: ${configPath}`);
 
     config.init(configPath);
+    logger.level = config.service.log_level || 'info';
+
     store.init(config);
-    logger.setLevel(config.service.log_level || 'info');
 
     const service = new Service(config);
     service.start();
