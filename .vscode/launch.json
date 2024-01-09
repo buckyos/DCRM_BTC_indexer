@@ -88,7 +88,6 @@
                 "${workspaceFolder}/**/*.js"
             ]
         },
-        ,
         {
             "type": "node",
             "request": "launch",
@@ -101,6 +100,22 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/src/service/main.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "cli",
+            "args": [
+                "--config",
+                "test"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/tools/cli.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
