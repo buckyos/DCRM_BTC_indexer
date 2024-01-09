@@ -1,18 +1,9 @@
 const { blog } = require('./blog/init.js');
-const path = require('path');
-const fs = require('fs');
+const { Util } = require('../util.js');
 
 class LogHelper {
     constructor(config) {
-        const base_dir = process.platform === 'win32' ? 'C:\\logs' : '/var/log';
-        let log_dir = path.join(base_dir, 'dcrm');
-        if (config.isolate) {
-            log_dir = path.join(log_dir, config.isolate);
-        }
-
-        if (!fs.existsSync(log_dir)) {
-            fs.mkdirSync(log_dir, { recursive: true });
-        }
+        const log_dir = Util.get_log_dir(config);
 
         blog.enable_file_log({
             name: 'dcrm_btc_index',
@@ -25,7 +16,7 @@ class LogHelper {
     enable_console_target(enable) {
         blog.enableConsoleTarget(enable);
     }
-    
+
     path_console() {
         blog.patch_console();
     }
@@ -34,7 +25,6 @@ class LogHelper {
         blog.setLevel(level);
     }
 }
-
 
 module.exports = {
     LogHelper,
