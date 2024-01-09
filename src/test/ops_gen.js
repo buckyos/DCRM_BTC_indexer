@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {Util} = require('../util');
+const { Util } = require('../util');
 
 class HashCollector {
     constructor() {
@@ -27,9 +27,8 @@ class HashCollector {
 
 const hash_collector = new HashCollector();
 
-class InscribeDataOpGenerator{
-    constructor() {
-    }
+class InscribeDataOpGenerator {
+    constructor() {}
 
     // gen hash 32bytes len with random data, in hex code string
     /**
@@ -50,12 +49,11 @@ class InscribeDataOpGenerator{
     gen_random_hash_with_check_valid(txid) {
         assert(_.isString(txid), `invalid txid ${txid}`);
 
-        
         // eslint-disable-next-line no-constant-condition
-        while(true) {
-            const hash = this.gen_random_hash()
+        while (true) {
+            const hash = this.gen_random_hash();
 
-            if (Util.check_inscribe_hash_and_txid(hash, txid, 32)) {
+            if (Util.check_inscribe_hash_and_address(hash, txid, 32)) {
                 return hash;
             }
         }
@@ -85,8 +83,7 @@ class InscribeDataOpGenerator{
 }
 
 class SetPriceOpGenerator {
-    constructor() {
-    }
+    constructor() {}
 
     gen_content(ph) {
         if (ph == null) {

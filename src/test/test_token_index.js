@@ -9,9 +9,9 @@ const assert = require('assert');
 const { TokenIndex } = require('../index/token');
 const { ETHIndex } = require('../eth/index');
 const { Config } = require('../config');
-const {Util} = require('../util');
+const { Util } = require('../util');
 
-class InscribeDataOpGenerator{
+class InscribeDataOpGenerator {
     constructor(address) {
         this.address = address;
     }
@@ -35,12 +35,11 @@ class InscribeDataOpGenerator{
     gen_random_hash_with_check_valid(txid) {
         assert(_.isString(txid), `invalid txid ${txid}`);
 
-        
         // eslint-disable-next-line no-constant-condition
-        while(true) {
-            const hash = this.gen_random_hash()
+        while (true) {
+            const hash = this.gen_random_hash();
 
-            if (Util.check_inscribe_hash_and_txid(hash, txid, 32)) {
+            if (Util.check_inscribe_hash_and_address(hash, txid, 32)) {
                 return hash;
             }
         }
@@ -65,7 +64,6 @@ class TestInscriptionsGenerator {
         assert(_.isObject(config), `invalid config`);
         this.config = config;
     }
-
 
     // gen some random inscriptions
     gen() {

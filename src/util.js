@@ -82,6 +82,21 @@ class Util {
         return { ret: 0, dir };
     }
 
+    static get_log_dir(config) {
+        assert(_.isObject(config), `config should be object ${config}`);
+
+        const base_dir = process.platform === 'win32' ? 'C:\\logs' : '/var/log';
+        let log_dir = path.join(base_dir, 'dcrm');
+        if (config.isolate) {
+            log_dir = path.join(log_dir, config.isolate);
+        }
+
+        if (!fs.existsSync(log_dir)) {
+            fs.mkdirSync(log_dir, { recursive: true });
+        }
+
+        return log_dir;
+    }
     /**
      *
      * @param {string} id
@@ -376,7 +391,7 @@ class Util {
      * @param {string} txid in hex
      * @returns {boolean}
      */
-    static check_inscribe_hash_and_txid(hash, txid, hash_threshold) {
+    static check_inscribe_hash_and_address(hash, txid, hash_threshold) {
         assert(_.isString(hash), `hash should be string ${hash}`);
         assert(_.isString(txid), `txid should be string ${txid}`);
         assert(

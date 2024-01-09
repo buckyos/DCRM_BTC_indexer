@@ -256,10 +256,9 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.ALREADY_EXISTS };
         }
 
-
         // 3. check hash condition if satisfied with user's address
         if (
-            !Util.check_inscribe_hash_and_txid(
+            !Util.check_inscribe_hash_and_address(
                 hash,
                 inscription_item.address,
                 this.inscribe_data_hash_threshold,
@@ -364,7 +363,10 @@ class InscribeDataOperator {
                 op.state === InscriptionOpState.OK &&
                 op.inscription_item.content.ph === hash
             ) {
-                assert(_.isNumber(op.hash_distance), `invalid hash distance ${op.hash_distance}`);
+                assert(
+                    _.isNumber(op.hash_distance),
+                    `invalid hash distance ${op.hash_distance}`,
+                );
                 if (op.hash_distance <= distance) {
                     // competition failed
                     console.warn(
