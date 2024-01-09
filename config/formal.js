@@ -41,7 +41,7 @@ const INDEX_CONFIG = {
     },
 
     service: {
-        port: 8080,
+        port: 13040,
         log_level: 'info',
     },
 
