@@ -107,6 +107,13 @@ class ETHIndex {
 
         const genesis_block_height = this.config.eth.genesis_block_height;
 
+        let percent;
+        if (eth > local) {
+            percent = ((local - genesis_block_height) / (eth - genesis_block_height)) * 100;
+        } else {
+            percent = 100;
+        }
+
         return {
             ret: 0,
 
@@ -114,6 +121,7 @@ class ETHIndex {
                 eth,
                 local,
                 genesis_block_height,
+                percent,
             },
         };
     }

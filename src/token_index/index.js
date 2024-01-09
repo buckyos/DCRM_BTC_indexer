@@ -147,12 +147,12 @@ class TokenIndexExecutor {
         }
 
         let index_percent;
-        if (btc_local_height <= this.current_block_height) {
+        if (min_height <= this.current_block_height) {
             index_percent = 100;
         } else {
             index_percent =
                 ((this.current_block_height - genesis_block_height) /
-                    (btc_local_height - genesis_block_height)) *
+                    (min_height - genesis_block_height)) *
                 100;
         }
 
