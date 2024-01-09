@@ -231,7 +231,9 @@ class MintStore {
                 return makeSuccessReponse(amount);
             }
 
-            return makeReponse(ERR_CODE.NOT_FOUND);
+            return makeSuccessReponse('0');
+
+            //return makeReponse(ERR_CODE.NOT_FOUND);
         } catch (error) {
             logger.error('queryBalanceByAddress failed:', error);
 
