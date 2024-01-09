@@ -76,7 +76,9 @@
             "name": "main",
             "args": [
                 "--config",
-                "formal"
+                "formal",
+                "--mode",
+                "both",
             ],
             "skipFiles": [
                 "<node_internals>/**"

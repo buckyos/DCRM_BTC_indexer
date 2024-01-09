@@ -24,7 +24,7 @@ const INDEX_CONFIG = {
     eth: {
         // rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
         rpc_url: 'http://127.0.0.1:8545',
-        genesis_block_height: 16757234,
+        genesis_block_height: 18816888,
         contract_address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
         contract_abi: 'contract.json',
 
@@ -41,7 +41,7 @@ const INDEX_CONFIG = {
     },
 
     service: {
-        port: 13020,
+        port: 8080,
     },
 
     token: {
@@ -49,8 +49,10 @@ const INDEX_CONFIG = {
             foundation_address: '0x100',
         },
 
-        genesis_block_height: 779832,
-        token_name: 'ordi',
+        genesis_block_height: 821884,
+        token_name: 'dmcs',
+        //genesis_block_height: 779832,
+        //token_name: 'ordi',
     }
 };
 
