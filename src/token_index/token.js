@@ -132,6 +132,11 @@ class TokenBlockIndex {
                 error.stack,
             );
             process_result = -1;
+
+            // report bug if global bug monitor is set
+            if (global.bug_monitor) {
+                global.bug_monitor.report(error);
+            }
         } finally {
             const is_success = process_result === 0;
 

@@ -10,8 +10,10 @@ const { LogHelper } = require('./log/log');
 const lockfile = require('proper-lockfile');
 const { Util } = require('./util');
 const { IndexLocalInterface } = require('./interface/local');
+const { BugMonitor } = require('./debug/monitor');
 
 global._ = require('underscore');
+
 
 async function main() {
     // first parse args
@@ -45,6 +47,10 @@ async function main() {
     assert(fs.existsSync(config_path), `config file not found: ${config_path}`);
     const config = new Config(config_path);
 
+    // init bug monitor
+    const monitor = new BugMonitor(config.config);
+    global.bug_monitor = monitor;
+
     if (argv['reset']) {
         reset(config.config, argv.mode);
         return { ret: 0 };
@@ -66,7 +72,12 @@ function reset(config, mode) {
 }
 
 function reset_sync(config) {
-    const {SYNC_STATE_DB_FILE, ETH_INDEX_DB_FILE, INSCRIPTION_DB_FILE, TRANSFER_DB_FILE } = require('./constants');
+    const {
+        SYNC_STATE_DB_FILE,
+        ETH_INDEX_DB_FILE,
+        INSCRIPTION_DB_FILE,
+        TRANSFER_DB_FILE,
+    } = require('./constants');
 
     // delete all the db files above
 
@@ -101,7 +112,7 @@ function reset_sync(config) {
 }
 
 function reset_index(config) {
-    const {INDEX_STATE_DB_FILE, TOKEN_INDEX_DB_FILE} = require('./constants');
+    const { INDEX_STATE_DB_FILE, TOKEN_INDEX_DB_FILE } = require('./constants');
 
     const { ret: get_dir_ret, dir } = Util.get_data_dir(config);
     if (get_dir_ret !== 0) {
@@ -130,6 +141,14 @@ async function run(config, mode) {
     log.enable_console_target(true);
     log.set_level('info');
 
+    if (global.bug_monitor) {
+        const error_fn = console.error;
+        console.error = function (error) {
+            global.bug_monitor.report(new Error(error));
+            error_fn(error);
+        }
+    }
+
     const promise_list = [];
     if (mode === 'sync' || mode === 'both') {
         const executor = new InscriptionIndexExecutor(config);
@@ -154,7 +173,7 @@ async function run(config, mode) {
         const { ret: server_ret } = await server.start();
         if (server_ret !== 0) {
             console.error(`failed to start local interface`);
-            return { ret: server_ret }; 
+            return { ret: server_ret };
         }
 
         promise_list.push(executor.run());

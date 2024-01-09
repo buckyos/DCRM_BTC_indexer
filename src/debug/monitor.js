@@ -1,43 +1,9 @@
 const fs = require('fs');
-const path = require('path');
-const assert = require('assert');
-const {Util} = require('../util.js');
-const moment = require('moment');
 
-class BugHandler {
-    handle(error) {
-        throw new Error('Not implemented');
-    }
-}
-
-class DefaultBugHandler extends BugHandler {
-    constructor(config) {
-        super();
-
-        const log_dir = Util.get_log_dir(config);
-        const error_dir = path.join(log_dir, 'errors');
-        if (!fs.existsSync(error_dir)) {
-            fs.mkdirSync(error_dir, { recursive: true });
-        }
-
-        const now = new Date();
-        const ts = moment(now).format('YYYY-MM-DD HH:mm:ss.SSS');
-
-        this.error_file = path.join(error_dir, `error_${process.pid}_${ts}.log`);
-    }
-
-    handle(error) {
-        assert(_.isString(error), `error should be string`);
-
-        try{
-            // append to error file
-            fs.appendFileSync(this.error_file, error)
-        } catch (error) {
-            console.error(`failed to append error to file: ${error}`);
-        }
-    }
-}
-
+const os = require('os');
+const { BugHandler } = require('./bug_handler.js');
+const { PostNotifier } = require('./notify.js');
+const { DefaultBugHandler } = require('./bug_handler.js');
 
 class BugMonitor {
     constructor(config) {
@@ -48,6 +14,10 @@ class BugMonitor {
         const user_handler = this._load_bug_handler();
         if (user_handler) {
             this.handlers.push(user_handler);
+        }
+
+        if (config.monitor && config.monitor.notify_url) {
+            this.handlers.push(new PostNotifier(config.monitor.notify_url));
         }
 
         // process the uncaught exception
@@ -63,9 +33,9 @@ class BugMonitor {
 
     // load user bug handler if exists
     _load_bug_handler() {
-        if (fs.existsSync('./bug_handler.js')) {
+        if (fs.existsSync('./user_handler.js')) {
             try {
-                const CustomBugHandler = require('./bug_handler');
+                const CustomBugHandler = require('./user_handler.js');
                 return new CustomBugHandler(this.config);
             } catch (error) {
                 console.error(`failed to load bug handler: ${error}`);
@@ -78,20 +48,21 @@ class BugMonitor {
 
     // called if the is an error that should notify the user
     report(error) {
-        const info = {
+        const content = {
+            service:'dcrm-btc-index',
+            hostname: os.hostname(),
+            network: this.config.btc.network,
             message: error.message,
             stack: error.stack,
         };
 
-        const info_str = JSON.stringify(info);
-
         for (const handler of this.handlers) {
-            handler.handle(info_str);
+            handler.handle(content);
         }
     }
 }
 
-
 module.exports = {
-    BugMonitor,BugHandler,
+    BugMonitor,
+    BugHandler,
 };
