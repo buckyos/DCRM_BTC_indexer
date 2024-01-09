@@ -37,7 +37,7 @@ class IndexCli {
             const response = await axios.get(`http://127.0.0.1:${this.port}/status`);
             return response.data;
         } catch (error) {
-            console.error(error);
+            console.error(`failed to fetch status: ${error.code} ${error.cause}`);
         }
     }
     
