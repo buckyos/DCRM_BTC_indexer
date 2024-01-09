@@ -26,12 +26,12 @@ class Config {
         return this.m_config.btc;
     }
 
-    get servicePort() {
+    get service() {
         if (!this.m_config) {
             throw new Error(`config not loaded`);
         }
 
-        return this.m_config.service.port;
+        return this.m_config.service;
     }
 
     get dataDir() {

@@ -42,7 +42,7 @@ class Service {
     }
 
     async start() {
-        const listenPort = config.servicePort;
+        const listenPort = this.m_config.service.port;
 
         this._register();
 
@@ -83,6 +83,7 @@ function main() {
 
     config.init(configPath);
     store.init(config);
+    logger.setLevel(config.service.log_level || 'info');
 
     const service = new Service(config);
     service.start();

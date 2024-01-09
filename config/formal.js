@@ -20,7 +20,7 @@ const INDEX_CONFIG = {
         },
     },
 
-    
+
     eth: {
         // rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
         rpc_url: 'http://127.0.0.1:8545',
@@ -42,6 +42,7 @@ const INDEX_CONFIG = {
 
     service: {
         port: 8080,
+        log_level: 'info',
     },
 
     token: {

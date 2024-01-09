@@ -40,6 +40,7 @@ const INDEX_CONFIG = {
 
     service: {
         port: 8081,
+        log_level: 'debug',
     },
 
     token: {
@@ -51,7 +52,7 @@ const INDEX_CONFIG = {
         token_name: 'dmcs',
 
         // difficulty for token ops
-        difficulty : {
+        difficulty: {
             lucky_mint_block_threshold: 4,
             inscribe_data_hash_threshold: 1,
             chant_block_threshold: 1,
