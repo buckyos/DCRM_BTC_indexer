@@ -222,7 +222,7 @@ class TokenIndexExecutor {
         }
 
         if (collector.is_empty()) {
-            console.debug(
+            console.info(
                 `indexing inscriptions and transfers at block ${block_height} with empty inscriptions and transfers`,
             );
 

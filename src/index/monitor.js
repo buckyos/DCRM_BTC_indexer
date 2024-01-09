@@ -282,8 +282,9 @@ class InscriptionTransferMonitor {
             const item = inscription_transfer_items[i];
             const outpoint_str = item.satpoint.outpoint.to_string();
 
-            const ret = this.inscriptions.delete(outpoint_str);
-            assert(ret, `failed to remove inscription from transfer monitor ${item.inscription_id} ${outpoint_str}`);
+            this.inscriptions.delete(outpoint_str);
+            // one outpoint may have more than one inscription transfer record, so we should not check the return value
+            //assert(ret, `failed to remove inscription from transfer monitor ${item.inscription_id} ${outpoint_str}`);
 
             console.log(`remove inscription from transfer monitor ${item.inscription_id} ${outpoint_str}`);
         }
