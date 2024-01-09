@@ -421,6 +421,14 @@ class Util {
         const distance = Math.abs(hash_number - address_number);
         return distance;
     }
+
+    /**
+     * @comment get now timestamp in seconds in unix time
+     * @returns {number}
+     */
+    static get_now_as_timestamp() {
+        return Math.floor(Date.now() / 1000);
+    }
 }
 
 class BigNumberUtil {

@@ -9,6 +9,7 @@ const { Config } = require('./config');
 const { LogHelper } = require('./log/log');
 const lockfile = require('proper-lockfile');
 const { Util } = require('./util');
+const { IndexLocalInterface } = require('./interface/local');
 
 global._ = require('underscore');
 
@@ -147,6 +148,13 @@ async function run(config, mode) {
         if (ret !== 0) {
             console.error(`failed to init token index executor`);
             return { ret };
+        }
+
+        const server = new IndexLocalInterface(config);
+        const { ret: server_ret } = await server.start();
+        if (server_ret !== 0) {
+            console.error(`failed to start local interface`);
+            return { ret: server_ret }; 
         }
 
         promise_list.push(executor.run());

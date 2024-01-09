@@ -54,7 +54,11 @@ const INDEX_CONFIG = {
         token_name: 'dmcs',
         //genesis_block_height: 779832,
         //token_name: 'ordi',
-    }
+    },
+
+    interface: {
+        port: 13001,
+    },
 };
 
 module.exports = INDEX_CONFIG;

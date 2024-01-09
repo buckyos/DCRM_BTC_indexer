@@ -58,6 +58,10 @@ const INDEX_CONFIG = {
             chant_block_threshold: 1,
         }
     },
+
+    interface: {
+        port: 13002,
+    },
 };
 
 module.exports = INDEX_CONFIG;
