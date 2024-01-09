@@ -12,7 +12,7 @@ const multi_bar = new ProgressBar.MultiBar(
     {
         clearOnComplete: false,
         hideCursor: true,
-        format: 'progress [{bar}] | ETA: {eta}s | {name} | {local}/{current} | {value}/{total}',
+        format: '[{name}] [{bar}] | ETA: {eta}s | {local}/{current} | {percent} | {value}/{total}',
     },
     ProgressBar.Presets.shades_grey,
 );
@@ -42,31 +42,35 @@ class IndexCli {
     }
     
     update_progress(status) {
-        // const sync_percent = parseFloat(status.sync.percent);
-        // const index_percent = parseFloat(status.index.percent);
+        const sync_percent = parseFloat(status.sync.percent);
+        const index_percent = parseFloat(status.index.percent);
+        const eth_percent = parseFloat(status.eth.percent);
     
         sync_bar.setTotal(status.sync.btc - status.genesis_block_height);
         sync_bar.update(status.sync.local - status.genesis_block_height, {
-            name: 'btc sync',
+            name: 'BTC SYNC  ',
             local: status.sync.local,
             current: Math.min(status.sync.btc, status.sync.ord),
+            percent: `${sync_percent.toFixed(2)}%`,
         });
         // console.log(`Sync height: ${status.sync.local}`);
     
         index_bar.setTotal(status.index.sync - status.genesis_block_height);
     
         index_bar.update(status.index.local - status.genesis_block_height, {
-            name: 'token index',
+            name: 'DMCs INDEX',
             local: status.index.local,
             current: status.index.sync,
+            percent: `${index_percent.toFixed(2)}%`,
         });
         // console.log(`Index height: ${status.index.local}`);
     
         eth_bar.setTotal(status.eth.eth - status.eth.genesis_block_height);
         eth_bar.update(status.eth.local - status.eth.genesis_block_height, {
-            name: 'eth sync',
+            name: 'ETH SYNC  ',
             local: status.eth.local,
             current: status.eth.eth,
+            percent: `${eth_percent.toFixed(2)}%`,
         });
     }
     
