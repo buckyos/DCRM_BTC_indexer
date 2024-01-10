@@ -358,7 +358,8 @@ class MintStore {
             const response = await fetch(url);
 
             if (response.status != 200) {
-                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response.body);
+                log.info(response)
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response);
             }
 
             const json = await response.json();
