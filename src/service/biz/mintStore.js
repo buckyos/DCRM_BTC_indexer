@@ -335,6 +335,11 @@ class MintStore {
         try {
             const url = `http://localhost:${this.m_config.localInterface.port}/hash-weight/${hash}`;
             const response = await fetch(url);
+
+            if (response.status != 200) {
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response.body);
+            }
+
             const json = await response.json();
             console.log(json);
 
@@ -351,6 +356,11 @@ class MintStore {
         try {
             const url = `http://localhost:${this.m_config.localInterface.port}/status`;
             const response = await fetch(url);
+
+            if (response.status != 200) {
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response.body);
+            }
+
             const json = await response.json();
             console.log(json);
 
