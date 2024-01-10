@@ -156,7 +156,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -204,7 +204,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -237,7 +237,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -289,7 +289,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -337,7 +337,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -370,7 +370,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -421,7 +421,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -467,7 +467,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -500,7 +500,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -566,7 +566,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -611,7 +611,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -662,7 +662,7 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: 需要查询的记录状态 success or failed or all，默认 all string
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
 
@@ -836,6 +836,154 @@ const InscriptionOpState = {
     }
     ```
 
+#### 根据地址获取转账记录
+
+    /transfer_by_address/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    address: 地址，无论是发起地址还是接受地址，都会返回
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            inscription_id,         // 铭文id
+            stage,                  // 阶段
+            genesis_block_height,   // 铭文构造块号
+            genesis_timestamp,      // 铭文构造时间
+            genesis_txid,           // 构造交易id
+            from_address,           // 发起地址
+            content TEXT,           // 铭文内容
+            block_height,           // 打包块号
+            timestamp,              // 打包时间
+            txid,                   // 打包交易
+            to_address,             // 接收地址
+            state                   // 转账状态
+        }
+    }
+    ```  
+
+#### 根据tx获取转账记录
+
+    /transfer_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid: 交易id
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: 同上
+    }
+    ```  
+
+#### 根据数据hash获取铭刻数据的转移记录
+
+    /inscribe_data_transfer_by_hash/:hash/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    hash: 数据hash
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            inscription_id,         // 铭文id
+            hash,                   // 数据hash
+            block_height,           // 块号
+            timestamp,              // 时间
+            txid,                   // 交易
+            satpoint,               //
+            from_address,           // 发起地址
+            to_address,             // 接收地址
+            value,                  // 金额
+            state,                  // 状态
+        }
+    }
+    ```  
+
+#### 根据地址获取铭刻数据的转移记录
+
+    /inscribe_data_transfer_by_address/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    address: 地址，无论是发起地址还是接受地址，都会返回
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: 同上
+    }
+    ```  
+
+#### 根据tx获取铭刻数据的转移记录
+
+    /inscribe_data_transfer_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid: 交易id
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: 同上
+    }
+    ```  
+
 #### 根据txid搜索：
 
     /search/:txid
@@ -857,7 +1005,7 @@ const InscriptionOpState = {
             ...                 // 其他数据参考上面对应数据
         }
     }
-    ```
+    ```  
     type的取值为下列其中一个，代表对应类型的交易:  
     mint            - mint  
     resonance       - 共鸣  
