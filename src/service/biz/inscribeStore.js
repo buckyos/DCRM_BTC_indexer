@@ -1,6 +1,7 @@
 const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
+const { check_and_fix_mixhash } = require('../../util');
 
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
@@ -13,6 +14,13 @@ class InscribeStore {
         if (!hash) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
+
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        hash = mixhash;
 
         try {
             const stmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash = ?`);
