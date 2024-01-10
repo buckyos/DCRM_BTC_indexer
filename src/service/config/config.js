@@ -55,12 +55,12 @@ class Config {
         return this.m_config.db;
     }
 
-    get config() {
+    get localInterface() {
         if (!this.m_config) {
             throw new Error(`config not loaded`);
         }
 
-        return this.m_config;
+        return this.m_config.interface;
     }
 }
 
