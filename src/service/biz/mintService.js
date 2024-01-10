@@ -95,11 +95,11 @@ class MintService {
     async _getHashWeight(ctx) {
         const hash = ctx.params.hash;
 
-        return this.m_store.queryHashWeight(hash);
+        return await this.m_store.queryHashWeight(hash);
     }
 
     async _getIndexerStateDetail(ctx) {
-        return this.m_store.queryIndexerStateDetail();
+        return await this.m_store.queryIndexerStateDetail();
     }
 
     async _getMingProgress(ctx) {

@@ -330,7 +330,7 @@ class MintStore {
         }
     }
 
-    queryHashWeight(hash) {
+    async queryHashWeight(hash) {
         // send a local http request to get hash weight
         try {
             const url = `http://localhost:${this.m_config.interface.port}/hash-weight/${hash}`;
@@ -347,7 +347,7 @@ class MintStore {
         }
     }
 
-    queryIndexerStateDetail() {
+    async queryIndexerStateDetail() {
         try {
             const url = `http://localhost:${this.m_config.interface.port}/status`;
             const response = await fetch(url);
