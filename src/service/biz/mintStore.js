@@ -5,7 +5,7 @@ const {
     InscriptionStage,
     MintType
 } = require('../../token_index/ops/state');
-const { BigNumberUtil } = require('../../util');
+const { BigNumberUtil, Util } = require('../../util');
 const {
     TOKEN_MINT_POOL_INIT_AMOUNT,
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
