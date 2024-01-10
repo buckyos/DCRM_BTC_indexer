@@ -19,6 +19,8 @@ log4js.configure({
     },
 });
 
+global._ = require('underscore');
+
 const logger = log4js.getLogger();
 global.logger = logger;
 
