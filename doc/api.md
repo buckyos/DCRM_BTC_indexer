@@ -303,20 +303,20 @@ const InscriptionOpState = {
             count,              // 总数
             list: [
                 {
-                    hash,               // 数据hash
-                    inscription_id,     // 铭文id
-                    address,            // 共鸣地址
-                    content,            // 铭文内容
-                    owner_bouns,        // 数据owner奖励 string
-                    service_charge,     // 手续费 string
-                    block_height,       // 共鸣区块
-                    timestamp,          // 共鸣时间
-                    txid,               // transfer txid
-                    stage,              // 共鸣处于哪个阶段 'inscribe' or 'transfer'
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    state,              // 状态码，见统一说明
+                    hash,                   // 数据hash
+                    inscription_id,         // 铭文id
+                    address,                // 共鸣地址
+                    content,                // 铭文内容
+                    owner_bonus,            // 数据owner奖励 string
+                    service_charge,         // 手续费 string
+                    block_height,           // 共鸣区块
+                    timestamp,              // 共鸣时间
+                    txid,                   // transfer txid
+                    stage,                  // 共鸣处于哪个阶段 'inscribe' or 'transfer'
+                    genesis_block_height,   // reveal tx 块号
+                    genesis_timestamp,      // reveal tx 时间
+                    genesis_txid,           // reveal tx id
+                    state,                  // 状态码，见统一说明
                 }
             ]
         }
@@ -863,9 +863,9 @@ const InscriptionOpState = {
         result: {
             inscription_id,         // 铭文id
             stage,                  // 阶段
-            genesis_block_height,   // 铭文构造块号
-            genesis_timestamp,      // 铭文构造时间
-            genesis_txid,           // 构造交易id
+            genesis_block_height,   // reveal tx块号
+            genesis_timestamp,      // reveal tx时间
+            genesis_txid,           // reveal txid
             from_address,           // 发起地址
             content TEXT,           // 铭文内容
             block_height,           // 打包块号
