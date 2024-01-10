@@ -221,6 +221,39 @@ const InscriptionOpState = {
     }
     ```
 
+#### 根据hash和地址获取铭刻记录：
+
+    /inscribe_by_hash_address/:hash/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    hash: 数据hash
+
+    address: 查询地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list:               // item说明同上
+        }
+    }
+    ```
+
 #### 根据交易hash获取铭刻记录：
 
     /inscribe_by_tx/:txid
@@ -297,6 +330,39 @@ const InscriptionOpState = {
     GET
 
     参数
+
+    address: 地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list                // 列表，item数据格式同上
+        }
+    }
+    ```
+
+#### 根据hash和address获取共鸣记录：
+
+    /resonance_by_hash_address/:hash/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    hash: 数据hash
 
     address: 地址
 
@@ -787,11 +853,19 @@ const InscriptionOpState = {
         err: 0,
         msg: "错误信息",
         result: {
-            type,               // mint or resonance or chant or transfer or inscribe or set_price
+            type,               // string
             ...                 // 其他数据参考上面对应数据
         }
     }
     ```
+    type的取值为下列其中一个，代表对应类型的交易:  
+    mint            - mint  
+    resonance       - 共鸣  
+    chant           - 吟唱  
+    transfer        - 转移  
+    inscribe        - 铭刻  
+    set_price       - 设置共鸣价格  
+    data_transfer   - 转移数据所有权
 
 #### 查询mint进度
 
