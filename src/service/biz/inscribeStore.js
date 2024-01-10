@@ -11,7 +11,7 @@ class InscribeStore {
 
     queryInscriptionByHash(hash) {
         if (!hash) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         try {
@@ -35,7 +35,7 @@ class InscribeStore {
 
     queryInscriptionByAddress(address, limit, offset, order) {
         if (!address) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -73,7 +73,7 @@ class InscribeStore {
     //[begin, end)
     queryInscriptionByBlock(beginBlock, endBlock, limit, offset, order) {
         if (!beginBlock) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -124,7 +124,7 @@ class InscribeStore {
 
     queryInscribeByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -136,9 +136,9 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
                 WHERE hash = ?`;
             if (state == SUCCESS) {
-                sql += " AND state = 0";
+                sql += ` AND state = ${InscriptionOpState.OK}`;
             } else if (state == FAILED) {
-                sql += " AND state != 0";
+                sql += ` AND state != ${InscriptionOpState.OK}`;
             }
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
@@ -147,9 +147,9 @@ class InscribeStore {
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.INSCRIBE_RECORDS} WHERE hash = ?`;
                 if (state == SUCCESS) {
-                    sql += " AND state = 0";
+                    sql += ` AND state = ${InscriptionOpState.OK}`;
                 } else if (state == FAILED) {
-                    sql += " AND state != 0";
+                    sql += ` AND state != ${InscriptionOpState.OK}`;
                 }
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
@@ -168,7 +168,7 @@ class InscribeStore {
 
     queryInscribeByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -180,9 +180,9 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
                 WHERE address = ?`;
             if (state == SUCCESS) {
-                sql += " AND state = 0";
+                sql += ` AND state = ${InscriptionOpState.OK}`;
             } else if (state == FAILED) {
-                sql += " AND state != 0";
+                sql += ` AND state != ${InscriptionOpState.OK}`;
             }
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
@@ -191,9 +191,9 @@ class InscribeStore {
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.INSCRIBE_RECORDS} WHERE address = ?`;
                 if (state == SUCCESS) {
-                    sql += " AND state = 0";
+                    sql += ` AND state = ${InscriptionOpState.OK}`;
                 } else if (state == FAILED) {
-                    sql += " AND state != 0";
+                    sql += ` AND state != ${InscriptionOpState.OK}`;
                 }
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
@@ -212,7 +212,7 @@ class InscribeStore {
 
     queryInscribeByTx(txid) {
         if (!txid) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         try {
@@ -236,7 +236,7 @@ class InscribeStore {
 
     queryResonanceByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -280,7 +280,7 @@ class InscribeStore {
 
     queryResonanceByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -326,7 +326,7 @@ class InscribeStore {
 
     queryResonanceByTx(txid) {
         if (!txid) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         try {
@@ -351,7 +351,7 @@ class InscribeStore {
 
     queryChantByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -397,7 +397,7 @@ class InscribeStore {
 
     queryChantByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -440,9 +440,56 @@ class InscribeStore {
         }
     }
 
+    queryChantByHashAndAddress(hash, address, limit, offset, state, order) {
+        if (!hash || !address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.CHANT_RECORDS}
+                WHERE hash = ? AND address = ?`;
+            if (state == SUCCESS) {
+                sql += ` AND state = ${InscriptionOpState.OK}`;
+            } else if (state == FAILED) {
+                sql += ` AND state != ${InscriptionOpState.OK}`;
+            }
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(hash, address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql = `SELECT * FROM ${TABLE_NAME.CHANT_RECORDS} WHERE hash = ? AND address = ?`;
+                if (state == SUCCESS) {
+                    sql += ` AND state = ${InscriptionOpState.OK}`;
+                } else if (state == FAILED) {
+                    sql += ` AND state != ${InscriptionOpState.OK}`;
+                }
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(hash, address, limit, offset);
+            }
+
+            logger.debug('queryChantByHashAndAddress:', hash, address, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryChantByHashAndAddress failed:', error);
+
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+
     queryChantByTx(txid) {
         if (!txid) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         try {
@@ -467,7 +514,7 @@ class InscribeStore {
 
     querySetPriceByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -513,7 +560,7 @@ class InscribeStore {
 
     querySetPriceByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -559,7 +606,7 @@ class InscribeStore {
 
     querySetPriceByTx(txid) {
         if (!txid) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         try {

@@ -764,3 +764,65 @@ const InscriptionOpState = {
         }
     }
     ```
+
+#### 根据hash查询hash weight
+
+    /hash_weight/:hash
+
+    GET
+
+    参数
+
+    hash: 公共数据hash
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            mixhash,
+            timestamp,
+            weight,
+            point
+        }
+    }
+    ```
+
+#### 查询index同步详情
+
+    /indexer/state_detail
+
+    GET
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            version: "0.5.0",
+            network: "testnet",
+            genesis_block_height: 2570577,
+            sync: {
+                btc: 2572108,
+                ord: 2572108,
+                local: 2572108,
+                percent: "100.00%"
+            },
+            index: {
+                sync: 2572108,
+                local: 2572108,
+                percent: "100.00%"
+            },
+            eth: {
+                eth: 39218,
+                local: 39218,
+                genesis_block_height: 1,
+                percent: 100
+            }
+        }
+    }
+    ```
