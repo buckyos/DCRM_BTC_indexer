@@ -418,6 +418,54 @@ const InscriptionOpState = {
     }
     ```
 
+### 根据hash和address获取吟唱记录：
+
+    /chant_by_hash_address/:hash/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    hash: 数据hash
+
+    address: 地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: 需要查询的记录状态 success or failed or all，默认 all string
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list: [
+                {
+                    hash,               // 数据hash
+                    inscription_id,     // 铭文id
+                    content,            // 铭文内容
+                    address,            // 吟唱发起人地址
+                    block_height,       // 吟唱区块
+                    timestamp,
+                    user_bouns,         // 吟唱人奖励 string
+                    owner_bouns,        // 数据owner奖励 string
+                    txid,
+                    hash_point,
+                    hash_weight,
+                    state,
+                }
+            ]
+        }
+    }
+    ```
+
 #### 根据交易hash获取吟唱记录：
 
     /chant_by_tx/:txid
