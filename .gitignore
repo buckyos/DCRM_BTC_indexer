@@ -130,3 +130,5 @@ dist
 .pnp.*
 
 src/service/data
+config/formal.js
+config/test.js

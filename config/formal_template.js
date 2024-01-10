@@ -61,7 +61,7 @@ const INDEX_CONFIG = {
     },
 
     monitor: {
-        notify_url: '',
+        // notify_url: '',
     }
 };
 

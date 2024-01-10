@@ -60,7 +60,7 @@
                 "--config",
                 "test",
                 "--mode",
-                "index",
+                "both",
             ],
             "skipFiles": [
                 "<node_internals>/**"
