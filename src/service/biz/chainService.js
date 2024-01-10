@@ -1,4 +1,4 @@
-const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
+const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { BTCClient } = require('../../btc/btc');
 
 class ChainService {
@@ -25,15 +25,15 @@ class ChainService {
             const { ret, height } = await this.m_btcClient.get_latest_block_height();
             if (ret !== 0) {
                 logger.warn('get btc block height failed. ret:', ret);
-                return makeReponse(ret);
+                return makeResponse(ret);
             }
 
-            return makeSuccessReponse(height);
+            return makeSuccessResponse(height);
 
         } catch (error) {
             logger.error('get btc block height failed:', error);
 
-            return makeReponse(ERR_CODE.UNKNOWN_ERROR);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -44,15 +44,15 @@ class ChainService {
             const { ret, tx } = await this.m_btcClient.get_transaction(txid);
             if (ret !== 0) {
                 logger.warn('get btc tx failed. ret:', ret);
-                return makeReponse(ERR_CODE.UNKNOWN_ERROR);
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR);
             }
 
-            return makeSuccessReponse(tx);
+            return makeSuccessResponse(tx);
 
         } catch (error) {
             logger.error('get btc tx failed:', error);
 
-            return makeReponse(ERR_CODE.UNKNOWN_ERROR, error.message);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR, error.message);
         }
     }
 
@@ -62,7 +62,7 @@ class ChainService {
         });
 
         router.get("/eth/block_height", async (ctx) => {
-            ctx.response.body = makeReponse(ERR_CODE.NOT_IMPLEMENTED);
+            ctx.response.body = makeResponse(ERR_CODE.NOT_IMPLEMENTED);
         });
 
         router.get("/btc/tx/:txid", async (ctx) => {

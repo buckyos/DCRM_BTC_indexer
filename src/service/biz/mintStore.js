@@ -1,5 +1,5 @@
 const { store, TABLE_NAME } = require('./store');
-const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
+const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const {
     InscriptionOpState,
     InscriptionStage,
@@ -16,21 +16,13 @@ const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
 
 class MintStore {
-    constructor() { }
-
-    // return null or data
-    queryMintRecordByHash(hash) {
-        // const stmt = store.db.prepare('SELECT * FROM mint WHERE hash = ?');
-        // const ret = stmt.get(hash);
-
-        // logger.debug('queryInscriptionByHash:', hash, "ret:", ret);
-
-        return null;
+    constructor(config) {
+        this.m_config = config;
     }
 
     queryMintRecordByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
         order = order == 'ASC' ? 'ASC' : 'DESC';
@@ -76,15 +68,15 @@ class MintStore {
         } catch (error) {
             logger.error('queryMintRecordByAddress failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
 
-        return makeSuccessReponse({ count, list });
+        return makeSuccessResponse({ count, list });
     }
 
     queryMintRecordByTx(txid) {
         if (!txid) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
         try {
@@ -95,11 +87,11 @@ class MintStore {
 
             logger.debug('queryMintRecordByTx:', txid, 'ret:', ret);
 
-            return ret ? makeSuccessReponse(ret) : makeReponse(ERR_CODE.NOT_FOUND);
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND);
         } catch (error) {
             logger.error('queryMintRecordByTx failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
@@ -137,15 +129,15 @@ class MintStore {
         } catch (error) {
             logger.error('queryLuckyMintRecord failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
 
-        return makeSuccessReponse({ count, list });
+        return makeSuccessResponse({ count, list });
     }
 
     queryTotalMintByTime(beginTime, endTime) {
         if (!beginTime || !endTime) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
         try {
@@ -171,11 +163,11 @@ class MintStore {
                 total,
             );
 
-            return makeSuccessReponse(total);
+            return makeSuccessResponse(total);
         } catch (error) {
             logger.error('queryTotalMintByTime failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
@@ -204,18 +196,18 @@ class MintStore {
                 }
             }
 
-            return makeSuccessReponse(result);
+            return makeSuccessResponse(result);
 
         } catch (error) {
             logger.error('queryBalanceByAddress failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryBalanceByAddress(address) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
         try {
@@ -228,16 +220,16 @@ class MintStore {
                 const amount = ret.amount;
                 logger.debug('queryBalanceByAddress:', address, 'ret:', amount);
 
-                return makeSuccessReponse(amount);
+                return makeSuccessResponse(amount);
             }
 
-            return makeSuccessReponse('0');
+            return makeSuccessResponse('0');
 
-            //return makeReponse(ERR_CODE.NOT_FOUND);
+            //return makeResponse(ERR_CODE.NOT_FOUND);
         } catch (error) {
             logger.error('queryBalanceByAddress failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
@@ -262,11 +254,11 @@ class MintStore {
 
             logger.debug('queryIndexerState: ret:', ret);
 
-            return makeSuccessReponse(ret);
+            return makeSuccessResponse(ret);
         } catch (error) {
             logger.error('queryIndexerState failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
@@ -330,11 +322,44 @@ class MintStore {
 
             logger.debug('queryIncomeByTime: ret:', result);
 
-            return makeSuccessReponse(result);
+            return makeSuccessResponse(result);
         } catch (error) {
             logger.error('queryIncomeByTime failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryHashWeight(hash) {
+        // send a local http request to get hash weight
+        try {
+            const url = `http://localhost:${this.m_config.interface.port}/hash-weight/${hash}`;
+            const response = await fetch(url);
+            const json = await response.json();
+            console.log(json);
+
+            return makeSuccessResponse(json);
+
+        } catch (error) {
+            logger.error('queryHashWeight failed:' error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR, error);
+        }
+    }
+
+    queryIndexerStateDetail() {
+        try {
+            const url = `http://localhost:${this.m_config.interface.port}/status`;
+            const response = await fetch(url);
+            const json = await response.json();
+            console.log(json);
+
+            return makeSuccessResponse(json);
+
+        } catch (error) {
+            logger.error('queryIndexerStateDetail failed:' error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR, error);
         }
     }
 }

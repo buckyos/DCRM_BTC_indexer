@@ -1,5 +1,5 @@
 const { store, TABLE_NAME } = require('./store');
-const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
+const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
 
 const SUCCESS = "SUCCESS";
@@ -9,10 +9,9 @@ class InscribeStore {
     constructor() {
     }
 
-    // return null or data
     queryInscriptionByHash(hash) {
         if (!hash) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         try {
@@ -22,22 +21,21 @@ class InscribeStore {
             logger.debug('queryInscriptionByHash:', hash, "ret:", ret);
 
             if (ret) {
-                return makeSuccessReponse(ret);
+                return makeSuccessResponse(ret);
             }
 
-            return makeReponse(ERR_CODE.NOT_FOUND, "not found");
+            return makeResponse(ERR_CODE.NOT_FOUND, "not found");
 
         } catch (error) {
             logger.error('queryInscriptionByHash failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
-    //return {count, list}
     queryInscriptionByAddress(address, limit, offset, order) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -62,20 +60,20 @@ class InscribeStore {
 
             logger.debug('queryInscriptionByAddress:', address, offset, limit, "ret:", count, list);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('queryInscriptionByAddress failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
 
     }
 
-    //[begin, end) return {count, list}
+    //[begin, end)
     queryInscriptionByBlock(beginBlock, endBlock, limit, offset, order) {
         if (!beginBlock) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -96,12 +94,12 @@ class InscribeStore {
 
             logger.debug('queryInscriptionByBlock:', beginBlock, endBlock, offset, limit, "ret:", count, list);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('queryInscriptionByBlock failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
@@ -116,17 +114,17 @@ class InscribeStore {
 
             logger.debug('queryInscriptionCount: ret:', count);
 
-            return makeSuccessReponse(count);
+            return makeSuccessResponse(count);
         } catch (error) {
             logger.error('queryInscriptionCount failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryInscribeByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -160,17 +158,17 @@ class InscribeStore {
             }
 
             logger.debug('queryInscribeByHash:', hash, offset, limit, state, "ret:", count);
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('queryInscribeByHash failed:', error);
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryInscribeByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -204,17 +202,17 @@ class InscribeStore {
             }
 
             logger.debug('queryInscribeByAddress:', address, offset, limit, state, "ret:", count);
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('queryInscribeByAddress failed:', error);
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryInscribeByTx(txid) {
         if (!txid) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         try {
@@ -228,17 +226,17 @@ class InscribeStore {
 
             logger.debug('queryInscribeByTx:', txid, "ret:", ret);
 
-            return ret ? makeSuccessReponse(ret) : makeReponse(ERR_CODE.NOT_FOUND, "not found");
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND, "not found");
 
         } catch (error) {
             logger.error('queryInscribeByTx failed:', error);
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryResonanceByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -272,17 +270,17 @@ class InscribeStore {
 
             logger.debug('queryResonanceByHash:', hash, offset, limit, "ret:", count);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
         } catch (error) {
             logger.error('queryResonanceByHash failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryResonanceByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -317,18 +315,18 @@ class InscribeStore {
 
             logger.debug('queryResonanceByAddress:', address, offset, limit, "ret:", count, list);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('queryResonanceByAddress failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryResonanceByTx(txid) {
         if (!txid) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         try {
@@ -342,18 +340,18 @@ class InscribeStore {
 
             logger.debug('queryResonanceByTx:', txid, "ret:", ret);
 
-            return ret ? makeSuccessReponse(ret) : makeReponse(ERR_CODE.NOT_FOUND, "not found");
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND, "not found");
 
         } catch (error) {
             logger.error('queryResonanceByTx failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryChantByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -388,18 +386,18 @@ class InscribeStore {
 
             logger.debug('queryChantByHash:', hash, offset, limit, "ret:", count);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('queryChantByHash failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryChantByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -434,17 +432,17 @@ class InscribeStore {
 
             logger.debug('queryChantByAddress:', address, offset, limit, "ret:", count);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
         } catch (error) {
             logger.error('queryChantByAddress failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     queryChantByTx(txid) {
         if (!txid) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         try {
@@ -458,18 +456,18 @@ class InscribeStore {
 
             logger.debug('queryChantByTx:', txid, "ret:", ret);
 
-            return ret ? makeSuccessReponse(ret) : makeReponse(ERR_CODE.NOT_FOUND, "not found");
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND, "not found");
 
         } catch (error) {
             logger.error('queryChantByTx failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     querySetPriceByHash(hash, limit, offset, state, order) {
         if (!hash) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -504,18 +502,18 @@ class InscribeStore {
 
             logger.debug('querySetPriceByHash:', hash, offset, limit, "ret:", count);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('querySetPriceByHash failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     querySetPriceByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         order = order == "ASC" ? "ASC" : "DESC";
@@ -550,18 +548,18 @@ class InscribeStore {
 
             logger.debug('querySetPriceByAddress:', address, offset, limit, "ret:", count);
 
-            return makeSuccessReponse({ count, list });
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('querySetPriceByAddress failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 
     querySetPriceByTx(txid) {
         if (!txid) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         try {
@@ -575,12 +573,12 @@ class InscribeStore {
 
             logger.debug('querySetPriceByTx:', txid, "ret:", ret);
 
-            return ret ? makeSuccessReponse(ret) : makeReponse(ERR_CODE.NOT_FOUND, "not found");
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND, "not found");
 
         } catch (error) {
             logger.error('querySetPriceByTx failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 }

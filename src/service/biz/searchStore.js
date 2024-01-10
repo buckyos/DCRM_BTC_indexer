@@ -1,5 +1,5 @@
 const { store, TABLE_NAME } = require('./store');
-const { ERR_CODE, makeReponse, makeSuccessReponse } = require('./util');
+const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
 
 class SearchStore {
@@ -8,7 +8,7 @@ class SearchStore {
 
     queryByTxid(txid) {
         if (!txid) {
-            return makeReponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
         }
 
         try {
@@ -22,7 +22,7 @@ class SearchStore {
             logger.debug('queryByTxid:', txid, " find mint records, ret:", ret);
             if (ret) {
                 ret.type = "mint";
-                return makeSuccessReponse(ret);
+                return makeSuccessResponse(ret);
             }
 
             stmt = store.indexDB.prepare(
@@ -34,7 +34,7 @@ class SearchStore {
             logger.debug('queryByTxid:', txid, " find inscribe records, ret:", ret);
             if (ret) {
                 ret.type = "inscribe";
-                return makeSuccessReponse(ret);
+                return makeSuccessResponse(ret);
             }
 
             stmt = store.indexDB.prepare(
@@ -46,7 +46,7 @@ class SearchStore {
             logger.debug('queryByTxid:', txid, " find resonance records, ret:", ret);
             if (ret) {
                 ret.type = "resonance";
-                return makeSuccessReponse(ret);
+                return makeSuccessResponse(ret);
             }
 
             stmt = store.indexDB.prepare(
@@ -58,7 +58,7 @@ class SearchStore {
             logger.debug('queryByTxid:', txid, " find chant records, ret:", ret);
             if (ret) {
                 ret.type = "chant";
-                return makeSuccessReponse(ret);
+                return makeSuccessResponse(ret);
             }
 
             stmt = store.indexDB.prepare(
@@ -70,7 +70,7 @@ class SearchStore {
             logger.debug('queryByTxid:', txid, " find transfer records, ret:", ret);
             if (ret) {
                 ret.type = "transfer";
-                return makeSuccessReponse(ret);
+                return makeSuccessResponse(ret);
             }
 
             stmt = store.indexDB.prepare(
@@ -82,15 +82,15 @@ class SearchStore {
             logger.debug('queryByTxid:', txid, " find set price records, ret:", ret);
             if (ret) {
                 ret.type = "set_price";
-                return makeSuccessReponse(ret);
+                return makeSuccessResponse(ret);
             }
 
-            return makeReponse(ERR_CODE.NOT_FOUND, "not found");
+            return makeResponse(ERR_CODE.NOT_FOUND, "not found");
 
         } catch (error) {
             logger.error('queryByTxid failed:', error);
 
-            return makeReponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
 }

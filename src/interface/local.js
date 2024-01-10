@@ -12,7 +12,7 @@ class IndexLocalInterface {
 
         this.config = config;
         this.executor = executor;
-        
+
         this.eth_index = new ETHIndex(config);
         this.hash_helper = new HashHelper(this.eth_index);
     }
@@ -22,7 +22,7 @@ class IndexLocalInterface {
      * @returns {ret: number}
      */
     async start() {
-        
+
         // first init eth index
         const { ret: eth_index_ret } = await this.eth_index.init();
         if (eth_index_ret !== 0) {
@@ -56,7 +56,7 @@ class IndexLocalInterface {
             _.isNumber(port),
             `invalid local interface port: ${port}`,
         );
-        
+
         const server = app.listen(port, '127.0.0.1');
         this.server = server;
 
@@ -65,7 +65,7 @@ class IndexLocalInterface {
                 console.log(`Server is listening on port ${port}`);
                 resolve({ ret: 0 });
             });
-    
+
             server.on('error', (err) => {
                 if (err.code === 'EADDRINUSE') {
                     console.error(
@@ -120,7 +120,7 @@ class IndexLocalInterface {
         });
 
         router.get('/status', async (ctx) => {
-            const {ret, status} = await this.executor.status();
+            const { ret, status } = await this.executor.status();
             if (ret !== 0) {
                 ctx.status = 500;
                 ctx.body = `Internal server error ${ret}`;

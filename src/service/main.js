@@ -31,7 +31,7 @@ class Service {
         const inscribeService = new InscribeService();
         inscribeService.registerRouter(this.m_router);
 
-        const mintService = new MintService();
+        const mintService = new MintService(this.m_config);
         mintService.registerRouter(this.m_router);
 
         const chainService = new ChainService(this.m_config);

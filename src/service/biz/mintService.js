@@ -1,35 +1,19 @@
 const { MintStore } = require('./mintStore');
 
 class MintService {
-    constructor() {
+    constructor(config) {
         this.m_inited = false;
         this.m_store = null;
+        this.m_config = config;
     }
 
     _init() {
         if (this.m_inited) {
             return;
         }
-        this.m_store = new MintStore();
+        this.m_store = new MintStore(this.m_config);
         this.m_inited = true;
     }
-
-    // async _getMintRecordByHash(ctx) {
-    //     let txHash = ctx.params.tx_hash;
-
-    //     if (!txHash) {
-    //         return {
-    //             err: 1,
-    //             msg: "invalid param"
-    //         };
-    //     }
-
-    //     let ret = this.m_store.queryMintRecordByHash(txHash);
-    //     return {
-    //         err: ret == null ? 1 : 0,
-    //         data: ret
-    //     };
-    // }
 
     async _getMintRecordByAddress(ctx) {
         const address = ctx.params.address;
@@ -108,16 +92,22 @@ class MintService {
         );
     }
 
+    async _getHashWeight(ctx) {
+        const hash = ctx.params.hash;
+
+        return this.m_store.queryHashWeight(hash);
+    }
+
+    async _getIndexerStateDetail(ctx) {
+        return this.m_store.queryIndexerStateDetail();
+    }
+
     async _getMingProgress(ctx) {
         return this.m_store.queryMintProgress();
     }
 
     registerRouter(router) {
         this._init();
-
-        // router.get("/mint_record_by_tx/:tx_hash", async (ctx) => {
-        //     ctx.response.body = await this._getMintRecordByHash(ctx);
-        // });
 
         router.get("/mint_record_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
             ctx.response.body = await this._getMintRecordByAddress(ctx);
@@ -153,6 +143,14 @@ class MintService {
 
         router.get("/income/:address/:begin_time/:end_time?", async (ctx) => {
             ctx.response.body = await this._getIncome(ctx);
+        });
+
+        router.get("/hash_weight/:hash", async (ctx) => {
+            ctx.response.body = await this._getHashWeight(ctx);
+        });
+
+        router.get("/indexer/state_detail", async (ctx) => {
+            ctx.response.body = await this._getIndexerStateDetail(ctx);
         });
 
         return 0;

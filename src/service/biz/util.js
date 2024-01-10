@@ -7,23 +7,23 @@ const ERR_CODE = {
     UNKNOWN_ERROR: 5,
 }
 
-function makeReponse(err, msg, result) {
+function makeResponse(err, msg, result) {
     if (err != ERR_CODE.SUCCESS && !msg) {
         switch (err) {
             case ERR_CODE.INVALID_PARAM:
-                msg = "invalid param";
+                msg = "Invalid param";
                 break;
             case ERR_CODE.DB_ERROR:
-                msg = "db error";
+                msg = "DB error";
                 break;
             case ERR_CODE.NOT_FOUND:
-                msg = "not found";
+                msg = "Not found";
                 break;
             case ERR_CODE.NOT_IMPLEMENTED:
-                msg = "not implemented";
+                msg = "Not implemented";
                 break;
             default:
-                msg = "unknown error";
+                msg = "Internal server error";
                 break;
         }
     }
@@ -34,12 +34,12 @@ function makeReponse(err, msg, result) {
     };
 }
 
-function makeSuccessReponse(result) {
-    return makeReponse(ERR_CODE.SUCCESS, null, result);
+function makeSuccessResponse(result) {
+    return makeResponse(ERR_CODE.SUCCESS, null, result);
 }
 
 module.exports = {
-    makeReponse,
-    makeSuccessReponse,
+    makeResponse,
+    makeSuccessResponse,
     ERR_CODE,
 }
