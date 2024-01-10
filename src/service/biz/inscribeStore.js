@@ -15,7 +15,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        const { valid, mixhash } = check_and_fix_mixhash(hash);
         if (!valid) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
