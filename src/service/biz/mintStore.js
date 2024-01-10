@@ -341,7 +341,7 @@ class MintStore {
             return makeSuccessResponse(json);
 
         } catch (error) {
-            logger.error('queryHashWeight failed:' error);
+            logger.error('queryHashWeight failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR, error);
         }
@@ -357,7 +357,7 @@ class MintStore {
             return makeSuccessResponse(json);
 
         } catch (error) {
-            logger.error('queryIndexerStateDetail failed:' error);
+            logger.error('queryIndexerStateDetail failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR, error);
         }
