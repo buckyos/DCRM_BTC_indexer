@@ -270,6 +270,70 @@ class InscribeService {
         return this.m_store.queryInscriptionCount();
     }
 
+    async _getTransferByAddress(ctx) {
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const state = ctx.params.state;
+        const order = ctx.params.order;
+
+        return this.m_store.queryTransferByAddress(
+            address,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getTransferByTx(ctx) {
+        const txid = ctx.params.txid;
+
+        return this.m_store.queryTransferByTx(
+            txid
+        );
+    }
+
+    async _getInscribeDataTransferByHash(ctx) {
+        const hash = ctx.params.hash;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const state = ctx.params.state;
+        const order = ctx.params.order;
+
+        return this.m_store.queryInscribeDataTransferByHash(
+            hash,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getInscribeDataTransferByAddress(ctx) {
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const state = ctx.params.state;
+        const order = ctx.params.order;
+
+        return this.m_store.queryInscribeDataTransferByAddress(
+            address,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getInscribeDataTransferByTx(ctx) {
+        const txid = ctx.params.txid;
+
+        return this.m_store.queryInscribeDataTransferByTx(
+            txid
+        );
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -349,6 +413,27 @@ class InscribeService {
         router.get("/set_price_by_tx/:txid", async (ctx) => {
             ctx.response.body = await this._getSetPriceByTx(ctx);
         });
+
+        router.get("/transfer_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getTransferByAddress(ctx);
+        });
+
+        router.get("/transfer_by_tx/:txid", async (ctx) => {
+            ctx.response.body = await this._getTransferByTx(ctx);
+        });
+
+        router.get("/inscribe_data_transfer_by_hash/:hash/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscribeDataTransferByHash(ctx);
+        });
+
+        router.get("/inscribe_data_transfer_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscribeDataTransferByAddress(ctx);
+        });
+
+        router.get("/inscribe_data_transfer_by_tx/:txid", async (ctx) => {
+            ctx.response.body = await this._getInscribeDataTransferByTx(ctx);
+        });
+
 
         return 0;
     }

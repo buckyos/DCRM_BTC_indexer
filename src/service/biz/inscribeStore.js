@@ -700,6 +700,181 @@ class InscribeStore {
             return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
+
+    queryTransferByAddress(address, limit, offset, state, order) {
+        if (!address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.TRANSFER_RECORDS}
+                WHERE from_address = ? OR to_address = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(address, address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.TRANSFER_RECORDS} 
+                    WHERE from_address = ? OR to_address = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(address, address, limit, offset);
+            }
+
+            logger.debug('queryTransferByAddress:', address, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryTransferByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryTransferByTx(txid) {
+        if (!txid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        try {
+            let sql =
+                `SELECT *
+                FROM ${TABLE_NAME.TRANSFER_RECORDS}
+                WHERE txid = ?`;
+
+            const stmt = store.indexDB.prepare(sql);
+            const ret = stmt.get(txid);
+
+            logger.debug('queryTransferByTx:', txid, "ret:", ret);
+
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND, "not found");
+
+        } catch (error) {
+            logger.error('queryTransferByTx failed:', error);
+
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryInscribeDataTransferByHash(hash, limit, offset, state, order) {
+        if (!hash) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        hash = mixhash;
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS}
+                WHERE hash = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(hash);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql = `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS} WHERE hash = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(hash, limit, offset);
+            }
+
+            logger.debug('queryInscribeDataTransferByHash:', hash, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryInscribeDataTransferByHash failed:', error);
+
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryInscribeDataTransferByAddress(address, limit, offset, state, order) {
+        if (!address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS}
+                WHERE from_address = ? OR to_address = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(address, address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS} 
+                    WHERE from_address = ? OR to_address = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(address, address, limit, offset);
+            }
+
+            logger.debug('queryInscribeDataTransferByAddress:', address, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryInscribeDataTransferByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryInscribeDataTransferByTx(txid) {
+        if (!txid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        try {
+            let sql =
+                `SELECT *
+                FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS}
+                WHERE txid = ?`;
+
+            const stmt = store.indexDB.prepare(sql);
+            const ret = stmt.get(txid);
+
+            logger.debug('queryInscribeDataTransferByTx:', txid, "ret:", ret);
+
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND, "not found");
+
+        } catch (error) {
+            logger.error('queryInscribeDataTransferByTx failed:', error);
+
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
 }
 
 module.exports = {
