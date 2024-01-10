@@ -109,7 +109,7 @@ class ETHIndex {
 
         let percent;
         if (eth > local) {
-            percent = ((local - genesis_block_height) / (eth - genesis_block_height)) * 100;
+            percent = (((local - genesis_block_height) / (eth - genesis_block_height)) * 100).toFixed(2);
         } else {
             percent = 100;
         }

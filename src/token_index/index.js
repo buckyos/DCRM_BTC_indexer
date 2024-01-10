@@ -172,13 +172,13 @@ class TokenIndexExecutor {
                 btc: btc_network_height,
                 ord: btc_ord_height,
                 local: btc_local_height,
-                percent: `${sync_percent.toFixed(2)}%`,
+                percent: sync_percent.toFixed(2),
             },
 
             index: {
                 sync: min_height,
                 local: this.current_block_height - 1,
-                percent: `${index_percent.toFixed(2)}%`,
+                percent: index_percent.toFixed(2),
             },
 
             eth: eth_status,
