@@ -360,6 +360,26 @@ class ETHIndex {
             }
 
             if (block_height == null) {
+
+                // if we have not fetch the first block yet, we should fetch the first block
+                if (this.first_block_timestamp == null) {
+                    const {ret, block_height, timestamp} = await this.storage.query_first_block();
+                    if (ret !== 0) {
+                        console.error(`failed to query first eth block`);
+                        return { ret };
+                    }
+                    this.first_block_timestamp = timestamp;
+                    this.first_block_height = block_height;
+                }
+
+                // on testnet this case maybe happen
+                if (this.first_block_timestamp != null && timestamp < this.first_block_timestamp) {
+                    console.warn(
+                        `timestamp ${timestamp} is less than first block timestamp ${this.first_block_timestamp}`,
+                    );
+                    return { ret: 0, point: 1 };
+                }
+
                 console.warn(
                     `no eth block found for timestamp ${timestamp}, now wait and retry...`,
                 );

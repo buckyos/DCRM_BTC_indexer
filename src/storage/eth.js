@@ -160,11 +160,11 @@ class ETHIndexStorage {
     }
 
     /**
-     * 
-     * @param {number} block_height 
-     * @param {string} hash 
-     * @param {number} amount 
-     * @returns 
+     *
+     * @param {number} block_height
+     * @param {string} hash
+     * @param {number} amount
+     * @returns
      */
     async update_point(block_height, hash, amount) {
         assert(this.db != null, `db should not be null`);
@@ -248,6 +248,41 @@ class ETHIndexStorage {
         });
     }
 
+    /**
+     * @comment query first block with lowest timestamp
+     * @returns {ret: number, block_height: number | null, timestamp: number | null}
+     */
+    async query_first_block() {
+        assert(this.db != null, `db should not be null`);
+
+        return new Promise((resolve) => {
+            this.db.get(
+                `SELECT * FROM blocks ORDER BY timestamp ASC LIMIT 1`,
+                (err, row) => {
+                    if (err) {
+                        console.error(`failed to query first block: ${err}`);
+                        resolve({ ret: -1 });
+                        return;
+                    }
+
+                    if (row == null) {
+                        resolve({
+                            ret: 0,
+                            block_height: null,
+                            timestamp: null,
+                        });
+                        return;
+                    } else {
+                        resolve({
+                            ret: 0,
+                            block_height: row.block_height,
+                            timestamp: row.timestamp,
+                        });
+                    }
+                },
+            );
+        });
+    }
     /**
      * @comment return block_height where timestamp <= target_timestamp && block_height + 1 timestamp > target_timestamp
      * @param {number} target_timestamp
