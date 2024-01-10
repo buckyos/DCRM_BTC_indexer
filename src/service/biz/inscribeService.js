@@ -83,6 +83,24 @@ class InscribeService {
         );
     }
 
+    async _getInscribeByHashAndAddress(ctx) {
+        const hash = ctx.params.hash;
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const order = ctx.params.order;
+        const state = ctx.params.state;
+
+        return this.m_store.queryInscribeByHashAndAddress(
+            hash,
+            address,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
     async _getInscribeByTx(ctx) {
         const txid = ctx.params.txid;
 
@@ -116,6 +134,24 @@ class InscribeService {
         const state = ctx.params.state;
 
         return this.m_store.queryResonanceByAddress(
+            address,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getResonanceByHashAndAddress(ctx) {
+        const hash = ctx.params.hash;
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const order = ctx.params.order;
+        const state = ctx.params.state;
+
+        return this.m_store.queryResonanceByHashAndAddress(
+            hash,
             address,
             limit || 0,
             offset || 0,
@@ -262,6 +298,10 @@ class InscribeService {
             ctx.response.body = await this._getInscribeByAddress(ctx);
         });
 
+        router.get("/inscribe_by_hash_address/:hash/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscribeByHashAndAddress(ctx);
+        });
+
         router.get("/inscribe_by_tx/:txid", async (ctx) => {
             ctx.response.body = await this._getInscribeByTx(ctx);
         });
@@ -272,6 +312,10 @@ class InscribeService {
 
         router.get("/resonance_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
             ctx.response.body = await this._getResonanceByAddress(ctx);
+        });
+
+        router.get("/resonance_by_hash_address/:hash/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getResonanceByHashAndAddress(ctx);
         });
 
         router.get("/resonance_by_tx/:txid", async (ctx) => {

@@ -8,7 +8,7 @@ class SearchStore {
 
     queryByTxid(txid) {
         if (!txid) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "invalid param");
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
         try {
@@ -82,6 +82,18 @@ class SearchStore {
             logger.debug('queryByTxid:', txid, " find set price records, ret:", ret);
             if (ret) {
                 ret.type = "set_price";
+                return makeSuccessResponse(ret);
+            }
+
+            stmt = store.indexDB.prepare(
+                `SELECT * 
+                FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS} 
+                WHERE txid = ?`
+            );
+            ret = stmt.get(txid);
+            logger.debug('queryByTxid:', txid, " find idata transfer records, ret:", ret);
+            if (ret) {
+                ret.type = "data_transfer";
                 return makeSuccessResponse(ret);
             }
 

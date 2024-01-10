@@ -67,6 +67,7 @@ const TABLE_NAME = {
     INSCRIBE_RECORDS: 'inscribe_records',
     TRANSFER_RECORDS: 'transfer_records',
     SET_PRICE_RECORDS: 'set_price_records',
+    INSCRIBE_DATA_TRANSFER_RECORDS: 'inscribe_data_transfer_records',
 };
 
 module.exports = {
