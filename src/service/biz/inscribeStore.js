@@ -6,6 +6,15 @@ const { Util } = require('../../util');
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
 
+function StateCondition(state) {
+    if (state == SUCCESS) {
+        return ` AND state = ${InscriptionOpState.OK}`;
+    } else if (state == FAILED) {
+        return ` AND state != ${InscriptionOpState.OK}`;
+    }
+    return '';
+}
+
 class InscribeStore {
     constructor() {
     }
@@ -150,22 +159,16 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
                 WHERE hash = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+
+            sql += StateCondition(state);
+
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.INSCRIBE_RECORDS} WHERE hash = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -194,22 +197,14 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
                 WHERE address = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.INSCRIBE_RECORDS} WHERE address = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -221,6 +216,51 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryInscribeByAddress failed:', error);
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryInscribeByHashAndAddress(hash, address, limit, offset, state, order) {
+        if (!hash || !address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        hash = mixhash;
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.INSCRIBE_RECORDS}
+                WHERE hash = ? AND address = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(hash, address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
+                    WHERE hash = ? AND address = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(hash, address, limit, offset);
+            }
+
+            logger.debug('queryInscribeByHashAndAddress:', hash, address, offset, limit, state, "ret:", count);
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryInscribeByHashAndAddress failed:', error);
             return makeResponse(ERR_CODE.DB_ERROR, error);
         }
     }
@@ -269,21 +309,13 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE hash = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.RESONANCE_RECORDS} WHERE hash = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -313,22 +345,14 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE address = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.RESONANCE_RECORDS} WHERE address = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -341,6 +365,51 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryResonanceByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.DB_ERROR, error);
+        }
+    }
+
+    queryResonanceByHashAndAddress(hash, address, limit, offset, state, order) {
+        if (!hash || !address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        hash = mixhash;
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.RESONANCE_RECORDS}
+                WHERE hash = ? AND address = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(hash, address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql = `SELECT * FROM ${TABLE_NAME.RESONANCE_RECORDS} WHERE hash = ? AND address = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(hash, address, limit, offset);
+            }
+
+            logger.debug('queryResonanceByHashAndAddress:', hash, address, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryResonanceByHashAndAddress failed:', error);
 
             return makeResponse(ERR_CODE.DB_ERROR, error);
         }
@@ -391,22 +460,14 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE hash = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.CHANT_RECORDS} WHERE hash = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -437,22 +498,14 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE address = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.CHANT_RECORDS} WHERE address = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -489,22 +542,14 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE hash = ? AND address = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash, address);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.CHANT_RECORDS} WHERE hash = ? AND address = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -568,22 +613,14 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.SET_PRICE_RECORDS}
                 WHERE hash = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.SET_PRICE_RECORDS} WHERE hash = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -614,22 +651,14 @@ class InscribeStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.SET_PRICE_RECORDS}
                 WHERE address = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += StateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.SET_PRICE_RECORDS} WHERE address = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
