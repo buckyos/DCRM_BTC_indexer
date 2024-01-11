@@ -3,7 +3,14 @@ const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState, InscriptionStage } = require('./state');
-const { InscriptionTransferItem, InscriptionNewItem } = require('../../index/item');
+const {
+    InscriptionTransferItem,
+    InscriptionNewItem,
+} = require('../../index/item');
+const {
+    UserHashRelationStorage,
+    UserHashRelation,
+} = require('../../storage/relation');
 
 class PendingResonanceOp {
     constructor(inscription_item, content, hash, hash_distance, state) {
@@ -27,7 +34,7 @@ class PendingResonanceOp {
 }
 
 class ResonanceOperator {
-    constructor(config, storage, hash_helper) {
+    constructor(config, storage, hash_helper, relation_storage) {
         assert(_.isObject(config), `config should be object`);
         assert(
             storage instanceof TokenIndexStorage,
@@ -37,10 +44,15 @@ class ResonanceOperator {
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,
         );
+        assert(
+            relation_storage instanceof UserHashRelationStorage,
+            `relation_storage should be UserHashRelationStorage`,
+        );
 
         this.config = config;
         this.storage = storage;
         this.hash_helper = hash_helper;
+        this.relation_storage = relation_storage;
 
         // pending resonance ops that need to be processed, has some restrictions in the same block
         this.pending_resonance_ops = [];
@@ -178,7 +190,7 @@ class ResonanceOperator {
     }
 
     /**
-     * 
+     *
      * @returns {Promise<{ret: number}>}
      */
     async process_pending_resonance_ops() {
@@ -202,8 +214,14 @@ class ResonanceOperator {
                     return { ret };
                 }
 
-                assert(_.isString(owner_bonus1), `owner_bonus should be string`);
-                assert(_.isString(service_charge1), `service_charge should be string`);
+                assert(
+                    _.isString(owner_bonus1),
+                    `owner_bonus should be string`,
+                );
+                assert(
+                    _.isString(service_charge1),
+                    `service_charge should be string`,
+                );
 
                 owner_bonus = owner_bonus1;
                 service_charge = service_charge1;
@@ -279,6 +297,40 @@ class ResonanceOperator {
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
         }
 
+        // 2. check the relation if already exists
+        const { ret: get_relation_ret, data: relation } =
+            await this.relation_storage.get_user_hash_relation(
+                inscription_item.address,
+                hash,
+            );
+        if (get_relation_ret !== 0) {
+            console.error(
+                `get_user_hash_relation failed ${inscription_item.address} ${hash}`,
+            );
+            return { ret: get_relation_ret };
+        }
+        if (relation != null) {
+            if (relation.relation === UserHashRelation.Resonance) {
+                // user can only resonance once for one hash
+                console.warn(
+                    `user ${inscription_item.address} has resonance relation with hash ${hash}`,
+                );
+                return { ret: 0, state: InscriptionOpState.ALREADY_EXISTS };
+            } else if (relation.relation === UserHashRelation.Owner) {
+                // user can not resonance for its own hash
+                console.warn(
+                    `user ${inscription_item.address} has owner relation with hash ${hash}`,
+                );
+                return { ret: 0, state: InscriptionOpState.PERMISSION_DENIED };
+            } else {
+                // should not happen
+                console.error(
+                    `user ${inscription_item.address} has relation with hash ${hash}: ${relation.relation}`,
+                );
+                return { ret: -1 };
+            }
+        }
+
         // 2. check the price of the hash, a hash can be resonated only if the price is greater than zero
         const price = data.price;
         if (price == null || BigNumberUtil.compare(price, 0) <= 0) {
@@ -331,31 +383,6 @@ class ResonanceOperator {
                 `hash ${hash} resonance_count ${data.resonance_count} is greater than 15`,
             );
             return { ret: 0, state: InscriptionOpState.OUT_OF_RESONANCE_LIMIT };
-        }
-
-        // 7. If the use has not any chant 12,800 consecutive blocks, will loses its resonance right
-        const { ret: get_last_chant_ret, data: last_chant_data } =
-            await this.storage.get_user_last_chant(inscription_item.address);
-        if (get_last_chant_ret !== 0) {
-            console.error(
-                `get_user_last_chant failed ${inscription_item.address}`,
-            );
-            return { ret: get_last_chant_ret };
-        }
-
-        if (last_chant_data != null) {
-            if (
-                last_chant_data.block_height + 12800 <
-                inscription_item.block_height
-            ) {
-                console.warn(
-                    `user ${inscription_item.address} has no chant at 12800 consecutive blocks, last chant block number ${last_chant_data.block_height}, current block number ${inscription_item.block_height}`,
-                );
-                return { ret: 0, state: InscriptionOpState.HAS_NO_VALID_CHANT };
-            }
-        } else {
-            // user has no chant at any block
-            // TODO: should we check for this case?
         }
 
         // 8. the op with same hash in current block, only the min distance one can be processed
@@ -450,10 +477,24 @@ class ResonanceOperator {
             return { ret: update_inscribe_data_ret };
         }
 
+        // 3. update the relation
+        const { ret: update_relation_ret } =
+            await this.relation_storage.insert_relation(
+                inscription_item.address,
+                hash,
+                UserHashRelation.Resonance,
+            );
+        if (update_relation_ret !== 0) {
+            console.error(
+                `insert relation failed ${inscription_item.inscription_id} ${inscription_item.address} ${hash}`,
+            );
+            return { ret: update_relation_ret };
+        }
+
         console.log(
             `resonance success ${inscription_item.inscription_id} ${inscription_item.address} -> ${inscription_item.output_address} ${inscription_item.content.ph} ${inscription_item.content.amt}`,
         );
-
+        
         return { ret: 0, owner_bonus, service_charge };
     }
 }

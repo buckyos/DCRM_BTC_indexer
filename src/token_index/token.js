@@ -10,6 +10,10 @@ const { ChantOperator } = require('./ops/chant');
 const { ResonanceOperator } = require('./ops/resonance');
 const { SetPriceOperator } = require('./ops/set_price');
 const { BlockInscriptionCollector, InscriptionOp } = require('../index/item');
+const {
+    UserHashRelationStorage,
+    UserHashRelation,
+} = require('../storage/relation');
 
 class TokenIndex {
     constructor(config) {
@@ -23,6 +27,7 @@ class TokenIndex {
         }
 
         this.storage = new TokenIndexStorage(dir);
+        this.user_hash_relation_storage = new UserHashRelationStorage(dir);
     }
 
     /**
@@ -41,6 +46,12 @@ class TokenIndex {
             return { ret };
         }
 
+        const { ret: relation_ret } = await this.user_hash_relation_storage.init();
+        if (relation_ret !== 0) {
+            console.error(`failed to init user hash relation storage`);
+            return { ret: relation_ret };
+        }
+
         console.log(`init TokenIndex success`);
         return { ret: 0 };
     }
@@ -54,6 +65,7 @@ class TokenIndex {
 
         const block_indexer = new TokenBlockIndex(
             this.storage,
+            this.user_hash_relation_storage,
             this.config,
             this.hash_helper,
             block_height,
@@ -67,6 +79,7 @@ class TokenIndex {
 class TokenBlockIndex {
     constructor(
         storage,
+        user_hash_relation_storage,
         config,
         hash_helper,
         block_height,
@@ -76,6 +89,10 @@ class TokenBlockIndex {
         assert(
             storage instanceof TokenIndexStorage,
             `storage should be TokenIndexStorage`,
+        );
+        assert(
+            user_hash_relation_storage instanceof UserHashRelationStorage,
+            `user_hash_relation_storage should be UserHashRelationStorage`,
         );
         assert(_.isObject(config), `config should be object`);
         assert(
@@ -90,6 +107,7 @@ class TokenBlockIndex {
         assert(eth_index instanceof ETHIndex, `eth_index should be ETHIndex`);
 
         this.storage = storage;
+        this.user_hash_relation_storage = user_hash_relation_storage;
         this.config = config;
         this.hash_helper = hash_helper;
         this.block_height = block_height;
@@ -100,14 +118,16 @@ class TokenBlockIndex {
             config,
             storage,
             hash_helper,
+            user_hash_relation_storage,
         );
         this.mint_operator = new MintOperator(config, storage, eth_index);
         this.transfer_operator = new TransferOperator(storage);
-        this.chant_operator = new ChantOperator(config, storage, hash_helper);
+        this.chant_operator = new ChantOperator(config, storage, hash_helper, user_hash_relation_storage);
         this.resonance_operator = new ResonanceOperator(
             config,
             storage,
             hash_helper,
+            user_hash_relation_storage,
         );
         this.set_price_operator = new SetPriceOperator(storage, hash_helper);
     }
@@ -243,7 +263,6 @@ class TokenBlockIndex {
         // process transfer inscriptions
         for (const inscription_transfer_item of this.block_collector
             .inscription_transfers) {
-
             console.log(
                 `will process transfer inscription ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.op.op}`,
             );
@@ -278,8 +297,7 @@ class TokenBlockIndex {
                     `chant op should not be transferred ${inscription_transfer_item.inscription_id}`,
                 );
             } else if (
-                inscription_transfer_item.op.op ===
-                InscriptionOp.Resonance
+                inscription_transfer_item.op.op === InscriptionOp.Resonance
             ) {
                 const { ret } = await this.on_transfer_resonance(
                     inscription_transfer_item,

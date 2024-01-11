@@ -11,6 +11,10 @@ const {
     InscriptionTransferItem,
 } = require('../../index/item');
 const { DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD } = require('../../constants');
+const {
+    UserHashRelationStorage,
+    UserHashRelation,
+} = require('../../storage/relation');
 
 class PendingInscribeOp {
     constructor(inscription_item, state, hash_distance) {
@@ -21,7 +25,7 @@ class PendingInscribeOp {
 }
 
 class InscribeDataOperator {
-    constructor(config, storage, hash_helper) {
+    constructor(config, storage, hash_helper, relation_storage) {
         assert(config, `config should not be null`);
         assert(
             storage instanceof TokenIndexStorage,
@@ -31,10 +35,15 @@ class InscribeDataOperator {
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,
         );
+        assert(
+            relation_storage instanceof UserHashRelationStorage,
+            `relation_storage should be UserHashRelationStorage`,
+        );
 
         this.config = config;
         this.storage = storage;
         this.hash_helper = hash_helper;
+        this.relation_storage = relation_storage;
 
         // load difficulty of inscribe data hash threshold from config
         this.inscribe_data_hash_threshold =
@@ -55,7 +64,9 @@ class InscribeDataOperator {
      * @returns {Promise<{ret: number}>}
      */
     async on_transfer(inscription_transfer_item) {
-        const { ret, state } = await this._on_transfer(inscription_transfer_item);
+        const { ret, state } = await this._on_transfer(
+            inscription_transfer_item,
+        );
         if (ret !== 0) {
             return { ret };
         }
@@ -103,7 +114,7 @@ class InscribeDataOperator {
             `invalid transfer index ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.index}`,
         );
 
-        // first query the inscribe record
+        // 1. first query the inscribe data record
         const { ret: get_inscribe_record_ret, data: record } =
             await this.storage.query_inscribe_data_record(
                 inscription_transfer_item.inscription_id,
@@ -130,7 +141,7 @@ class InscribeDataOperator {
         const hash = record.hash;
         inscription_transfer_item.hash = hash;
 
-        // then query current inscribed data
+        // 2. then query current inscribed data
         const { ret: get_inscribe_data_ret, data } =
             await this.storage.get_inscribe_data(hash);
         if (get_inscribe_data_ret !== 0) {
@@ -148,7 +159,7 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
         }
 
-        // check if the block_height is greater than the current block_height
+        // 3. check if the block_height is greater than the current block_height
         assert(
             _.isNumber(data.block_height),
             `invalid inscribe data block_height ${inscription_transfer_item.inscription_id} ${hash}`,
@@ -160,7 +171,7 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.INVALID_STATE };
         }
 
-        // update owner with transfer_inscribe_data_owner
+        // 4. update owner with transfer_inscribe_data_owner
         const { ret: update_owner_ret } =
             await this.storage.transfer_inscribe_data_owner(
                 hash,
@@ -182,6 +193,20 @@ class InscribeDataOperator {
                 );
                 return { ret: update_owner_ret };
             }
+        }
+
+        // 5. update relation and transfer inscribe data owner
+        const { ret: update_relation_ret } =
+            await this.relation_storage.transfer_owner(
+                inscription_transfer_item.from_address,
+                inscription_transfer_item.to_address,
+                hash,
+            );
+        if (update_relation_ret !== 0) {
+            console.error(
+                `failed to update owner relation ${inscription_transfer_item.from_address} -> ${inscription_transfer_item.to_address} hash: ${inscription_transfer_item.inscription_id} ${hash}`,
+            );
+            return { ret: update_relation_ret };
         }
 
         console.log(
@@ -274,7 +299,7 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.ALREADY_EXISTS };
         }
 
-        // 3. check hash condition if satisfied with user's address
+        // 2. check hash condition if satisfied with user's address
         if (
             !Util.check_inscribe_hash_and_address(
                 hash,
@@ -291,7 +316,7 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.HASH_UNMATCHED };
         }
 
-        // 4. check weight with amt, amt must be greater than hash weight
+        // 3. check weight with amt, amt must be greater than hash weight
         // calc hash weight
         const {
             ret: calc_ret,
@@ -319,7 +344,7 @@ class InscribeDataOperator {
         // price <= n
         const max_price = BigNumberUtil.multiply(hash_weight, 2);
 
-        // try fix price if exists
+        // 4. try fix price if exists
         if (inscription_item.content.price != null) {
             const price = inscription_item.content.price;
             assert(
@@ -338,7 +363,7 @@ class InscribeDataOperator {
             }
         }
 
-        // check if hash weight is less than amt (amt >= hash_weight * 2)
+        // 5. check if hash weight is less than amt (amt >= hash_weight * 2)
         if (BigNumberUtil.compare(amt, max_price) < 0) {
             console.warn(
                 `hash weight is less than amt ${inscription_item.inscription_id} ${amt} < ${max_price}`,
@@ -349,7 +374,7 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.INVALID_AMT };
         }
 
-        // 4. check if address balance is enough
+        // 6. check if address balance is enough
         const { ret: get_balance_ret, amount: balance } =
             await this.storage.get_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
@@ -370,7 +395,7 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
-        // 5. calc distance of (address, hash)
+        // 7. calc distance of (address, hash)
         // if there is multiple inscribe in the same block, we should select the one had the shortest distance
         const distance = Util.calc_distance_with_hash_and_address(
             hash,
@@ -379,7 +404,7 @@ class InscribeDataOperator {
 
         let state = InscriptionOpState.OK;
 
-        // 6. check if there is any pending inscribe op in the same block with same hash
+        // 8. check if there is any pending inscribe op in the same block with same hash
         for (const op of this.pending_inscribe_ops) {
             if (
                 op.state === InscriptionOpState.OK &&
@@ -500,7 +525,7 @@ class InscribeDataOperator {
             `foundation_address should be string`,
         );
 
-        // 1. subtract balance from address
+        // 2. subtract balance from address
         const { ret: update_balance_ret } = await this.storage.update_balance(
             op.inscription_item.address,
             BigNumberUtil.multiply(amt, '-1'),
@@ -564,6 +589,20 @@ class InscribeDataOperator {
                     `failed to add inscribe data ${op.inscription_item.inscription_id}`,
                 );
                 return { ret };
+            }
+
+            // build relation for the first time
+            const { ret: update_relation_ret } =
+                await this.relation_storage.insert_relation(
+                    op.inscription_item.address,
+                    op.inscription_item.content.ph,
+                    UserHashRelation.Owner,
+                );
+            if (update_relation_ret !== 0) {
+                console.error(
+                    `failed to update owner relation ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph}`,
+                );
+                return { ret: update_relation_ret };
             }
         }
 

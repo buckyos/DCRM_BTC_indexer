@@ -7,10 +7,17 @@ const {
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem } = require('../../index/item');
-const { TOKEN_MINT_POOL_VIRTUAL_ADDRESS, DIFFICULTY_CHANT_BLOCK_THRESHOLD } = require('../../constants');
+const {
+    TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+    DIFFICULTY_CHANT_BLOCK_THRESHOLD,
+} = require('../../constants');
+const {
+    UserHashRelationStorage,
+    UserHashRelation,
+} = require('../../storage/relation');
 
 class ChantOperator {
-    constructor(config, storage, hash_helper) {
+    constructor(config, storage, hash_helper, relation_storage) {
         assert(_.isObject(config), `config should be object`);
         assert(
             storage instanceof TokenIndexStorage,
@@ -20,17 +27,21 @@ class ChantOperator {
             hash_helper instanceof HashHelper,
             `hash_helper should be HashHelper`,
         );
+        assert(
+            relation_storage instanceof UserHashRelationStorage,
+            `relation_storage should be UserHashRelationStorage`,
+        );
 
         this.config = config;
         this.storage = storage;
         this.hash_helper = hash_helper;
+        this.relation_storage = relation_storage;
 
         // The same user can only successfully chant once in a block
         this.user_chant_ops = new Map();
 
         // load difficulty of chant block threshold from config
-        this.chant_block_threshold =
-            DIFFICULTY_CHANT_BLOCK_THRESHOLD;
+        this.chant_block_threshold = DIFFICULTY_CHANT_BLOCK_THRESHOLD;
         if (config.token.difficulty.chant_block_threshold != null) {
             this.chant_block_threshold =
                 config.token.difficulty.chant_block_threshold;
@@ -104,53 +115,40 @@ class ChantOperator {
         }
 
         // 1. check permission
-        // check hash's owner address
-        const { ret: get_owner_ret, data } =
-            await this.storage.get_inscribe_data(hash);
-        if (get_owner_ret !== 0) {
-            console.error(
-                `failed to get owner of hash ${inscription_item.inscription_id} ${hash}`,
-            );
-            return { ret: get_owner_ret };
-        }
-
-        if (data == null) {
-            console.warn(
-                `chant hash not found ${inscription_item.inscription_id} ${hash}`,
-            );
-            return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
-        }
-
-        // The user has the inscription or the user resonates the data inscription
-        assert(data.address != null, `invalid owner address of hash ${hash}`);
-        if (data.address !== inscription_item.address) {
-            const { ret, data } = await this.storage.query_user_resonance(
+        // user can only chant the hash which he has or he resonates
+        const { ret: query_relation_ret, data: data_relation } =
+            await this.relation_storage.query_relation(
                 inscription_item.address,
                 hash,
             );
-            if (ret !== 0) {
-                console.error(
-                    `failed to query user resonance ${inscription_item.inscription_id} ${hash}`,
-                );
-                return { ret };
-            }
-
-            if (data == null) {
-                console.warn(
-                    `user not have resonate the hash yet ${inscription_item.inscription_id} ${inscription_item.address} ${hash}`,
-                );
-
-                return { ret: 0, state: InscriptionOpState.PERMISSION_DENIED };
-            } else {
-                // The user has resonate the hash
-            }
-        } else {
-            // The user has the inscription
+        if (query_relation_ret !== 0) {
+            console.error(
+                `failed to query user hash relation ${inscription_item.inscription_id} ${inscription_item.address} ${hash}`,
+            );
+            return { ret: query_relation_ret };
         }
+
+        if (data_relation == null) {
+            console.warn(
+                `user not own the hash or have resonate the hash yet ${inscription_item.inscription_id} ${inscription_item.address} ${hash}`,
+            );
+
+            return { ret: 0, state: InscriptionOpState.PERMISSION_DENIED };
+        }
+
+        assert(
+            data_relation.relation === UserHashRelation.Own ||
+                data_relation.relation === UserHashRelation.Resonate,
+            `invalid relation ${data_relation.relation}`,
+        );
 
         // 2. check hash relation
         const hash_num = Util.address_number(hash);
-        if (Math.abs(hash_num - inscription_item.block_height) % this.chant_block_threshold !== 0) {
+        if (
+            Math.abs(hash_num - inscription_item.block_height) %
+                this.chant_block_threshold !==
+            0
+        ) {
             console.warn(
                 `invalid hash relation ${inscription_item.inscription_id} hash: ${hash} block: ${inscription_item.block_height}`,
             );
@@ -162,11 +160,14 @@ class ChantOperator {
         // Chant Bonus = weight and Chant Stamina = weight / 4, and user' balance should be enough: balance >= chant stamina
 
         // calc hash weight
-        const { ret: calc_ret, weight: hash_weight, point: hash_point } =
-            await this.hash_helper.query_hash_weight(
-                inscription_item.timestamp,
-                hash,
-            );
+        const {
+            ret: calc_ret,
+            weight: hash_weight,
+            point: hash_point,
+        } = await this.hash_helper.query_hash_weight(
+            inscription_item.timestamp,
+            hash,
+        );
         if (calc_ret !== 0) {
             console.error(
                 `failed to calc hash weight ${inscription_item.inscription_id} ${hash}`,
