@@ -144,9 +144,9 @@ async function run(config, mode) {
 
     if (global.bug_monitor) {
         const error_fn = console.error;
-        console.error = function (error) {
-            global.bug_monitor.report(new Error(error));
-            error_fn(error);
+        console.error = function (...args) {
+            global.bug_monitor.report(new Error(JSON.stringify(args)));
+            error_fn(...args);
         };
     }
 
