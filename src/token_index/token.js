@@ -27,7 +27,7 @@ class TokenIndex {
         }
 
         this.storage = new TokenIndexStorage(dir);
-        this.user_hash_relation_storage = new UserHashRelationStorage(dir);
+        this.user_hash_relation_storage = this.storage.get_user_hash_relation_storage();
     }
 
     /**
@@ -44,12 +44,6 @@ class TokenIndex {
         if (ret !== 0) {
             console.error(`failed to init storage`);
             return { ret };
-        }
-
-        const { ret: relation_ret } = await this.user_hash_relation_storage.init();
-        if (relation_ret !== 0) {
-            console.error(`failed to init user hash relation storage`);
-            return { ret: relation_ret };
         }
 
         console.log(`init TokenIndex success`);

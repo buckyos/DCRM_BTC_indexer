@@ -16,6 +16,7 @@ const {
     TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
 } = require('../constants');
 const { InscriptionOp } = require('../index/item');
+const { UserHashRelationStorage } = require('./relation');
 
 // the ops that can update pool balance
 const UpdatePoolBalanceOp = {
@@ -53,6 +54,7 @@ class TokenIndexStorage {
         this.db_file_path = path.join(data_dir, TOKEN_INDEX_DB_FILE);
         this.db = null;
         this.during_transaction = false;
+        this.user_hash_relation_storage = new UserHashRelationStorage();
     }
 
     /**
@@ -83,8 +85,23 @@ class TokenIndexStorage {
             return { ret: ret3 };
         }
 
+        const { ret: ret4 } = await this.user_hash_relation_storage.init(
+            this.db,
+        );
+        if (ret4 !== 0) {
+            console.error(`failed to init user hash relation storage`);
+            return { ret: ret4 };
+        }
+
         console.log(`init token storage success`);
         return { ret: 0 };
+    }
+
+    /**
+     * @returns {UserHashRelationStorage}
+     */
+    get_user_hash_relation_storage() {
+        return this.user_hash_relation_storage;
     }
 
     /**
@@ -2677,8 +2694,8 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
-     * @param {string} address 
+     *
+     * @param {string} address
      * @returns {ret: number, txid: string | null}
      */
     async query_user_last_mint_and_inscribe_data_ops_txid(address) {
@@ -2701,7 +2718,7 @@ class TokenIndexStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
-                        resolve({ ret: 0, txid: row? row.txid: null });
+                        resolve({ ret: 0, txid: row ? row.txid : null });
                     }
                 },
             );

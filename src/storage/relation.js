@@ -9,39 +9,23 @@ const UserHashRelation = {
 };
 
 class UserHashRelationStorage {
-    constructor(data_dir) {
-        assert(
-            typeof data_dir === 'string',
-            `data_dir should be string: ${data_dir}`,
-        );
-
-        this.db_file_path = path.join(data_dir, TOKEN_INDEX_DB_FILE);
+    constructor() {
         this.db = null;
     }
 
-    async init() {
+    async init(db) {
+        assert(db instanceof sqlite3.Database, `db should be sqlite3.Database`);
         assert(this.db == null, `UserHashRelationStorage db should be null`);
+        this.db = db;
 
-        return new Promise((resolve) => {
-            assert(
-                this.db == null,
-                `UserHashRelationStorage db should be null`,
-            );
-            this.db = new sqlite3.Database(this.db_file_path, (err) => {
-                if (err) {
-                    console.error(
-                        `failed to connect to UserHashRelationStorage sqlite: ${err}`,
-                    );
-                    resolve({ ret: -1 });
-                    return;
-                }
+        // init tables
+        const { ret } = await this._init_tables();
+        if (ret !== 0) {
+            console.error(`failed to init relation db tables`);
+            return { ret };
+        }
 
-                console.log(`Connected to ${this.db_file_path}`);
-                this._init_tables().then(({ ret }) => {
-                    resolve({ ret });
-                });
-            });
-        });
+        return { ret: 0 };
     }
 
     async _init_tables() {
@@ -99,11 +83,11 @@ class UserHashRelationStorage {
     }
 
     /**
-     * 
-     * @param {string} address 
-     * @param {string} hash 
-     * @param {UserHashRelation} relation 
-     * @returns {Promise<{ret: number}>} 
+     *
+     * @param {string} address
+     * @param {string} hash
+     * @param {UserHashRelation} relation
+     * @returns {Promise<{ret: number}>}
      */
     async insert_relation(address, hash, relation) {
         assert(this.db != null, `db should not be null`);
@@ -117,7 +101,9 @@ class UserHashRelationStorage {
                 [address, hash, relation],
                 function (err) {
                     if (err) {
-                        console.error(`failed to insert relation: ${address} ${hash} ${relation} ${err}`);
+                        console.error(
+                            `failed to insert relation: ${address} ${hash} ${relation} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({
@@ -131,8 +117,8 @@ class UserHashRelationStorage {
 
     /**
      * @comment query relation from address with hash
-     * @param {string} address 
-     * @param {string} hash 
+     * @param {string} address
+     * @param {string} hash
      * @returns {Promise<{ret: number, data: {address: string, hash: string, relation: UserHashRelation}}>}
      */
     async query_relation(address, hash) {
@@ -146,7 +132,9 @@ class UserHashRelationStorage {
                 [address, hash],
                 (err, row) => {
                     if (err) {
-                        console.error(`failed to query relation: ${address} ${hash} ${err}`);
+                        console.error(
+                            `failed to query relation: ${address} ${hash} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         if (row == null) {
@@ -171,10 +159,17 @@ class UserHashRelationStorage {
         return new Promise((resolve) => {
             this.db.run(
                 `UPDATE relations SET relation = ? WHERE address = ? AND hash = ? AND relation = ?`,
-                [UserHashRelation.Owner, address, hash, UserHashRelation.Resonance],
+                [
+                    UserHashRelation.Owner,
+                    address,
+                    hash,
+                    UserHashRelation.Resonance,
+                ],
                 function (err) {
                     if (err) {
-                        console.error(`failed to update relation: ${address} ${hash} ${err}`);
+                        console.error(
+                            `failed to update relation: ${address} ${hash} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({
@@ -188,19 +183,28 @@ class UserHashRelationStorage {
 
     /**
      * @comment transfer owner from from_address to to_address
-     * @param {string} from_address 
-     * @param {string} to_address 
-     * @param {string} hash 
+     * @param {string} from_address
+     * @param {string} to_address
+     * @param {string} hash
      * @returns {Promise<{ret: number}>}
      */
     async transfer_owner(from_address, to_address, hash) {
         assert(this.db != null, `db should not be null`);
-        assert(_.isString(from_address), `from_address should be string: ${from_address}`);
-        assert(_.isString(to_address), `to_address should be string: ${to_address}`);
+        assert(
+            _.isString(from_address),
+            `from_address should be string: ${from_address}`,
+        );
+        assert(
+            _.isString(to_address),
+            `to_address should be string: ${to_address}`,
+        );
         assert(_.isString(hash), `hash should be string: ${hash}`);
 
         // first delete new owner's relation if exists
-        const { ret: delete_ret } = await this.delete_resonance(to_address, hash);
+        const { ret: delete_ret } = await this.delete_resonance(
+            to_address,
+            hash,
+        );
         if (delete_ret !== 0) {
             console.error(`failed to delete relation: ${to_address} ${hash}`);
             return { ret: delete_ret };
@@ -212,7 +216,9 @@ class UserHashRelationStorage {
                 [to_address, from_address, hash, UserHashRelation.Owner],
                 function (err) {
                     if (err) {
-                        console.error(`failed to update relation: ${from_address} ${to_address} ${hash} ${err}`);
+                        console.error(
+                            `failed to update relation: ${from_address} ${to_address} ${hash} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({
@@ -234,7 +240,9 @@ class UserHashRelationStorage {
                 [hash, UserHashRelation.Resonance],
                 (err, rows) => {
                     if (err) {
-                        console.error(`failed to get resonances by hash: ${hash} ${err}`);
+                        console.error(
+                            `failed to get resonances by hash: ${hash} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, data: rows });
@@ -254,7 +262,9 @@ class UserHashRelationStorage {
                 [address, UserHashRelation.Resonance],
                 (err, rows) => {
                     if (err) {
-                        console.error(`failed to get resonances by address: ${address} ${err}`);
+                        console.error(
+                            `failed to get resonances by address: ${address} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, data: rows });
@@ -266,7 +276,7 @@ class UserHashRelationStorage {
 
     /**
      * @comment get resonance count by hash
-     * @param {string} hash 
+     * @param {string} hash
      * @returns {Promise<{ret: number, count: number}>}
      */
     async get_resonance_count_by_hash(hash) {
@@ -279,7 +289,9 @@ class UserHashRelationStorage {
                 [hash, UserHashRelation.Resonance],
                 (err, row) => {
                     if (err) {
-                        console.error(`failed to get resonance count by hash: ${hash} ${err}`);
+                        console.error(
+                            `failed to get resonance count by hash: ${hash} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0, count: row.count });
@@ -300,11 +312,15 @@ class UserHashRelationStorage {
                 [address, hash],
                 function (err) {
                     if (err) {
-                        console.error(`failed to delete relation: ${address} ${hash} ${err}`);
+                        console.error(
+                            `failed to delete relation: ${address} ${hash} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         if (this.changes === 0) {
-                            console.info(`No relation found: ${address} ${hash}`);
+                            console.info(
+                                `No relation found: ${address} ${hash}`,
+                            );
                             resolve({
                                 ret: 0,
                             });
@@ -329,7 +345,9 @@ class UserHashRelationStorage {
                 [address, UserHashRelation.Resonance],
                 function (err) {
                     if (err) {
-                        console.error(`failed to delete relation with address: ${address} ${err}`);
+                        console.error(
+                            `failed to delete relation with address: ${address} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         if (this.changes === 0) {
@@ -350,4 +368,4 @@ class UserHashRelationStorage {
     }
 }
 
-module.exports = {UserHashRelationStorage, UserHashRelation};
+module.exports = { UserHashRelationStorage, UserHashRelation };
