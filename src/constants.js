@@ -44,6 +44,9 @@ const DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD = 32;
 // difficulty of chant block height
 const DIFFICULTY_CHANT_BLOCK_THRESHOLD = 32;
 
+// the minimal size of data hash, if the data hash is less than this size, we will set to it
+const DATA_HASH_START_SIZE = 1024 * 1024 * 128;
+
 module.exports = {
     INDEX_VERSION,
 
@@ -70,4 +73,6 @@ module.exports = {
     DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD,
     DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
     DIFFICULTY_CHANT_BLOCK_THRESHOLD,
+
+    DATA_HASH_START_SIZE,
 };

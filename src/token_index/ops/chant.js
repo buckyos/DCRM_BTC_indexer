@@ -181,7 +181,6 @@ class ChantOperator {
         inscription_item.hash_weight = hash_weight;
 
         let bonus = hash_weight;
-        // const stamina = hash_weight / 4;
         const stamina = BigNumberUtil.divide(hash_weight, 4);
 
         const { ret: get_balance_ret, amount } = await this.storage.get_balance(

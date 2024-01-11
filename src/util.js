@@ -6,7 +6,7 @@ const bs58 = require('bs58');
 const sb = require('satoshi-bitcoin');
 const Decimal = require('decimal.js');
 const BigNumber = require('bignumber.js');
-const { TOKEN_DECIMAL } = require('./constants');
+const { TOKEN_DECIMAL, DATA_HASH_START_SIZE } = require('./constants');
 
 class Util {
     /**
@@ -335,36 +335,41 @@ class Util {
 
     /**
      *
-     * @param {string | number} data_size
-     * @param {string | number} point
-     * @returns {string}
+     * @param {number} data_size
+     * @param {number} point
+     * @returns {string} value will always between [500, 20000]
      */
     static calc_point(data_size, point) {
-        const baseScore = new Decimal(999)
-            .dividedBy(
-                new Decimal('1').plus(
-                    Decimal.exp(
-                        new Decimal('-0.00000762939453125').times(
-                            new Decimal(data_size).minus(
-                                new Decimal('127999999'),
-                            ),
-                        ),
-                    ),
-                ),
-            )
-            .plus(1);
+        assert(
+            _.isNumber(data_size),
+            `data_size should be number ${data_size}`,
+        );
+        assert(_.isNumber(point), `point should be number ${point}`);
 
-        const baseRate = new Decimal(19)
-            .dividedBy(
-                new Decimal('1').plus(
-                    Decimal.exp(
-                        new Decimal(-0.15).times(new Decimal(point).minus(90)),
-                    ),
-                ),
-            )
-            .plus(1);
+        let x = 0;
+        if (data_size > DATA_HASH_START_SIZE) {
+            x = data_size - DATA_HASH_START_SIZE;
+        }
 
-        const score = baseScore.times(baseRate).times(2);
+        const base_score = Decimal.div(
+            '999',
+            Decimal.add(
+                1,
+                Decimal.exp(new Decimal('-0.00000762939453125').mul(x)),
+            ),
+        ).plus(1);
+
+        const base_rate = Decimal.div(
+            '19',
+            Decimal.add(
+                1,
+                Decimal.exp(
+                    new Decimal('-0.15').mul(new Decimal(point).minus('90')),
+                ),
+            ),
+        ).plus(1);
+
+        const score = base_score.times(base_rate);
         return score.toDecimalPlaces(TOKEN_DECIMAL).toString();
     }
 
@@ -546,7 +551,6 @@ new BigNumberUtil();
 
 module.exports = { Util, BigNumberUtil };
 
-/*
 function test() {
     const v = '100';
     assert(BigNumberUtil.check_decimal_string(v));
@@ -564,7 +568,6 @@ function test() {
     assert(!BigNumberUtil.check_decimal_string(v4));
 }
 
-
 function test_calc_points() {
     const score = Util.calc_point(1024 * 1024, 1);
     console.log(`score ${score}`);
@@ -577,10 +580,13 @@ function test_calc_points() {
 
     const score3 = Util.calc_point(1024 * 1024 * 1024, 100);
     console.log(`score3 ${score3}`);
+
+    const score4 = Util.calc_point(
+        1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+        100,
+    );
+    console.log(`score4 ${score4}`);
 }
 
+global._ = require('underscore');
 test_calc_points();
-
-test();
-
-*/

@@ -314,6 +314,11 @@ class InscribeDataOperator {
         inscription_item.hash_weight = hash_weight;
         inscription_item.hash_point = hash_point;
 
+        // suppose that: n = (hash_weight * 2), then we should confirm that:
+        // amt >= n
+        // price <= n
+        const max_price = BigNumberUtil.multiply(hash_weight, 2);
+
         // try fix price if exists
         if (inscription_item.content.price != null) {
             const price = inscription_item.content.price;
@@ -323,7 +328,6 @@ class InscribeDataOperator {
             );
 
             // check and try fix price
-            const max_price = BigNumberUtil.multiply(hash_weight, 2);
             if (BigNumberUtil.compare(price, max_price) > 0) {
                 console.warn(
                     `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
@@ -334,10 +338,10 @@ class InscribeDataOperator {
             }
         }
 
-        // check if hash weight is less than amt (amt >= hash_weight)
-        if (BigNumberUtil.compare(amt, hash_weight) < 0) {
+        // check if hash weight is less than amt (amt >= hash_weight * 2)
+        if (BigNumberUtil.compare(amt, max_price) < 0) {
             console.warn(
-                `hash weight is less than amt ${inscription_item.inscription_id} ${amt} < ${hash_weight}`,
+                `hash weight is less than amt ${inscription_item.inscription_id} ${amt} < ${max_price}`,
             );
 
             // hash weight is less than amt, so this inscription will failed
