@@ -477,7 +477,7 @@ class ResonanceOperator {
             return { ret: update_inscribe_data_ret };
         }
 
-        // 3. update the relation
+        // 3. build the relation between user and hash for the first time
         const { ret: update_relation_ret } =
             await this.relation_storage.insert_relation(
                 inscription_item.address,
@@ -494,7 +494,7 @@ class ResonanceOperator {
         console.log(
             `resonance success ${inscription_item.inscription_id} ${inscription_item.address} -> ${inscription_item.output_address} ${inscription_item.content.ph} ${inscription_item.content.amt}`,
         );
-        
+
         return { ret: 0, owner_bonus, service_charge };
     }
 }

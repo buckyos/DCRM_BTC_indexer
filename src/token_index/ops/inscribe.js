@@ -525,10 +525,10 @@ class InscribeDataOperator {
             `foundation_address should be string`,
         );
 
-        // 2. subtract balance from address
+        // 2. subtract mint_amt from address
         const { ret: update_balance_ret } = await this.storage.update_balance(
             op.inscription_item.address,
-            BigNumberUtil.multiply(amt, '-1'),
+            BigNumberUtil.multiply(mint_amt, '-1'),
         );
         if (update_balance_ret !== 0) {
             // the balance has been checked in on_inscribe, so should not reach here
@@ -539,7 +539,7 @@ class InscribeDataOperator {
             return { ret: update_balance_ret };
         }
 
-        // 2. transfer service charge to foundation address
+        // 2. transfer service_charge from address to foundation address
         const { ret: transfer_ret2 } = await this.storage.transfer_balance(
             op.inscription_item.address,
             this.config.token.account.foundation_address,
