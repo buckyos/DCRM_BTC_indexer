@@ -68,6 +68,8 @@ const TABLE_NAME = {
     TRANSFER_RECORDS: 'transfer_records',
     SET_PRICE_RECORDS: 'set_price_records',
     INSCRIBE_DATA_TRANSFER_RECORDS: 'inscribe_data_transfer_records',
+
+    USER_OPS: 'user_ops',
 };
 
 module.exports = {

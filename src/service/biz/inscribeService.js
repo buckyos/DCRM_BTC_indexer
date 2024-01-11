@@ -334,6 +334,64 @@ class InscribeService {
         );
     }
 
+    async _getOpsByAddress(ctx) {
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const state = ctx.params.state;
+        const order = ctx.params.order;
+
+        return this.m_store.queryOpsByAddress(
+            address,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getOpsByInscription(ctx) {
+        const inscription = ctx.params.inscription_id;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const state = ctx.params.state;
+        const order = ctx.params.order;
+
+        return this.m_store.queryOpsByInscription(
+            inscription,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getOpsByInscriptionAndAddress(ctx) {
+        const inscription = ctx.params.inscription_id;
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const state = ctx.params.state;
+        const order = ctx.params.order;
+
+        return this.m_store.queryOpsByInscriptionAndAddress(
+            inscription,
+            address,
+            limit || 0,
+            offset || 0,
+            state ? state.toUpperCase() : "ALL",
+            order ? order.toUpperCase() : "DESC"
+        );
+    }
+
+    async _getOpsByTx(ctx) {
+        const txid = ctx.params.txid;
+
+        return this.m_store.queryOpsByTx(
+            txid
+        );
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -432,6 +490,22 @@ class InscribeService {
 
         router.get("/inscribe_data_transfer_by_tx/:txid", async (ctx) => {
             ctx.response.body = await this._getInscribeDataTransferByTx(ctx);
+        });
+
+        router.get("/ops_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getOpsByAddress(ctx);
+        });
+
+        router.get("/ops_by_inscription/:inscription_id/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getOpsByInscription(ctx);
+        });
+
+        router.get("/ops_by_inscription_address/:inscription_id/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getOpsByInscriptionAndAddress(ctx);
+        });
+
+        router.get("/ops_by_tx/:txid", async (ctx) => {
+            ctx.response.body = await this._getOpsByTx(ctx);
         });
 
 

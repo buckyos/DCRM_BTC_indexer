@@ -68,7 +68,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryMintRecordByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
 
         return makeSuccessResponse({ count, list });
@@ -91,7 +91,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryMintRecordByTx failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -129,7 +129,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryLuckyMintRecord failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
 
         return makeSuccessResponse({ count, list });
@@ -167,7 +167,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryTotalMintByTime failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -201,7 +201,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryBalanceByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -229,7 +229,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryBalanceByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -258,7 +258,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryIndexerState failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -326,7 +326,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryIncomeByTime failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -348,7 +348,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryHashWeight failed:', error);
 
-            return makeResponse(ERR_CODE.UNKNOWN_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -369,7 +369,7 @@ class MintStore {
         } catch (error) {
             logger.error('queryIndexerStateDetail failed:', error);
 
-            return makeResponse(ERR_CODE.UNKNOWN_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 }

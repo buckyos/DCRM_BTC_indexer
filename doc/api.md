@@ -1035,6 +1035,137 @@ const InscriptionOpState = {
     }
     ```
 
+#### 根据地址查询用户操作
+
+    /ops_by_address/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    address: 地址，无论是发起地址还是接受地址，都会返回
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    返回值中可能包含用户的操作类型（op）,取值有如下几种：  
+    'mint'              - mint操作  
+    'chant'             - 吟唱操作  
+    'inscribe_data'     - 铭刻数据操作  
+    'transfer_data'     - 转移数据操作  
+    'inscribe_res'      - 铭刻共鸣操作  
+    'res'               - 共鸣确认操作  
+    'inscribe_transfer' - 铭刻transfer操作  
+    'transfer'          - brc20转账操作  
+    'set_price'         - 设置共鸣价格  
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            address,        // 用户地址
+            inscription_id, // 相关铭文id
+            block_height,   // 操作发生的区块
+            timestamp,      // 时间
+            txid,           // 操作txid
+            op,             // string 操作类型 取值见op描述
+            state,          // 见state描述
+        }
+    }
+    ```    
+
+#### 根据铭文id查询相关用户操作
+
+    /ops_by_inscription/:inscription_id/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    inscription_id: 铭文id
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            // 同上
+        }
+    }
+    ```  
+
+#### 根据铭文id和地址查询相关用户操作
+
+    /ops_by_inscription_address/:inscription_id/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    inscription_id: 铭文id
+
+    address: 用户地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            // 同上
+        }
+    }
+    ```  
+
+#### 根据铭文id和地址查询相关用户操作
+
+    /ops_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid: 交易id
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            // 同上
+        }
+    }
+    ```  
+
 #### 根据hash查询hash weight
 
     /hash_weight/:hash

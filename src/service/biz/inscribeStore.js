@@ -46,7 +46,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryInscriptionByHash failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -82,7 +82,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryInscriptionByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
 
     }
@@ -116,7 +116,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryInscriptionByBlock failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -135,7 +135,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryInscriptionCount failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -180,7 +180,7 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryInscribeByHash failed:', error);
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -216,7 +216,7 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryInscribeByAddress failed:', error);
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -261,7 +261,7 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryInscribeByHashAndAddress failed:', error);
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -285,7 +285,7 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryInscribeByTx failed:', error);
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -328,7 +328,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryResonanceByHash failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -366,7 +366,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryResonanceByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -411,7 +411,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryResonanceByHashAndAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -436,7 +436,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryResonanceByTx failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -481,7 +481,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryChantByHash failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -518,7 +518,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryChantByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -563,7 +563,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryChantByHashAndAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -589,7 +589,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryChantByTx failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -634,7 +634,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('querySetPriceByHash failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -672,7 +672,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('querySetPriceByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -697,7 +697,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('querySetPriceByTx failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -737,7 +737,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryTransferByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -762,7 +762,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryTransferByTx failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -807,7 +807,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryInscribeDataTransferByHash failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -847,7 +847,7 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryInscribeDataTransferByAddress failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
@@ -872,7 +872,145 @@ class InscribeStore {
         } catch (error) {
             logger.error('queryInscribeDataTransferByTx failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryOpsByAddress(address, limit, offset, state, order) {
+        if (!address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.USER_OPS}
+                WHERE address = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql = `SELECT * FROM ${TABLE_NAME.OPS_RECORDS} WHERE address = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(address, limit, offset);
+            }
+
+            logger.debug('queryOpsByAddress:', address, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryOpsByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryOpsByInscription(inscription, limit, offset, state, order) {
+        if (!inscription) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.USER_OPS}
+                WHERE inscription_id = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(inscription);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql = `SELECT * FROM ${TABLE_NAME.USER_OPS} WHERE inscription_id = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(inscription, limit, offset);
+            }
+
+            logger.debug('queryOpsByInscription:', inscription, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryOpsByInscription failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryOpsByInscriptionAndAddress(inscription, address, limit, offset, state, order) {
+        if (!inscription || !address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "ASC" ? "ASC" : "DESC";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.USER_OPS}
+                WHERE inscription_id = ? AND address = ?`;
+            sql += StateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(inscription, address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql = `SELECT * FROM ${TABLE_NAME.USER_OPS} WHERE inscription_id = ? AND address = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(inscription, address, limit, offset);
+            }
+
+            logger.debug('queryOpsByInscriptionAndAddress:', inscription, address, offset, limit, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryOpsByInscriptionAndAddress failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryOpsByTx(txid) {
+        if (!txid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        try {
+            let sql =
+                `SELECT *
+                FROM ${TABLE_NAME.USER_OPS}
+                WHERE txid = ?`;
+
+            const stmt = store.indexDB.prepare(sql);
+            const ret = stmt.get(txid);
+
+            logger.debug('queryOpsByTx:', txid, "ret:", ret);
+
+            return ret ? makeSuccessResponse(ret) : makeResponse(ERR_CODE.NOT_FOUND, "not found");
+
+        } catch (error) {
+            logger.error('queryOpsByTx failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 }
