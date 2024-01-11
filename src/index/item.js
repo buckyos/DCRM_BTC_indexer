@@ -124,13 +124,6 @@ class InscribeDataOp {
                 return { ret: 0, valid: false };
             }
         }
-
-        if (_.isNumber(amt)) {
-            console.error(`fix inscribe content amt on debug: ${amt}`);
-            amt = amt.toString();
-            content.amt = amt;
-        }
-
         // check amt
         if (!BigNumberUtil.is_positive_number_string(amt)) {
             console.warn(`invalid inscribe content amt ${amt}`);
@@ -139,17 +132,12 @@ class InscribeDataOp {
 
         // check price
         if (price != null) {
-            if (_.isNumber(price)) {
-                console.error(`fix inscribe content price on debug: ${price}`);
-                price = price.toString();
-                content.price = price;
-            }
-
             if (!BigNumberUtil.is_positive_number_string(price)) {
                 console.warn(`invalid inscribe content price ${price}`);
                 return { ret: 0, valid: false };
             }
         } else {
+            content.price = '0';
             price = '0';
         }
 
