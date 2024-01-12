@@ -4,6 +4,7 @@ const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/
 const { Util } = require('../../util');
 const { UserHashRelation } = require('../../storage/relation')
 const { UserOp } = require('../../storage/token');
+const { InscriptionOp } = require('../../index/item');
 
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
@@ -1121,16 +1122,12 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIPTION_OP}
                 WHERE inscription_id = ?`;
 
-            logger.debug('queryInscriptionOpById:', inscriptionId, "sql:", sql);
-
             const stmt = store.inscriptionOpDB.prepare(sql);
             const ret = stmt.get(inscriptionId);
 
             if (!ret) {
                 return makeResponse(ERR_CODE.NOT_FOUND);
             }
-
-            logger.debug('queryInscriptionOpById:', inscriptionId, "ret:", ret);
 
             const opType = ret.op;
             const tableName = this._getTableByOpType(opType);
@@ -1187,6 +1184,14 @@ class InscribeStore {
                 return TABLE_NAME.TRANSFER_RECORDS;
             case UserOp.SetPrice:
                 return TABLE_NAME.SET_PRICE_RECORDS;
+
+            case InscriptionOp.Inscribe:
+                return TABLE_NAME.INSCRIBE_RECORDS;
+            case InscriptionOp.SetPrice:
+                return TABLE_NAME.SET_PRICE_RECORDS;
+            case InscriptionOp.Resonance:
+                return TABLE_NAME.RESONANCE_RECORDS;
+
             default:
                 return null;
         }
