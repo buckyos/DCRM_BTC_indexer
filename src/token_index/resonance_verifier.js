@@ -13,7 +13,7 @@ class ResonanceVerifier {
         this.relation_storage = storage.get_user_hash_relation_storage();
         assert(
             this.relation_storage instanceof UserHashRelationStorage,
-            'relation_storage should be UserHashRelatonStorage',
+            'relation_storage should be UserHashRelationStorage',
         );
     }
 
@@ -39,7 +39,7 @@ class ResonanceVerifier {
         if (last_chant_data != null) {
             if (last_chant_data.block_height + 12800 < block_height) {
                 console.warn(
-                    `user ${address} has no chant at 12800 consecutive blocks, last chant block number ${last_chant_data.block_height}, current block number ${inscription_item.block_height}`,
+                    `user ${address} has no chant at 12800 consecutive blocks, last chant block number ${last_chant_data.block_height}, current block number ${block_height}`,
                 );
 
                 // clear user all resonance

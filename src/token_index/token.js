@@ -12,7 +12,6 @@ const { SetPriceOperator } = require('./ops/set_price');
 const { BlockInscriptionCollector, InscriptionOp } = require('../index/item');
 const {
     UserHashRelationStorage,
-    UserHashRelation,
 } = require('../storage/relation');
 const { ResonanceVerifier } = require('../resonance_verifier');
 

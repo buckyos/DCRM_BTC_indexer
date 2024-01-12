@@ -551,6 +551,7 @@ new BigNumberUtil();
 
 module.exports = { Util, BigNumberUtil };
 
+/*
 function test() {
     const v = '100';
     assert(BigNumberUtil.check_decimal_string(v));
@@ -590,3 +591,4 @@ function test_calc_points() {
 
 global._ = require('underscore');
 test_calc_points();
+*/

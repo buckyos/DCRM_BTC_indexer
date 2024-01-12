@@ -268,6 +268,23 @@ class ChantOperator {
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
+        // load inscribed data by hash, and we should check if the owner is the same
+        const { ret: get_data_ret, data } =
+            await this.storage.get_inscribe_data(hash);
+        if (get_data_ret !== 0) {
+            console.error(
+                `failed to get inscribe data ${inscription_item.inscription_id} ${hash}`,
+            );
+            return { ret: get_data_ret };
+        }
+
+        if (data == null) {
+            console.warn(
+                `inscribe data not exists ${inscription_item.inscription_id} ${hash}`,
+            );
+            return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
+        }
+        
         // 6. trans bonus to user and owner
         let user_bonus;
         let owner_bonus;

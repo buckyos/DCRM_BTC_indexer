@@ -90,7 +90,7 @@ class InscribeDataOperator {
             );
         if (add_record_ret !== 0) {
             console.error(
-                `failed to record user transfer data op ${inscription_transfer_item.inscription_id} ${hash}`,
+                `failed to record user transfer data op ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.hash}`,
             );
             return { ret: add_record_ret };
         }

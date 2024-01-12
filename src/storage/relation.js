@@ -1,7 +1,6 @@
-const path = require('path');
 const assert = require('assert');
 const sqlite3 = require('sqlite3').verbose();
-const { TOKEN_INDEX_DB_FILE } = require('../constants');
+
 
 const UserHashRelation = {
     Owner: 0,
