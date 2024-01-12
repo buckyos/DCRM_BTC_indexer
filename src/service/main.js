@@ -86,8 +86,35 @@ function main() {
 
     store.init(config);
 
+    watchExit();
+
     const service = new Service(config);
     service.start();
+}
+
+function watchExit() {
+    process.on('exit', () => {
+        store.close();
+        console.log('Process is exiting.');
+    });
+
+    process.on('SIGINT', () => {
+        store.close();
+        console.log('Process was interrupted (SIGINT).');
+        process.exit(0);
+    });
+
+    process.on('SIGTERM', () => {
+        store.close();
+        console.log('Process was terminated (SIGTERM).');
+        process.exit(0);
+    });
+
+    process.on('uncaughtException', (error) => {
+        console.error('Uncaught exception:', error);
+        store.close();
+        process.exit(1);
+    });
 }
 
 main();

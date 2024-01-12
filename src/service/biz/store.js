@@ -1,6 +1,8 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const { SYNC_STATE_DB_FILE, INDEX_STATE_DB_FILE, TOKEN_INDEX_DB_FILE } = require('../../constants');
+const fs = require('fs');
+const chokidar = require('chokidar');
 
 class Store {
     constructor() {
@@ -11,6 +13,38 @@ class Store {
         this.m_indexStateDB = null;
 
         this.m_inited = false;
+
+        this.m_watchers = [];
+    }
+
+    _connectDB(dbPath, option) {
+        if (fs.existsSync(dbPath)) {
+            try {
+                const db = new Database(dbPath, option);
+                logger.info(`Connected to database at ${dbPath}`);
+
+                return db;
+            } catch (error) {
+                logger.error(`Failed to connect to database at ${dbPath}: ${error}`);
+                return null;
+            }
+        } else {
+            logger.warn(`Database file at ${dbPath} does not exist.`);
+            return null;
+        }
+    }
+
+    _watchAndReconnect(dbPath, dbName, option) {
+        const watcher = chokidar.watch(dbPath, { ignoreInitial: true });
+        watcher.on('add', (path) => {
+            logger.info(`Reconnecting to the new database file: ${path}`);
+            if (this[dbName]) {
+                this[dbName].close();
+                this[dbName] = null;
+            }
+            this[dbName] = this._connectDB(dbPath, option);
+        });
+        this.m_watchers.push(watcher);
     }
 
     init(config) {
@@ -28,17 +62,32 @@ class Store {
         };
 
         const indexDBPath = path.join(this.m_dataDir, TOKEN_INDEX_DB_FILE);
-        this.m_indexDB = new Database(indexDBPath, option);
+        this.m_indexDB = this._connectDB(indexDBPath, option);
+        this._watchAndReconnect(indexDBPath, 'm_indexDB', option);
 
         const syncStateDBPath = path.join(this.m_dataDir, SYNC_STATE_DB_FILE);
-        this.m_syncStateDB = new Database(syncStateDBPath, option);
+        this.m_syncStateDB = this._connectDB(syncStateDBPath, option);
+        this._watchAndReconnect(syncStateDBPath, 'm_syncStateDB', option);
 
         const indexStateDBPath = path.join(this.m_dataDir, INDEX_STATE_DB_FILE);
-        this.m_indexStateDB = new Database(indexStateDBPath, option);
+        this.m_indexStateDB = this._connectDB(indexStateDBPath, option);
+        this._watchAndReconnect(indexStateDBPath, 'm_indexStateDB', option);
 
-        logger.info('init db success');
+        // logger.info('init db success');
 
         this.m_inited = true;
+    }
+
+    close() {
+        this.m_watchers.forEach(watcher => watcher.close());
+
+        ['m_indexDB', 'm_syncStateDB', 'm_indexStateDB'].forEach(dbName => {
+            if (this[dbName]) {
+                this[dbName].close();
+                this[dbName] = null;
+                console.log('close db:', dbName);
+            }
+        });
     }
 
     get indexDB() {
