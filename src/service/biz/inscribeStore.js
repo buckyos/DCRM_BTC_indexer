@@ -1128,6 +1128,8 @@ class InscribeStore {
                 return makeResponse(ERR_CODE.NOT_FOUND);
             }
 
+            log.debug('queryInscriptionOpById:', inscriptionId, "ret:", ret);
+
             const opType = ret.op;
             const tableName = this._getTableByOpType(opType);
             if (!tableName) {
