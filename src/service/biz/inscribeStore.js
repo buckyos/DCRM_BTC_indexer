@@ -1121,7 +1121,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIPTION_OP}
                 WHERE inscription_id = ?`;
 
-            log.debug('queryInscriptionOpById:', inscriptionId, "sql:", sql);
+            logger.debug('queryInscriptionOpById:', inscriptionId, "sql:", sql);
 
             const stmt = store.inscriptionOpDB.prepare(sql);
             const ret = stmt.get(inscriptionId);
@@ -1130,7 +1130,7 @@ class InscribeStore {
                 return makeResponse(ERR_CODE.NOT_FOUND);
             }
 
-            log.debug('queryInscriptionOpById:', inscriptionId, "ret:", ret);
+            logger.debug('queryInscriptionOpById:', inscriptionId, "ret:", ret);
 
             const opType = ret.op;
             const tableName = this._getTableByOpType(opType);
