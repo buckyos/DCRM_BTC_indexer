@@ -137,10 +137,7 @@ async function run(config, mode) {
     assert(_.isString(mode), `mode should be string, but ${mode}`);
 
     // init log
-    const log = new LogHelper(config);
-    log.path_console();
-    log.enable_console_target(true);
-    log.set_level('info');
+    new LogHelper(config);
 
     if (global.bug_monitor) {
         const error_fn = console.error;

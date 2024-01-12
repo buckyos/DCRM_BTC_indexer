@@ -62,7 +62,12 @@ const INDEX_CONFIG = {
 
     monitor: {
         // notify_url: '',
-    }
+    },
+
+    log: {
+        console: true,
+        level: 'info',
+    },
 };
 
 module.exports = INDEX_CONFIG;
