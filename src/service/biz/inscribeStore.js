@@ -1066,7 +1066,7 @@ class InscribeStore {
         }
     }
 
-    queryVerifyRelationByAddress(address) {
+    async queryVerifyRelationByAddress(address) {
         try {
             const url = `http://localhost:${this.m_config.localInterface.port}/resonance/address/${address}`;
             const response = await fetch(url);
@@ -1087,7 +1087,7 @@ class InscribeStore {
         }
     }
 
-    queryVerifyRelationByHash(hash) {
+    async queryVerifyRelationByHash(hash) {
         try {
             const url = `http://localhost:${this.m_config.localInterface.port}/resonance/hash/${hash}`;
             const response = await fetch(url);
