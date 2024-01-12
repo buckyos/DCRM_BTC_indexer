@@ -17,7 +17,8 @@ function StateCondition(state) {
 }
 
 class InscribeStore {
-    constructor() {
+    constructor(config) {
+        this.m_config = config;
     }
 
     queryInscriptionByHash(hash) {

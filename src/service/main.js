@@ -28,7 +28,7 @@ class Service {
     }
 
     _register() {
-        const inscribeService = new InscribeService();
+        const inscribeService = new InscribeService(this.m_config);
         inscribeService.registerRouter(this.m_router);
 
         const mintService = new MintService(this.m_config);
