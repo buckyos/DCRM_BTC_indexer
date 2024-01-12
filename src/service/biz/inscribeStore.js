@@ -3,6 +3,7 @@ const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
 const { Util } = require('../../util');
 const { UserHashRelation } = require('../../storage/relation')
+const { UserOp } = require('../../storage/token');
 
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
@@ -1106,6 +1107,84 @@ class InscribeStore {
             logger.error('queryVerifyRelationByAddress failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryInscriptionOpById(inscriptionId) {
+        if (!inscriptionId) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        try {
+            let sql =
+                `SELECT *
+                FROM ${TABLE_NAME.INSCRIPTION_OP}
+                WHERE inscription_id = ?`;
+
+            const stmt = store.indexDB.prepare(sql);
+            const ret = stmt.get(inscriptionId);
+
+            if (!ret) {
+                return makeResponse(ERR_CODE.NOT_FOUND);
+            }
+
+            const opType = ret.op;
+            const tableName = this._getTableByOpType(opType);
+            if (!tableName) {
+                return makeResponse(ERR_CODE.NOT_FOUND);
+            }
+
+            sql = `SELECT * FROM ${tableName} WHERE inscription_id = ? LIMIT 1`;
+            const opStmt = store.indexDB.prepare(sql);
+            ret.detail = opStmt.get(inscriptionId);
+
+            return makeSuccessResponse(ret);
+
+        } catch (error) {
+            logger.error('queryInscriptionOpById failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    /*
+    const UserOp = {
+        Mint: 'mint',
+        Chant: 'chant',
+
+        InscribeData: 'inscribe_data',
+        TransferData: 'transfer_data',
+
+        InscribeResonance: 'inscribe_res',
+        Resonance: 'res',
+
+        InscribeTransfer: 'inscribe_transfer',
+        Transfer: 'transfer',
+
+        SetPrice: 'set_price',
+    }; */
+    _getTableByOpType(opType) {
+        switch (opType) {
+            case UserOp.Mint:
+                return TABLE_NAME.MINT_RECORDS;
+            case UserOp.Chant:
+                return TABLE_NAME.CHANT_RECORDS;
+            case UserOp.InscribeData:
+                return TABLE_NAME.INSCRIBE_RECORDS;
+            case UserOp.TransferData:
+                return TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS;
+            case UserOp.InscribeResonance:
+                return TABLE_NAME.RESONANCE_RECORDS;
+            case UserOp.Resonance:
+                return TABLE_NAME.RESONANCE_RECORDS;
+            case UserOp.InscribeTransfer:
+                return TABLE_NAME.TRANSFER_RECORDS;
+            case UserOp.Transfer:
+                return TABLE_NAME.TRANSFER_RECORDS;
+            case UserOp.SetPrice:
+                return TABLE_NAME.SET_PRICE_RECORDS;
+            default:
+                return null;
         }
     }
 }

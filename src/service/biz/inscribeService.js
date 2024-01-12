@@ -425,6 +425,14 @@ class InscribeService {
         );
     }
 
+    async _getInscriptionOpById(ctx) {
+        const inscriptionId = ctx.params.inscription_id;
+
+        return this.m_store.queryInscriptionOpById(
+            inscriptionId
+        );
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -555,6 +563,10 @@ class InscribeService {
 
         router.get("/res_relation_by_hash/verify/:hash", async (ctx) => {
             ctx.response.body = await this._getVerifyRelationByAddress(ctx);
+        });
+
+        router.get("/inscription_op/:inscription_id", async (ctx) => {
+            ctx.response.body = await this._getInscriptionOpById(ctx);
         });
 
         return 0;
