@@ -1,16 +1,17 @@
 const { InscribeStore } = require('./inscribeStore.js');
 
 class InscribeService {
-    constructor() {
+    constructor(config) {
         this.m_inited = false;
         this.m_store = null;
+        this.m_config = config;
     }
 
     _init() {
         if (this.m_inited) {
             return;
         }
-        this.m_store = new InscribeStore();
+        this.m_store = new InscribeStore(this.m_config);
         this.m_inited = true;
     }
 
