@@ -14,6 +14,8 @@ const {
     UserHashRelationStorage,
     UserHashRelation,
 } = require('../storage/relation');
+const { ResonanceVerifier } = require('../resonance_verifier');
+
 
 class TokenIndex {
     constructor(config) {
@@ -28,6 +30,7 @@ class TokenIndex {
 
         this.storage = new TokenIndexStorage(dir);
         this.user_hash_relation_storage = this.storage.get_user_hash_relation_storage();
+        this.resonance_verifier = new ResonanceVerifier(this.storage);
     }
 
     /**
@@ -65,6 +68,7 @@ class TokenIndex {
             block_height,
             block_collector,
             this.eth_index,
+            this.resonance_verifier,
         );
         return await block_indexer.process_inscriptions();
     }
@@ -79,6 +83,7 @@ class TokenBlockIndex {
         block_height,
         block_collector,
         eth_index,
+        resonance_verifier,
     ) {
         assert(
             storage instanceof TokenIndexStorage,
@@ -99,6 +104,7 @@ class TokenBlockIndex {
             `block_collector should be BlockInscriptionCollector`,
         );
         assert(eth_index instanceof ETHIndex, `eth_index should be ETHIndex`);
+        assert(resonance_verifier instanceof ResonanceVerifier, `resonance_verifier should be ResonanceVerifier`);
 
         this.storage = storage;
         this.user_hash_relation_storage = user_hash_relation_storage;
@@ -107,6 +113,7 @@ class TokenBlockIndex {
         this.block_height = block_height;
         this.block_collector = block_collector;
         this.eth_index = eth_index;
+        this.resonance_verifier = resonance_verifier;
 
         this.inscribe_operator = new InscribeDataOperator(
             config,
@@ -122,6 +129,7 @@ class TokenBlockIndex {
             storage,
             hash_helper,
             user_hash_relation_storage,
+            resonance_verifier,
         );
         this.set_price_operator = new SetPriceOperator(storage, hash_helper);
     }

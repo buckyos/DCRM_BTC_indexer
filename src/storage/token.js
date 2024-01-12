@@ -2527,6 +2527,43 @@ class TokenIndexStorage {
     }
 
     /**
+     * @comment reset resonance count to new count
+     * @param {string} hash
+     * @param {number} count
+     * @returns {ret: number}
+     */
+    async reset_resonance_count(hash, count) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(_.isNumber(count), `count should be number ${count}`);
+        assert(count <= 15, `count should <= 15 ${count}`);
+
+        const sql = `
+                UPDATE inscribe_data SET resonance_count = ? WHERE hash = ?
+            `;
+
+        return new Promise((resolve) => {
+            this.db.run(sql, [count, hash], (err) => {
+                if (err) {
+                    console.error(
+                        `Could not reset resonance count ${hash}`,
+                        err,
+                    );
+                    resolve({ ret: -1 });
+                } else if (this.changes === 0) {
+                    console.error(
+                        `Could not reset resonance count ${hash}, resonance not found!`,
+                    );
+                    resolve({ ret: 1 });
+                } else {
+                    console.log(`rest resonance count ${hash}, ${count}`);
+                    resolve({ ret: 0 });
+                }
+            });
+        });
+    }
+
+    /**
      * @comment update inscribe data owner+block_height+timestamp where hash and block_height match
      * @param {string} hash
      * @param {number} current_block_height

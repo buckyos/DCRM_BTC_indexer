@@ -15,9 +15,16 @@ const {
     UserHashRelationStorage,
     UserHashRelation,
 } = require('../../storage/relation');
+const { ResonanceVerifier } = require('../resonance_verifier');
 
 class ChantOperator {
-    constructor(config, storage, hash_helper, relation_storage) {
+    constructor(
+        config,
+        storage,
+        hash_helper,
+        relation_storage,
+        resonance_verifier,
+    ) {
         assert(_.isObject(config), `config should be object`);
         assert(
             storage instanceof TokenIndexStorage,
@@ -31,11 +38,16 @@ class ChantOperator {
             relation_storage instanceof UserHashRelationStorage,
             `relation_storage should be UserHashRelationStorage`,
         );
+        assert(
+            resonance_verifier instanceof ResonanceVerifier,
+            `resonance_verifier should be ResonanceVerifier`,
+        );
 
         this.config = config;
         this.storage = storage;
         this.hash_helper = hash_helper;
         this.relation_storage = relation_storage;
+        this.resonance_verifier = resonance_verifier;
 
         // The same user can only successfully chant once in a block
         this.user_chant_ops = new Map();
@@ -114,6 +126,18 @@ class ChantOperator {
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
+        // at first we should check if user has chant at 12800 consecutive blocks, if that, we should clear all its resonance qualifications
+        const { ret: verify_ret } = await this.resonance_verifier.verify_user(
+            inscription_item.address,
+            inscription_item.block_height,
+        );
+        if (verify_ret !== 0) {
+            console.error(
+                `failed to verify user resonance qualifications ${inscription_item.inscription_id} ${inscription_item.address}`,
+            );
+            return { ret: verify_ret };
+        }
+
         // 1. check permission
         // user can only chant the hash which he has or he resonates
         const { ret: query_relation_ret, data: data_relation } =
@@ -138,7 +162,7 @@ class ChantOperator {
 
         assert(
             data_relation.relation === UserHashRelation.Own ||
-                data_relation.relation === UserHashRelation.Resonate,
+                data_relation.relation === UserHashRelation.Resonance,
             `invalid relation ${data_relation.relation}`,
         );
 

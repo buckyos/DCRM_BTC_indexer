@@ -11,6 +11,7 @@ const {
     UserHashRelationStorage,
     UserHashRelation,
 } = require('../../storage/relation');
+const { ResonanceVerifier } = require('../resonance_verifier');
 
 class PendingResonanceOp {
     constructor(inscription_item, content, hash, hash_distance, state) {
@@ -34,7 +35,7 @@ class PendingResonanceOp {
 }
 
 class ResonanceOperator {
-    constructor(config, storage, hash_helper, relation_storage) {
+    constructor(config, storage, hash_helper, relation_storage, resonance_verifier) {
         assert(_.isObject(config), `config should be object`);
         assert(
             storage instanceof TokenIndexStorage,
@@ -48,11 +49,13 @@ class ResonanceOperator {
             relation_storage instanceof UserHashRelationStorage,
             `relation_storage should be UserHashRelationStorage`,
         );
+        assert(resonance_verifier instanceof ResonanceVerifier, `resonance_verifier should be ResonanceVerifier`);
 
         this.config = config;
         this.storage = storage;
         this.hash_helper = hash_helper;
         this.relation_storage = relation_storage;
+        this.resonance_verifier = resonance_verifier;
 
         // pending resonance ops that need to be processed, has some restrictions in the same block
         this.pending_resonance_ops = [];
@@ -282,6 +285,13 @@ class ResonanceOperator {
                 `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        // at first we should verify the hash's resonance count, check if any user has no chant at 12800 consecutive blocks
+        const { ret: verify_ret } = await this.resonance_verifier.verify_hash(hash);
+        if (verify_ret !== 0) {
+            console.error(`verify hash resonance failed ${hash}`);
+            return { ret: verify_ret };
         }
 
         // 1. check if the hash had been inscribed

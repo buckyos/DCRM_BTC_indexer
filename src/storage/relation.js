@@ -230,6 +230,11 @@ class UserHashRelationStorage {
         });
     }
 
+    /**
+     * 
+     * @param {string} hash 
+     * @returns {Promise<{ret: number, data: {address: string, hash: string, relation: UserHashRelation}[]}>}
+     */
     async get_resonances_by_hash(hash) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(hash), `hash should be string: ${hash}`);
@@ -359,6 +364,42 @@ class UserHashRelationStorage {
                             resolve({
                                 ret: 0,
                                 value: 'Relations deleted successfully',
+                            });
+                        }
+                    }
+                },
+            );
+        });
+    }
+
+    async clear_user_all_resonances(address) {
+        assert(this.db != null, `db should not be null`);
+        assert(_.isString(address), `address should be string: ${address}`);
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `DELETE FROM relations WHERE address = ? AND relation = ?`,
+                [address, UserHashRelation.Resonance],
+                function (err) {
+                    if (err) {
+                        console.error(
+                            `failed to delete relation with address: ${address} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        if (this.changes === 0) {
+                            console.warn(
+                                `No relation clear for resonances: ${address}`,
+                            );
+                            resolve({
+                                ret: 0,
+                            });
+                        } else {
+                            console.log(
+                                `Relations cleared successfully for resonances: ${address}`,
+                            );
+                            resolve({
+                                ret: 0,
                             });
                         }
                     }

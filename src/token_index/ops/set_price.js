@@ -89,7 +89,7 @@ class SetPriceOperator {
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
-        // 2. check if hash's owner is the same
+        // 2. check if hash is exists already and hash's owner is the same
         const { ret: get_ret, data } = await this.storage.get_inscribe_data(
             hash,
         );
@@ -101,7 +101,7 @@ class SetPriceOperator {
         }
 
         if (data == null) {
-            console.error(
+            console.warn(
                 `inscribe data not exists ${inscription_item.inscription_id} ${hash}`,
             );
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
@@ -116,11 +116,14 @@ class SetPriceOperator {
 
         // 3. check price, should less than weight * 2
         // calc hash weight
-        const { ret: calc_ret, weight: hash_weight, point: hash_point } =
-            await this.hash_helper.query_hash_weight(
-                inscription_item.timestamp,
-                hash,
-            );
+        const {
+            ret: calc_ret,
+            weight: hash_weight,
+            point: hash_point,
+        } = await this.hash_helper.query_hash_weight(
+            inscription_item.timestamp,
+            hash,
+        );
         if (calc_ret !== 0) {
             console.error(
                 `failed to calc hash weight ${inscription_item.inscription_id} ${hash}`,
