@@ -25,10 +25,10 @@ const INDEX_CONFIG = {
         // rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
         rpc_url: 'http://127.0.0.1:8545',
         genesis_block_height: 18816888,
-        contract_address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+        contract_address: '0x30EeEF94C7cfb7CC2b3BF8F6a2376ec187A95E8d',
         contract_abi: 'contract.json',
 
-        lucky_mint_contract_address: '0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf',
+        lucky_mint_contract_address: '0x56fEc5fe1c73808762167e1f3815F76B2B358160',
         lucky_mint_contract_abi: 'lucky_mint_contract.json',
     },
 
@@ -47,7 +47,7 @@ const INDEX_CONFIG = {
 
     token: {
         account: {
-            foundation_address: '0x100',
+            foundation_address: 'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
         },
 
         genesis_block_height: 821884,

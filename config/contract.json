@@ -1,917 +1,1080 @@
 [
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_gwtToken",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_Foundation",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnableInvalidOwner",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
-        }
-      ],
-      "name": "OwnableUnauthorizedAccount",
-      "type": "error"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "mixedHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint64",
-          "name": "point",
-          "type": "uint64"
-        }
-      ],
-      "name": "DataPointAdded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "depositer",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "mixedHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "balance",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "reward",
-          "type": "uint256"
-        }
-      ],
-      "name": "DepositData",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "supplier",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "GWTStacked",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "supplier",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "GWTUnstacked",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "previousOwner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnershipTransferred",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "mixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "PublicDataCreated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "supplier",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "nonce_block",
-          "type": "uint256"
-        }
-      ],
-      "name": "ShowDataProof",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "mixedHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "oldSponsor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "newSponsor",
-          "type": "address"
-        }
-      ],
-      "name": "SponsorChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "supplier",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "avalibleBalance",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "lockedBalance",
-          "type": "uint256"
-        }
-      ],
-      "name": "SupplierBalanceChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "supplier",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "mixedHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "SupplierPunished",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "supplier",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "mixedHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "SupplierReward",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "mixedHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "cycle",
-          "type": "uint256"
-        }
-      ],
-      "name": "WithdrawAward",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "dataMixedHash",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce_block",
-          "type": "uint256"
-        }
-      ],
-      "name": "_mergeMixHashAndHeight",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "_scoreFromHash",
-      "outputs": [
-        {
-          "internalType": "uint64",
-          "name": "",
-          "type": "uint64"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "depositAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "addDeposit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint64",
-          "name": "depositRatio",
-          "type": "uint64"
-        },
-        {
-          "internalType": "uint256",
-          "name": "depositAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "publicDataContract",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "createPublicData",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "dataBalance",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "foundationAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getCurrectLastShowed",
-      "outputs": [
-        {
-          "internalType": "address[]",
-          "name": "",
-          "type": "address[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "cycleNumber",
-          "type": "uint256"
-        }
-      ],
-      "name": "getCycleInfo",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "totalReward",
-              "type": "uint256"
-            },
-            {
-              "internalType": "bytes32[]",
-              "name": "dataRanking",
-              "type": "bytes32[]"
-            }
-          ],
-          "internalType": "struct PublicDataStorage.CycleOutputInfo",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "cycleNumber",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getDataInCycle",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "address[]",
-              "name": "lastShowers",
-              "type": "address[]"
-            },
-            {
-              "internalType": "uint64",
-              "name": "score",
-              "type": "uint64"
-            },
-            {
-              "internalType": "uint8",
-              "name": "showerIndex",
-              "type": "uint8"
-            }
-          ],
-          "internalType": "struct PublicDataStorage.CycleDataInfo",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce_blocks",
-          "type": "uint256"
-        }
-      ],
-      "name": "getDataProof",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "nonceBlockHeight",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "proofBlockHeight",
-              "type": "uint256"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "proofResult",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "address",
-              "name": "prover",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "lockedAmount",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct PublicDataStorage.DataProof",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getOwner",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getPublicData",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "address",
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "sponsor",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "nftContract",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "maxDeposit",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "dataBalance",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint64",
-              "name": "depositRatio",
-              "type": "uint64"
-            }
-          ],
-          "internalType": "struct PublicDataStorage.PublicData",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "gwtToken",
-      "outputs": [
-        {
-          "internalType": "contract GWTToken",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "owner",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "pledgeGwt",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "renounceOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint32",
-              "name": "minDepositRatio",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "minPublicDataStorageWeeks",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "minLockWeeks",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "blocksPerCycle",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "topRewards",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "lockAfterShow",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "showTimeout",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "maxNonceBlockDistance",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint64",
-              "name": "minRankingScore",
-              "type": "uint64"
-            },
-            {
-              "internalType": "uint64",
-              "name": "minDataSize",
-              "type": "uint64"
-            }
-          ],
-          "internalType": "struct PublicDataStorage.SysConfig",
-          "name": "config",
-          "type": "tuple"
-        }
-      ],
-      "name": "setSysConfig",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce_block",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint32",
-          "name": "index",
-          "type": "uint32"
-        },
-        {
-          "internalType": "bytes16[]",
-          "name": "m_path",
-          "type": "bytes16[]"
-        },
-        {
-          "internalType": "bytes",
-          "name": "leafdata",
-          "type": "bytes"
-        },
-        {
-          "internalType": "enum PublicDataStorage.ShowType",
-          "name": "showType",
-          "type": "uint8"
-        }
-      ],
-      "name": "showData",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "sysConfig",
-      "outputs": [
-        {
-          "internalType": "uint32",
-          "name": "minDepositRatio",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint32",
-          "name": "minPublicDataStorageWeeks",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint32",
-          "name": "minLockWeeks",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint32",
-          "name": "blocksPerCycle",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint32",
-          "name": "topRewards",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint32",
-          "name": "lockAfterShow",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint32",
-          "name": "showTimeout",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint32",
-          "name": "maxNonceBlockDistance",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint64",
-          "name": "minRankingScore",
-          "type": "uint64"
-        },
-        {
-          "internalType": "uint64",
-          "name": "minDataSize",
-          "type": "uint64"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "transferOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "unstakeGWT",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "cycleNumber",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "withdrawAward",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "dataMixedHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce_block",
-          "type": "uint256"
-        }
-      ],
-      "name": "withdrawShow",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ]
-  
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+      }
+    ],
+    "name": "AddressEmptyCode",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "ERC1967InvalidImplementation",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ERC1967NonPayable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FailedInnerCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UUPSUnauthorizedCallContext",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "slot",
+        "type": "bytes32"
+      }
+    ],
+    "name": "UUPSUnsupportedProxiableUUID",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "mixedHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "point",
+        "type": "uint64"
+      }
+    ],
+    "name": "DataPointAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "depositer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "mixedHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "balance",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "reward",
+        "type": "uint256"
+      }
+    ],
+    "name": "DepositData",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "supplier",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "GWTStacked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "supplier",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "GWTUnstacked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "mixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "PublicDataCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "supplier",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce_block",
+        "type": "uint256"
+      }
+    ],
+    "name": "ShowDataProof",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "mixedHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldSponsor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newSponsor",
+        "type": "address"
+      }
+    ],
+    "name": "SponsorChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "supplier",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "avalibleBalance",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "lockedBalance",
+        "type": "uint256"
+      }
+    ],
+    "name": "SupplierBalanceChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "supplier",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "mixedHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "SupplierPunished",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "supplier",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "mixedHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "SupplierReward",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "Upgraded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "mixedHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cycle",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawAward",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "UPGRADE_INTERFACE_VERSION",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "dataMixedHash",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nonce_block",
+        "type": "uint256"
+      }
+    ],
+    "name": "_mergeMixHashAndHeight",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "_scoreFromHash",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "depositAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "addDeposit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddr",
+        "type": "address"
+      }
+    ],
+    "name": "allowPublicDataContract",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint64",
+        "name": "depositRatio",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint256",
+        "name": "depositAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "publicDataContract",
+        "type": "address"
+      }
+    ],
+    "name": "createPublicData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "dataBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddr",
+        "type": "address"
+      }
+    ],
+    "name": "denyPublicDataContract",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "foundationAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getCurrectLastShowed",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cycleNumber",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCycleInfo",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "totalReward",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32[]",
+            "name": "dataRanking",
+            "type": "bytes32[]"
+          }
+        ],
+        "internalType": "struct PublicDataStorage.CycleOutputInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cycleNumber",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDataInCycle",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address[]",
+            "name": "lastShowers",
+            "type": "address[]"
+          },
+          {
+            "internalType": "uint64",
+            "name": "score",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint8",
+            "name": "showerIndex",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct PublicDataStorage.CycleDataInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nonce_blocks",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDataProof",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "nonceBlockHeight",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "proofBlockHeight",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "proofResult",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "prover",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lockedAmount",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct PublicDataStorage.DataProof",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getOwner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getPublicData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "sponsor",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "dataContract",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxDeposit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "dataBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint64",
+            "name": "depositRatio",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct PublicDataStorage.PublicData",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "gwtToken",
+    "outputs": [
+      {
+        "internalType": "contract GWTToken",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_gwtToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_Foundation",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "pledgeGwt",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proxiableUUID",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "minDepositRatio",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "minPublicDataStorageWeeks",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "minLockWeeks",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "blocksPerCycle",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "topRewards",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "lockAfterShow",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "showTimeout",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "maxNonceBlockDistance",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "createDepositRatio",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "minRankingScore",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "minDataSize",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct PublicDataStorage.SysConfig",
+        "name": "config",
+        "type": "tuple"
+      }
+    ],
+    "name": "setSysConfig",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nonce_block",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "index",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes16[]",
+        "name": "m_path",
+        "type": "bytes16[]"
+      },
+      {
+        "internalType": "bytes",
+        "name": "leafdata",
+        "type": "bytes"
+      },
+      {
+        "internalType": "enum PublicDataStorage.ShowType",
+        "name": "showType",
+        "type": "uint8"
+      }
+    ],
+    "name": "showData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "sysConfig",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "minDepositRatio",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "minPublicDataStorageWeeks",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "minLockWeeks",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "blocksPerCycle",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "topRewards",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "lockAfterShow",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "showTimeout",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "maxNonceBlockDistance",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "createDepositRatio",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint64",
+        "name": "minRankingScore",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "minDataSize",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalRewardScore",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "unstakeGWT",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cycleNumber",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "withdrawAward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "dataMixedHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nonce_block",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawShow",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
