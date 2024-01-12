@@ -24,8 +24,8 @@ class ResonanceVerifier {
      * @returns {Promise<{ret: number}>}
      */
     async verify_user(address, block_height) {
-        assert(_.isString(address), `address should be string`);
-        assert(_.isNumber(block_height), `block_height should be number`);
+        assert(_.isString(address), `address should be string ${address}`);
+        assert(_.isNumber(block_height), `block_height should be number ${block_height}`);
 
         // If the use has not any chant 12,800 consecutive blocks, will loses its resonance right
         const { ret: get_last_chant_ret, data: last_chant_data } =
@@ -71,8 +71,8 @@ class ResonanceVerifier {
      * @returns {Promise<{ret: number, changed: boolean}>}
      */
     async verify_hash(hash, block_height) {
-        assert(_.isString(hash), `hash should be string`);
-        assert(_.isNumber(block_height), `block_height should be number`);
+        assert(_.isString(hash), `hash should be string ${hash}`);
+        assert(_.isNumber(block_height), `block_height should be number ${block_height}`);
 
         // first get hash all resonance list
         const { ret: get_ret, data: resonance_list } =

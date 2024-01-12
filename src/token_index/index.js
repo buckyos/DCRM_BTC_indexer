@@ -101,6 +101,10 @@ class TokenIndexExecutor {
         return { ret: 0 };
     }
 
+    get_current_block_height() {
+        return this.current_block_height;
+    }
+
     async status() {
         // first get btc network latest block height
         const { ret: get_btc_height, height: btc_network_height } =
