@@ -1121,7 +1121,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIPTION_OP}
                 WHERE inscription_id = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = store.inscriptionOpDB.prepare(sql);
             const ret = stmt.get(inscriptionId);
 
             if (!ret) {
