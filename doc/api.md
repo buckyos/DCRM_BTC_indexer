@@ -1253,6 +1253,37 @@ const InscriptionOpState = {
     }
     ```
 
+#### 根据InscriptionId查询inscribe操作详情
+
+    /inscription_op/:inscription_id
+
+    GET
+
+    参数
+
+    inscription_id
+
+    返回
+
+    ```json
+    {
+        inscription_id,
+        inscription_number,
+        genesis_block_height,
+        genesis_timestamp,
+        genesis_satpoint,
+        commit_txid,
+        value,
+        content,
+        op: // string 可能的返回值有："mint", "transfer", "inscribe", "chant", "setPrice", "resonance"
+        creator,
+        owner,
+        last_block_height,
+        transfer_count,
+        detail: // 根据op不同会返回不同的内容，详见以上各接口返回
+    }
+    ```
+
 #### 根据hash查询hash weight
 
     /hash_weight/:hash
