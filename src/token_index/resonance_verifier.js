@@ -76,7 +76,7 @@ class ResonanceVerifier {
 
         // first get hash all resonance list
         const { ret: get_ret, data: resonance_list } =
-            await this.storage.get_resonances_by_hash(hash);
+            await this.relation_storage.get_resonances_by_hash(hash);
         if (get_ret !== 0) {
             console.error(`failed to get hash all resonance ${hash}`);
             return { ret: get_ret };

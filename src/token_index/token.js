@@ -10,11 +10,8 @@ const { ChantOperator } = require('./ops/chant');
 const { ResonanceOperator } = require('./ops/resonance');
 const { SetPriceOperator } = require('./ops/set_price');
 const { BlockInscriptionCollector, InscriptionOp } = require('../index/item');
-const {
-    UserHashRelationStorage,
-} = require('../storage/relation');
-const { ResonanceVerifier } = require('../resonance_verifier');
-
+const { UserHashRelationStorage } = require('../storage/relation');
+const { ResonanceVerifier } = require('./resonance_verifier');
 
 class TokenIndex {
     constructor(config) {
@@ -28,7 +25,8 @@ class TokenIndex {
         }
 
         this.storage = new TokenIndexStorage(dir);
-        this.user_hash_relation_storage = this.storage.get_user_hash_relation_storage();
+        this.user_hash_relation_storage =
+            this.storage.get_user_hash_relation_storage();
         this.resonance_verifier = new ResonanceVerifier(this.storage);
     }
 
@@ -103,7 +101,10 @@ class TokenBlockIndex {
             `block_collector should be BlockInscriptionCollector`,
         );
         assert(eth_index instanceof ETHIndex, `eth_index should be ETHIndex`);
-        assert(resonance_verifier instanceof ResonanceVerifier, `resonance_verifier should be ResonanceVerifier`);
+        assert(
+            resonance_verifier instanceof ResonanceVerifier,
+            `resonance_verifier should be ResonanceVerifier`,
+        );
 
         this.storage = storage;
         this.user_hash_relation_storage = user_hash_relation_storage;
@@ -122,7 +123,13 @@ class TokenBlockIndex {
         );
         this.mint_operator = new MintOperator(config, storage, eth_index);
         this.transfer_operator = new TransferOperator(storage);
-        this.chant_operator = new ChantOperator(config, storage, hash_helper, user_hash_relation_storage);
+        this.chant_operator = new ChantOperator(
+            config,
+            storage,
+            hash_helper,
+            user_hash_relation_storage,
+            resonance_verifier,
+        );
         this.resonance_operator = new ResonanceOperator(
             config,
             storage,

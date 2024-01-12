@@ -288,7 +288,7 @@ class ResonanceOperator {
         }
 
         // at first we should verify the hash's resonance count, check if any user has no chant at 12800 consecutive blocks
-        const { ret: verify_ret } = await this.resonance_verifier.verify_hash(hash);
+        const { ret: verify_ret } = await this.resonance_verifier.verify_hash(hash, inscription_item.block_height);
         if (verify_ret !== 0) {
             console.error(`verify hash resonance failed ${hash}`);
             return { ret: verify_ret };
