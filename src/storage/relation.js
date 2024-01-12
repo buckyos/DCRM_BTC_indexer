@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sqlite3 = require('sqlite3').verbose();
 
-
 const UserHashRelation = {
     Owner: 0,
     Resonance: 1,
@@ -40,6 +39,11 @@ class UserHashRelationStorage {
                         address TEXT,
                         hash TEXT,
                         relation INTEGER,
+    
+                        inscription_id TEXT,
+                        block_height INTEGER,
+                        timestamp INTEGER,
+
                         PRIMARY KEY (address, hash)
                     );`,
                     (err) => {
@@ -88,16 +92,42 @@ class UserHashRelationStorage {
      * @param {UserHashRelation} relation
      * @returns {Promise<{ret: number}>}
      */
-    async insert_relation(address, hash, relation) {
+    async insert_relation(
+        address,
+        hash,
+        inscription_id,
+        block_height,
+        timestamp,
+        relation,
+    ) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
         assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(
+            _.isString(inscription_id),
+            `inscription_id should be string: ${inscription_id}`,
+        );
+        assert(
+            _.isNumber(block_height),
+            `block_height should be number: ${block_height}`,
+        );
+        assert(
+            _.isNumber(timestamp),
+            `timestamp should be number: ${timestamp}`,
+        );
         assert(_.isNumber(relation), `relation should be number: ${relation}`);
 
         return new Promise((resolve) => {
             this.db.run(
-                `INSERT INTO relations(address, hash, relation) VALUES(?, ?, ?)`,
-                [address, hash, relation],
+                `INSERT INTO relations(address, hash, inscription_id, block_height, timestamp, relation) VALUES(?, ?, ?, ?, ?, ?)`,
+                [
+                    address,
+                    hash,
+                    inscription_id,
+                    block_height,
+                    timestamp,
+                    relation,
+                ],
                 function (err) {
                     if (err) {
                         console.error(
@@ -118,7 +148,7 @@ class UserHashRelationStorage {
      * @comment query relation from address with hash
      * @param {string} address
      * @param {string} hash
-     * @returns {Promise<{ret: number, data: {address: string, hash: string, relation: UserHashRelation}}>}
+     * @returns {Promise<{ret: number, data: {address: string, hash: string, inscription_id: string, block_height: number, timestamp: number,  relation: UserHashRelation}}>}
      */
     async query_relation(address, hash) {
         assert(this.db != null, `db should not be null`);
@@ -230,9 +260,9 @@ class UserHashRelationStorage {
     }
 
     /**
-     * 
-     * @param {string} hash 
-     * @returns {Promise<{ret: number, data: {address: string, hash: string, relation: UserHashRelation}[]}>}
+     * @comment get all resonances by hash
+     * @param {string} hash
+     * @returns {Promise<{ret: number, data: {address: string, hash: string, inscription_id: string, block_height: number, timestamp: number, relation: UserHashRelation}[]}>}
      */
     async get_resonances_by_hash(hash) {
         assert(this.db != null, `db should not be null`);
@@ -256,6 +286,11 @@ class UserHashRelationStorage {
         });
     }
 
+    /**
+     * @comment get all resonances by address
+     * @param {string} address
+     * @returns {Promise<{ret: number, data: {address: string, hash: string, inscription_id: string, block_height: number, timestamp: number, relation: UserHashRelation}[]}>}
+     */
     async get_resonances_by_address(address) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);

@@ -596,6 +596,9 @@ class InscribeDataOperator {
                 await this.relation_storage.insert_relation(
                     op.inscription_item.address,
                     op.inscription_item.content.ph,
+                    op.inscription_item.inscription_id,
+                    op.inscription_item.block_height,
+                    op.inscription_item.timestamp,
                     UserHashRelation.Owner,
                 );
             if (update_relation_ret !== 0) {

@@ -492,6 +492,9 @@ class ResonanceOperator {
             await this.relation_storage.insert_relation(
                 inscription_item.address,
                 hash,
+                inscription_item.inscription_id,
+                inscription_item.block_height,
+                inscription_item.timestamp,
                 UserHashRelation.Resonance,
             );
         if (update_relation_ret !== 0) {
