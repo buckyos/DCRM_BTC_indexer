@@ -60,6 +60,7 @@ const TABLE_NAME = {
     INSCRIBE_DATA: 'inscribe_data',
     BALANCE: 'balance',
     STATE: 'state',
+    relations: 'relations',
 
     RESONANCE_RECORDS: 'resonance_records',
     CHANT_RECORDS: 'chant_records',

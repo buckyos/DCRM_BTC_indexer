@@ -2,6 +2,7 @@ const { store, TABLE_NAME } = require('./store');
 const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
 const { Util } = require('../../util');
+const { UserHashRelation } = require('../../storage/relation')
 
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
@@ -895,7 +896,7 @@ class InscribeStore {
             const count = countResult.count;
 
             if (count > 0) {
-                sql = `SELECT * FROM ${TABLE_NAME.OPS_RECORDS} WHERE address = ?`;
+                sql = `SELECT * FROM ${TABLE_NAME.USER_OPS} WHERE address = ?`;
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
@@ -1009,6 +1010,99 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryOpsByTx failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryRelationByAddress(address) {
+        if (!address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT * FROM ${TABLE_NAME.RELATIONS} 
+                    WHERE address = ? AND relation = ?`;
+            const pageStmt = store.indexDB.prepare(sql);
+            list = pageStmt.all(address, UserHashRelation.Resonance);
+
+            return makeSuccessResponse(list);
+
+        } catch (error) {
+            logger.error('queryRelationByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryRelationByHash(hash) {
+        if (!hash) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        hash = mixhash;
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT * FROM ${TABLE_NAME.RELATIONS} 
+                    WHERE hash = ? AND relation = ?`;
+            const pageStmt = store.indexDB.prepare(sql);
+            list = pageStmt.all(hash, UserHashRelation.Resonance);
+
+            return makeSuccessResponse(list);
+
+        } catch (error) {
+            logger.error('queryRelationByHash failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryVerifyRelationByAddress(address) {
+        try {
+            const url = `http://localhost:${this.m_config.localInterface.port}/resonance/address/${address}`;
+            const response = await fetch(url);
+
+            if (response.status != 200) {
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response.statusText);
+            }
+
+            const json = await response.json();
+            console.log(json);
+
+            return makeSuccessResponse(json);
+
+        } catch (error) {
+            logger.error('queryVerifyRelationByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryVerifyRelationByHash(hash) {
+        try {
+            const url = `http://localhost:${this.m_config.localInterface.port}/resonance/hash/${hash}`;
+            const response = await fetch(url);
+
+            if (response.status != 200) {
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response.statusText);
+            }
+
+            const json = await response.json();
+            console.log(json);
+
+            return makeSuccessResponse(json);
+
+        } catch (error) {
+            logger.error('queryVerifyRelationByAddress failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }

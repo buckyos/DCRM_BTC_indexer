@@ -392,6 +392,38 @@ class InscribeService {
         );
     }
 
+    async _getRelationByAddress(ctx) {
+        const address = ctx.params.address;
+
+        return this.m_store.queryRelationByAddress(
+            address
+        );
+    }
+
+    async _getRelationByHash(ctx) {
+        const hash = ctx.params.hash;
+
+        return this.m_store.queryRelationByHash(
+            hash
+        );
+    }
+
+    async _getVerifyRelationByAddress(ctx) {
+        const address = ctx.params.address;
+
+        return this.m_store.queryVerifyRelationByAddress(
+            address
+        );
+    }
+
+    async _getVerifyRelationByHash(ctx) {
+        const hash = ctx.params.hash;
+
+        return this.m_store.queryVerifyRelationByHash(
+            hash
+        );
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -508,6 +540,21 @@ class InscribeService {
             ctx.response.body = await this._getOpsByTx(ctx);
         });
 
+        router.get("/res_relation_by_address/:address", async (ctx) => {
+            ctx.response.body = await this._getRelationByAddress(ctx);
+        });
+
+        router.get("/res_relation_by_hash/:hash", async (ctx) => {
+            ctx.response.body = await this._getRelationByHash(ctx);
+        });
+
+        router.get("/res_relation_by_address/verify/:address", async (ctx) => {
+            ctx.response.body = await this._getVerifyRelationByAddress(ctx);
+        });
+
+        router.get("/res_relation_by_hash/verify/:hash", async (ctx) => {
+            ctx.response.body = await this._getVerifyRelationByAddress(ctx);
+        });
 
         return 0;
     }

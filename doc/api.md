@@ -441,8 +441,8 @@ const InscriptionOpState = {
                     address,            // 吟唱发起人地址
                     block_height,       // 吟唱区块
                     timestamp,
-                    user_bouns,         // 吟唱人奖励 string
-                    owner_bouns,        // 数据owner奖励 string
+                    user_bonus,         // 吟唱人奖励 string
+                    owner_bonus,        // 数据owner奖励 string
                     txid,
                     hash_point,
                     hash_weight,
@@ -520,8 +520,8 @@ const InscriptionOpState = {
                     address,            // 吟唱发起人地址
                     block_height,       // 吟唱区块
                     timestamp,
-                    user_bouns,         // 吟唱人奖励 string
-                    owner_bouns,        // 数据owner奖励 string
+                    user_bonus,         // 吟唱人奖励 string
+                    owner_bonus,        // 数据owner奖励 string
                     txid,
                     hash_point,
                     hash_weight,
@@ -829,9 +829,9 @@ const InscriptionOpState = {
         msg: "错误信息",
         result: {
             mint,               // mint部分 string
-            chant_bouns,        // 吟唱奖励 string
-            chanted_bouns,      // 被他人吟唱的奖励 string
-            resonance_bouns     // 数据被共鸣的奖励 string
+            chant_bonus,        // 吟唱奖励 string
+            chanted_bonus,      // 被他人吟唱的奖励 string
+            resonance_bonus     // 数据被共鸣的奖励 string
         }
     }
     ```
@@ -1165,6 +1165,93 @@ const InscriptionOpState = {
         }
     }
     ```  
+
+#### 根据地址查询共鸣关系（未验证，因为某些共鸣可能失效，这个接口返回的是未经验证的结果）
+
+    /res_relation_by_address/:address
+
+    GET
+
+    参数
+
+    address: 查询地址
+
+    返回
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: [{
+            address,            // 查询地址
+            hash,               // 数据hash
+            relation,           // int 关系，1代表共鸣
+            inscription_id,     // 铭文id
+            block_height,       // 关系建立的区块号
+            timestamp,          // 关系建立的时间
+        }]
+    }
+    ```
+
+#### 根据hash查询共鸣关系（未验证，因为某些共鸣可能失效，这个接口返回的是未经验证的结果）
+
+    /res_relation_by_hash/:hash
+
+    GET
+
+    参数
+
+    hash: 数据hash
+
+    返回
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: // 同上
+    }
+    ```
+
+#### 根据地址查询共鸣关系（返回验证过的，确保有效的共鸣关系）
+
+    /res_relation_by_address/verify/:address
+
+    GET
+
+    参数
+
+    address: 查询地址
+
+    返回
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: // 同上
+    }
+    ```
+
+#### 根据hash查询共鸣关系（返回验证过的，确保有效的共鸣关系）
+
+    /res_relation_by_hash/verify/:hash
+
+    GET
+
+    参数
+
+    hash: 数据hash
+
+    返回
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: // 同上
+    }
+    ```
 
 #### 根据hash查询hash weight
 
