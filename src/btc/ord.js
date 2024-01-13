@@ -31,7 +31,7 @@ class OrdClient {
             const response = await this.client.get('/blockheight');
             if (!this._is_successful_response(response)) {
                 console.error(
-                    `failed to get latest block height ${response.status}`,
+                    `failed to get ord latest block height ${response.status}`,
                 );
                 return {
                     ret: -1,
@@ -44,7 +44,7 @@ class OrdClient {
                 height: response.data,
             };
         } catch (error) {
-            console.error(`failed to get latest btc block height ${error}`);
+            console.error(`failed to get ord latest block height ${error}`);
             return {
                 ret: -1,
                 height: 0,

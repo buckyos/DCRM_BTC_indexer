@@ -416,6 +416,7 @@ class InscriptionTransferMonitor {
             `invalid inscription_storage`,
         );
 
+        const begin_tick = Date.now();
         const { ret, block } = await this.btc_client.get_block(block_height);
         if (ret !== 0) {
             console.error(`failed to get block ${block_height}`);
@@ -429,6 +430,8 @@ class InscriptionTransferMonitor {
             console.error(`failed to get transaction batch`);
             return { ret: batch_get_ret };
         }
+
+        console.debug(`load block ${block_height} cost ${Date.now() - begin_tick} ms`);
 
         const transfer_items = [];
         for (let i = 0; i < txs.length; ++i) {

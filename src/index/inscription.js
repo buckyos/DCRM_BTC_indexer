@@ -504,12 +504,14 @@ class InscriptionIndex {
         }
 
         // get inscriptions by batch
+        let begin_tick = Date.now();
         const { ret: batch_get_inscriptions_ret, inscriptions } =
             await this.ord_client.get_inscription_batch(inscription_ids);
         if (batch_get_inscriptions_ret !== 0) {
             console.error(`failed to get inscriptions by batch`);
             return { ret: batch_get_inscriptions_ret };
         }
+        console.debug(`get inscriptions ${block_height} by batch cost ${Date.now() - begin_tick}ms`);
 
         assert(
             inscription_ids.length === inscriptions.length,
@@ -517,12 +519,15 @@ class InscriptionIndex {
         );
 
         // load inscriptions content in batch
+        begin_tick = Date.now();
         const { ret: load_content, results } =
             await this._load_inscriptions_content(inscriptions);
         if (load_content !== 0) {
             console.error(`failed to load inscriptions content`);
             return { ret: load_content };
         }
+
+        console.debug(`load inscriptions content ${block_height} cost ${Date.now() - begin_tick}ms`);
 
         for (let i = 0; i < results.length; i++) {
             const {

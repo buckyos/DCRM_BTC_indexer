@@ -118,7 +118,7 @@ class TokenIndexExecutor {
         const { ret: get_ord_height, height: btc_ord_height } =
             await this.ord_client.get_latest_block_height();
         if (get_ord_height !== 0) {
-            console.error(`failed to get btc ord latest block height`);
+            console.error(`failed to get ord latest block height`);
             return { ret: get_ord_height };
         }
 
@@ -126,7 +126,7 @@ class TokenIndexExecutor {
         const { ret, height: btc_local_height } =
             await this.inscriptions_state_storage.get_btc_latest_block_height();
         if (ret !== 0) {
-            console.error(`failed to get btc latest block height`);
+            console.error(`failed to get synced btc latest block height`);
             return { ret };
         }
 
