@@ -161,7 +161,7 @@ class ChantOperator {
         }
 
         assert(
-            data_relation.relation === UserHashRelation.Own ||
+            data_relation.relation === UserHashRelation.Owner ||
                 data_relation.relation === UserHashRelation.Resonance,
             `invalid relation ${data_relation.relation}`,
         );
@@ -284,7 +284,7 @@ class ChantOperator {
             );
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
         }
-        
+
         // 6. trans bonus to user and owner
         let user_bonus;
         let owner_bonus;
