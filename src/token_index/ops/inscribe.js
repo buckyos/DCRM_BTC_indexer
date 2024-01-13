@@ -576,6 +576,7 @@ class InscribeDataOperator {
         if (op.state === InscriptionOpState.OK) {
             const { ret } = await this.storage.add_inscribe_data(
                 op.inscription_item.content.ph,
+                op.inscription_item.inscription_id,
                 op.inscription_item.address,
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,

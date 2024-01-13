@@ -519,6 +519,8 @@ class TokenIndexStorage {
                     `CREATE TABLE IF NOT EXISTS inscribe_data (
                         hash TEXT PRIMARY KEY,
 
+                        inscription_id TEXT,
+
                         address TEXT,
                         block_height INTEGER,
                         timestamp INTEGER,
@@ -2385,6 +2387,7 @@ class TokenIndexStorage {
     /**
      *
      * @param {string} hash
+     * 
      * @param {string} address
      * @param {number} block_height
      * @param {number} timestamp
@@ -2395,6 +2398,7 @@ class TokenIndexStorage {
      */
     async add_inscribe_data(
         hash,
+        inscription_id,
         address,
         block_height,
         timestamp,
@@ -2404,6 +2408,10 @@ class TokenIndexStorage {
     ) {
         assert(this.db != null, `db should not be null`);
         assert(typeof hash === 'string', `hash should be string`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
         assert(typeof address === 'string', `address should be string`);
         if (text) {
             assert(typeof text === 'string', `text should be string`);
@@ -2423,8 +2431,8 @@ class TokenIndexStorage {
         );
 
         const sql = `
-                INSERT INTO inscribe_data (hash, address, block_height, timestamp, text, price, resonance_count)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO inscribe_data (hash, inscription_id, address, block_height, timestamp, text, price, resonance_count)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
         return new Promise((resolve) => {
@@ -2432,6 +2440,7 @@ class TokenIndexStorage {
                 sql,
                 [
                     hash,
+                    inscription_id,
                     address,
                     block_height,
                     timestamp,
