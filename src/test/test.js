@@ -30,9 +30,12 @@ async function test_token() {
     
     const index = new InscriptionIndex(config.config);
 
-    const eth_index = new ETHIndex(config.config);
-    await index.init(eth_index);
-    index.run().then(console.log);
+    const {ret, tx} = await client.get_transaction('f7aaa9d45e36571f0c2dd19da2276a2267c25e449b35f3f0148eecd8cac9e7bc');
+    console.log(tx);
+    
+    //const eth_index = new ETHIndex(config.config);
+    //await index.init(eth_index);
+    //index.run().then(console.log);
 }
 
 test_token().then(console.log).catch(console.error);

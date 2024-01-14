@@ -91,23 +91,48 @@ class MultiMap {
         this.map = new Map();
     }
 
+    get size() {
+        return this.map.size;
+    }
+
+    
     /**
      *
      * @param {string} key
      * @param {object} value
      */
     set(key, value) {
+        assert(_.isString(key), `invalid key`);
+        assert(value instanceof InscriptionTransferRecordItem, `invalid value`);
+
         if (!this.map.has(key)) {
             this.map.set(key, value);
         } else {
             const currentValue = this.map.get(key);
             if (Array.isArray(currentValue)) {
-                if (currentValue.indexOf(value) !== -1) {
-                    currentValue.push(value);
+                // check if value exists, then try to replace it
+                for (let i = 0; i < currentValue.length; ++i) {
+                    const item = currentValue[i];
+                    if (item.inscription_id === value.inscription_id) {
+                        if (item.block_height < value.block_height) {
+                            // replace item
+                            currentValue[i] = value;
+                        } else {
+                            console.error(`invalid new transfer value ${JSON.stringify(value)} for key ${key}, current=${JSON.stringify(item)}`);
+                        }
+                        return;
+                    }
                 }
+
+                currentValue.push(value);
             } else {
-                if (currentValue !== value) {
-                    this.map.set(key, [currentValue, value]);
+                if (currentValue.inscription_id === value.inscription_id) {
+                    if (currentValue.block_height < value.block_height) {
+                        // replace item
+                        this.map.set(key, value);
+                    } else {
+                        console.error(`invalid new transfer value ${JSON.stringify(value)} for key ${key}, current=${JSON.stringify(currentValue)}`);
+                    }
                 }
             }
         }
@@ -166,6 +191,8 @@ class MultiMap {
      * @returns {boolean}
      */
     delete_with_value(key, value) {
+        assert(value instanceof InscriptionTransferRecordItem, `invalid value`);
+
         const stored_value = this.map.get(key);
         if (stored_value == null) {
             return false;
@@ -280,7 +307,7 @@ class InscriptionTransferMonitor {
 
         for (let i = 0; i < inscription_transfer_items.length; ++i) {
             const item = inscription_transfer_items[i];
-            const outpoint_str = item.satpoint.outpoint.to_string();
+            const outpoint_str = item.prev_satpoint.outpoint.to_string();
 
             this.inscriptions.delete(outpoint_str);
             // one outpoint may have more than one inscription transfer record, so we should not check the return value
@@ -581,6 +608,9 @@ class InscriptionTransferMonitor {
                             op,
                             inscription.index + 1,
                         );
+
+                        // set prev satpoint for later remove from monitor
+                        transfer_item.set_prev_satpoint(satpoint);
 
                         transfer_items.push(transfer_item);
                     } else {

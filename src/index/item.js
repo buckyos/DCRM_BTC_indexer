@@ -677,6 +677,20 @@ class InscriptionTransferItem {
     }
 
     /**
+     * @comment set the previous satpoint for later use
+     * @param {SatPoint} prev_satpoint 
+     */
+    set_prev_satpoint(prev_satpoint) {
+        assert(
+            prev_satpoint instanceof SatPoint,
+            `invalid prev_satpoint ${prev_satpoint}`,
+        );
+
+        assert(this.prev_satpoint == null, `prev_satpoint already set`);
+        this.prev_satpoint = prev_satpoint;
+    }
+
+    /**
      * @returns {string}
      */
     get txid() {
