@@ -59,6 +59,15 @@ class BTCClient {
         this.tx_cache = new DummyTxCache();
     }
 
+    static new_from_config(config) {
+        
+        return new BTCClient(
+            config.btc.host,
+            config.btc.network,
+            config.btc.auth,
+        );
+    }
+
     _should_retry(error) {
         return (
             error.code == `ETIMEDOUT` ||
@@ -138,7 +147,7 @@ class BTCClient {
         return { ret: -1 };
     }
 
-    async _get_transaction(txid) {
+    async   _get_transaction(txid) {
         try {
             const tx = await this.client.getRawTransaction(txid, true);
             this.tx_cache.set(txid, tx);

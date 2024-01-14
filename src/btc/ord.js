@@ -14,6 +14,12 @@ class OrdClient {
         });
     }
 
+    static new_from_config(config) {
+        assert(_.isObject(config), `invalid config: ${config}`);
+
+        return new OrdClient(config.ord.rpc_url);
+    }
+    
     /**
      * @command check if response is successful by status code
      * @param {object} response

@@ -6,6 +6,7 @@ const { HashHelper } = require('../token_index/ops/hash.js');
 const { ETHIndex } = require('../eth/index');
 const { TokenIndexStorage } = require('../storage/token');
 const { ResonanceVerifier } = require('../token_index/resonance_verifier');
+const { UTXORetriever } = require('./utxo');
 
 class StateService {
     constructor(config, executor) {
@@ -24,6 +25,8 @@ class StateService {
         this.user_hash_relation_storage =
             this.storage.get_user_hash_relation_storage();
         this.resonance_verifier = new ResonanceVerifier(this.storage);
+
+        this.utxo_retriever = new UTXORetriever(config);
 
         this.block_state = {};
         this.current_block_height = 0;
@@ -277,6 +280,32 @@ class IndexLocalInterface {
             }
 
             ctx.body = data;
+        });
+
+        router.get('/utxo/:inscription_id', async (ctx) => {
+            const inscription_id = ctx.params.inscription_id;
+            if (!_.isString(inscription_id)) {
+                ctx.status = 400;
+                ctx.body = 'Bad request';
+                return;
+            }
+
+            const { ret, status, info } =
+                await this.state_service.utxo_retriever.get_utxo_by_inscription_id(
+                    inscription_id,
+                );
+            if (ret !== 0) {
+                ctx.status = 500;
+                ctx.body = `Internal server error ${ret}`;
+                return;
+            }
+
+            if (status >= 200 && status < 300) {
+                ctx.status = status;
+                ctx.body = info;
+            } else {
+                ctx.status = status;
+            }
         });
     }
 }

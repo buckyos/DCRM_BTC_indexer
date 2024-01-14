@@ -44,6 +44,20 @@ class SatPoint {
     }
 
     /**
+     * @returns {string}
+     */
+    get txid() {
+        return this.outpoint.txid;
+    }
+
+    /**
+     * @returns {number}
+     */
+    get vout() {
+        return this.outpoint.vout;
+    }
+
+    /**
      *
      * @param {string} satpoint_str in format `txid:vout:offset`
      * @returns {ret: number, satpoint: SatPoint}
