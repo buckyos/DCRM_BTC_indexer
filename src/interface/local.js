@@ -7,6 +7,8 @@ const { ETHIndex } = require('../eth/index');
 const { TokenIndexStorage } = require('../storage/token');
 const { ResonanceVerifier } = require('../token_index/resonance_verifier');
 const { UTXORetriever } = require('./utxo');
+const { TokenStat } = require('./stat');
+
 
 class StateService {
     constructor(config, executor) {
@@ -27,6 +29,7 @@ class StateService {
         this.resonance_verifier = new ResonanceVerifier(this.storage);
 
         this.utxo_retriever = new UTXORetriever(config);
+        this.stat = new TokenStat(config);
 
         this.block_state = {};
         this.current_block_height = 0;
@@ -37,6 +40,13 @@ class StateService {
         if (ret !== 0) {
             console.error(`failed to init storage`);
             return { ret };
+        }
+
+        // init stat
+        const { ret: stat_ret } = await this.stat.init();
+        if (stat_ret !== 0) {
+            console.error(`failed to init stat`);
+            return { ret: stat_ret };
         }
 
         return { ret: 0 };
@@ -306,6 +316,28 @@ class IndexLocalInterface {
             } else {
                 ctx.status = status;
             }
+        });
+
+        router.get('/stat/:type', async (ctx) => {
+            const type = ctx.params.type || 'all';
+            const start = ctx.query.start || 0;
+            const end = ctx.query.end || 0;
+    
+        
+            const { ret, status, stat } = await this.state_service.stat.stat(type, start, end);
+            if (ret !== 0) {
+                ctx.status = 500;
+                ctx.body = `Internal server error ${ret}`;
+                return;
+            }
+
+            if (status == null || (status >= 200 && status < 300)) {
+                ctx.status = 200;
+                ctx.body = stat;
+            } else {
+                ctx.status = status;
+            }
+    
         });
     }
 }
