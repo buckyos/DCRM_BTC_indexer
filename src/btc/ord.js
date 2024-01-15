@@ -19,7 +19,7 @@ class OrdClient {
 
         return new OrdClient(config.ord.rpc_url);
     }
-    
+
     /**
      * @command check if response is successful by status code
      * @param {object} response
@@ -248,6 +248,13 @@ class OrdClient {
         } catch (error) {
             if (error.response.status === 404) {
                 console.warn(`get content but not found ${inscription_id}`);
+                return {
+                    ret: 0,
+                    data: null,
+                };
+            } else if (error.response.status >= 200 && error.response.status < 300) {
+                // FIXME something wrong with the inscription, such as invalid content, like this one: 08770f28ab15ec0acf1103ce6af34c57c05ba7db5df783b3b75058725e0bd480i0
+                console.warn(`get content with status ok but invalid content ${inscription_id} ${error.response.status} ${error}`);
                 return {
                     ret: 0,
                     data: null,
