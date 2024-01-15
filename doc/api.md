@@ -1353,7 +1353,7 @@ const InscriptionOpState = {
     GET
 
     参数
-
+1
     inscription_id： 铭文id
 
     返回
