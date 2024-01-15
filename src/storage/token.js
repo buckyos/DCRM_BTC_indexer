@@ -9,14 +9,17 @@ const { BigNumberUtil } = require('../util');
 const {
     TOKEN_INDEX_DB_FILE,
     TOKEN_MINT_POOL_INIT_AMOUNT,
+    TOKEN_MINT_POOL_BURN_INIT_AMOUNT,
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
+    TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
 } = require('../constants');
 const { InscriptionOp } = require('../index/item');
 const { UserHashRelationStorage } = require('./relation');
+const { default: BigNumber } = require('bignumber.js');
 
 // the ops that can update pool balance
 const UpdatePoolBalanceOp = {
@@ -616,8 +619,16 @@ class TokenIndexStorage {
             return { ret: ret4 };
         }
 
+        // init burn mint balance
+        const { ret: ret5 } = await this._init_burn_mint_balance();
+        if (ret5 !== 0) {
+            console.error(`failed to init balance for burn mint pool`);
+            return { ret: ret5 };
+        }
+
         return { ret: 0 };
     }
+
     /**
      *
      * @returns {ret: number}
@@ -2009,6 +2020,92 @@ class TokenIndexStorage {
         });
     }
 
+    async _init_burn_mint_balance() {
+        // run in transaction
+        const { ret } = await this.begin_transaction();
+        if (ret != 0) {
+            console.error(`failed to begin transaction`);
+            return { ret };
+        }
+
+        let process_result = 0;
+        try {
+            const { ret } = await this._init_burn_mint_balance_impl();
+            process_result = ret;
+        } catch (error) {
+            console.error(
+                `failed to init burn mint balance: ${error}, ${error.stack}`,
+            );
+            process_result = -1;
+        } finally {
+            const is_success = process_result === 0;
+
+            const { ret: commit_ret } = await this.end_transaction(is_success);
+            if (commit_ret !== 0) {
+                console.error(
+                    `failed to commit transaction for init burn mint balance`,
+                );
+                process_result = commit_ret;
+            } else {
+                console.log(
+                    `finish init burn mint balance: ${TOKEN_MINT_POOL_BURN_INIT_AMOUNT}`,
+                );
+            }
+        }
+
+        return { ret: process_result };
+    }
+
+    async _init_burn_mint_balance_impl() {
+        const { ret: get_ret, amount } = await this.get_balance(
+            TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
+        );
+        if (get_ret !== 0) {
+            console.error(
+                `failed to get balance for ${TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS}`,
+            );
+            return { ret: get_ret };
+        }
+
+        const current_amount = new BigNumber(amount);
+        const init_amount = new BigNumber(TOKEN_MINT_POOL_BURN_INIT_AMOUNT);
+        if (current_amount.isEqualTo(init_amount)) {
+            console.log(
+                `burn mint balance already to update: ${TOKEN_MINT_POOL_BURN_INIT_AMOUNT}`,
+            );
+            return { ret: 0 };
+        }
+
+        // mint_pool_balance := mint_pool_balance + current_amount - init_amount
+        const diff = current_amount.minus(init_amount);
+
+        // update mint pool balance
+        const { ret: update_ret } = await this.update_balance(
+            TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+            diff.toString(),
+        );
+        if (update_ret != 0) {
+            console.error(
+                `failed to update balance for mint pool with burn mint balance changed: ${current_amount.toString()} -> ${init_amount.toString()}`,
+            );
+            return { ret: update_ret };
+        }
+
+        // set burn mint balance
+        const { ret: set_burn_ret } = await this.set_balance(
+            TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
+            TOKEN_MINT_POOL_BURN_INIT_AMOUNT,
+        );
+        if (set_burn_ret != 0) {
+            console.error(
+                `failed to set burn mint balance: ${init_amount.toString()}`,
+            );
+            return { ret: set_burn_ret };
+        }
+
+        return { ret: 0 };
+    }
+
     /**
      * @comment set the balance for address, if address exists, update it
      * @param {string} address
@@ -2387,7 +2484,7 @@ class TokenIndexStorage {
     /**
      *
      * @param {string} hash
-     * 
+     *
      * @param {string} address
      * @param {number} block_height
      * @param {number} timestamp
