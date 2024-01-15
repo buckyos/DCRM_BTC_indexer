@@ -1345,3 +1345,34 @@ const InscriptionOpState = {
         }
     }
     ```
+
+#### 根据铭文ID查询utxo
+
+    /utxo_by_inscription/:inscription_id
+
+    GET
+
+    参数
+
+    inscription_id： 铭文id
+
+    返回
+
+    ```json
+    {
+        "txid": "f7aaa9d45e36571f0c2dd19da2276a2267c25e449b35f3f0148eecd8cac9e7bc",
+        "vout": 1,
+        "offset": 1714,
+        "output": {
+            "value": 0.00002382,
+            "n": 1,
+            "scriptPubKey": {
+                "asm": "1 70a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82",
+                "desc": "rawtr(70a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82)#trp438vu",
+                "hex": "512070a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82",
+                "address": "tb1pwz5tzu2pn2ewq5t46erhtxaxacg6d8m54289pe0gf60a7e58n7pq6wpxfr",
+                "type": "witness_v1_taproot"
+            }
+        }
+    }
+    ```

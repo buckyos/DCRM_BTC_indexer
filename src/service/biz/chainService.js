@@ -56,6 +56,32 @@ class ChainService {
         }
     }
 
+    async _getUtxoByInscriptionId(ctx) {
+        const inscriptionId = ctx.params.inscription_id;
+        if (!inscriptionId) {
+            return makeResponse(ERR_CODE.INVALID_PARAM);
+        }
+
+        try {
+            const url = `http://localhost:${this.m_config.localInterface.port}/utxo/${inscriptionId}`;
+            const response = await fetch(url);
+
+            if (response.status != 200) {
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response.statusText);
+            }
+
+            const json = await response.json();
+            console.log(json);
+
+            return makeSuccessResponse(json);
+
+        } catch (error) {
+            logger.error('_getUtxoByInscriptionId failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
     registerRouter(router) {
         router.get("/btc/block_height", async (ctx) => {
             ctx.response.body = await this._getLastBtcBlockHeight();
@@ -67,6 +93,10 @@ class ChainService {
 
         router.get("/btc/tx/:txid", async (ctx) => {
             ctx.response.body = await this._getTx(ctx);
+        });
+
+        router.get("/utxo_by_inscription/:inscription_id", async (ctx) => {
+            ctx.response.body = await this._getUtxoByInscriptionId(ctx);
         });
     }
 }
