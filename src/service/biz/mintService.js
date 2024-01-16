@@ -113,6 +113,11 @@ class MintService {
             ctx.response.body = await this._getMintRecordByAddress(ctx);
         });
 
+        router.get("/mint_record_by_tx/:txid", async (ctx) => {
+            ctx.response.body = await this._getMintRecordByTx(ctx);
+        });
+
+
         router.get("/luck_mint/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getLuckyMintRecord(ctx);
         });

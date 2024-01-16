@@ -693,6 +693,26 @@ const InscriptionOpState = {
     }
     ```
 
+#### 根据tx查询mint
+
+    /mint_record_by_tx/:txid
+
+    GET
+
+    参数
+
+    txid
+
+    返回
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: // 同上item
+    }
+    ```
+
 #### 获取幸运铭刻列表：
 
     /luck_mint/:limit?/:offset?/:order?
