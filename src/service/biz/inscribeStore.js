@@ -6,14 +6,23 @@ const { UserHashRelation } = require('../../storage/relation')
 const { UserOp } = require('../../storage/token');
 const { InscriptionOp } = require('../../index/item');
 
-const SUCCESS = "SUCCESS";
-const FAILED = "FAILED";
+const SUCCESS = "success";
+const FAILED = "failed";
 
 function StateCondition(state) {
     if (state == SUCCESS) {
         return ` AND state = ${InscriptionOpState.OK}`;
     } else if (state == FAILED) {
         return ` AND state != ${InscriptionOpState.OK}`;
+    }
+    return '';
+}
+
+function StageCondition(stage) {
+    if (stage == InscriptionStage.Inscribe) {
+        return ` AND stage = '${InscriptionStage.Inscribe}'`;
+    } else if (stage == InscriptionStage.Transfer) {
+        return ` AND stage = '${InscriptionStage.Transfer}'`;
     }
     return '';
 }
@@ -59,7 +68,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
         try {
             let list = [];
             const countStmt = store.indexDB.prepare(
@@ -97,7 +106,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
         try {
             let list = [];
             const countStmt = store.indexDB.prepare(
@@ -155,7 +164,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -193,7 +202,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -236,7 +245,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -305,7 +314,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -336,12 +345,12 @@ class InscribeStore {
         }
     }
 
-    queryResonanceByAddress(address, limit, offset, state, order) {
+    queryResonanceByAddress(address, limit, offset, state, order, stage) {
         if (!address) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -350,6 +359,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE address = ?`;
             sql += StateCondition(state);
+            sql += StageCondition(stage);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
@@ -357,6 +367,7 @@ class InscribeStore {
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.RESONANCE_RECORDS} WHERE address = ?`;
                 sql += StateCondition(state);
+                sql += StageCondition(stage);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -386,7 +397,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -456,7 +467,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -494,7 +505,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -538,7 +549,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -609,7 +620,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -647,7 +658,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -705,12 +716,12 @@ class InscribeStore {
         }
     }
 
-    queryTransferByAddress(address, limit, offset, state, order) {
+    queryTransferByAddress(address, limit, offset, state, order, stage) {
         if (!address) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -719,6 +730,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.TRANSFER_RECORDS}
                 WHERE from_address = ? OR to_address = ?`;
             sql += StateCondition(state);
+            sql += StageCondition(stage);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address, address);
             const count = countResult.count;
@@ -728,6 +740,7 @@ class InscribeStore {
                     `SELECT * FROM ${TABLE_NAME.TRANSFER_RECORDS} 
                     WHERE from_address = ? OR to_address = ?`;
                 sql += StateCondition(state);
+                sql += StageCondition(stage);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -782,7 +795,7 @@ class InscribeStore {
 
         hash = mixhash;
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -820,7 +833,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -885,7 +898,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -923,7 +936,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];
@@ -961,7 +974,7 @@ class InscribeStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        order = order == "ASC" ? "ASC" : "DESC";
+        order = order == "asc" ? "asc" : "desc";
 
         try {
             let list = [];

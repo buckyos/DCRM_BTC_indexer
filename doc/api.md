@@ -325,7 +325,7 @@ const InscriptionOpState = {
 
 #### 获取某地址的共鸣记录：
 
-    /resonance_by_address/:address/:limit?/:offset?/:state?/:order?
+    /resonance_by_address/:address/:limit?/:offset?/:state?/:order?/:stage?
 
     GET
 
@@ -337,9 +337,11 @@ const InscriptionOpState = {
 
     offset: 返回的起始位置，默认为0
 
-    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all', 默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    stage: string类型，需要查询的stage状态 'inscribe' or 'transfer' or 'all', 默认 'all'
 
     返回：
 
@@ -838,7 +840,7 @@ const InscriptionOpState = {
 
 #### 根据地址获取转账记录
 
-    /transfer_by_address/:address/:limit?/:offset?/:state?/:order?
+    /transfer_by_address/:address/:limit?/:offset?/:state?/:order?/:stage?
 
     GET
 
@@ -853,6 +855,8 @@ const InscriptionOpState = {
     state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    stage: string类型，需要查询的stage状态 'inscribe' or 'transfer' or 'all', 默认 'all'
 
     返回：
 
@@ -1353,7 +1357,7 @@ const InscriptionOpState = {
     GET
 
     参数
-1
+
     inscription_id： 铭文id
 
     返回

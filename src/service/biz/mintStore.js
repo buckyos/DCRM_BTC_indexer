@@ -12,8 +12,17 @@ const {
     TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS
 } = require('../../constants');
 
-const SUCCESS = "SUCCESS";
-const FAILED = "FAILED";
+const SUCCESS = "success";
+const FAILED = "failed";
+
+function stateCondition(state) {
+    if (state == SUCCESS) {
+        return ` AND state = ${InscriptionOpState.OK}`;
+    } else if (state == FAILED) {
+        return ` AND state != ${InscriptionOpState.OK}`;
+    }
+    return '';
+}
 
 class MintStore {
     constructor(config) {
@@ -25,7 +34,7 @@ class MintStore {
             return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
         }
 
-        order = order == 'ASC' ? 'ASC' : 'DESC';
+        order = order == "asc" ? "asc" : "desc";
         let count = 0;
         let list = [];
 
@@ -34,11 +43,7 @@ class MintStore {
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.MINT_RECORDS}
                 WHERE address = ?`;
-            if (state == SUCCESS) {
-                sql += ` AND state = ${InscriptionOpState.OK}`;
-            } else if (state == FAILED) {
-                sql += ` AND state != ${InscriptionOpState.OK}`;
-            }
+            sql += stateCondition(state);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             count = countResult.count;
@@ -47,11 +52,7 @@ class MintStore {
                 sql =
                     `SELECT * FROM ${TABLE_NAME.MINT_RECORDS}
                     WHERE address = ?`;
-                if (state == SUCCESS) {
-                    sql += ` AND state = ${InscriptionOpState.OK}`;
-                } else if (state == FAILED) {
-                    sql += ` AND state != ${InscriptionOpState.OK}`;
-                }
+                sql += stateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
                 const pageStmt = store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
@@ -96,7 +97,7 @@ class MintStore {
     }
 
     queryLuckyMintRecord(limit, offset, order) {
-        order = order == 'ASC' ? 'ASC' : 'DESC';
+        order = order == "asc" ? "asc" : "desc";
         let count = 0;
         let list = [];
 

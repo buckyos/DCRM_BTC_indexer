@@ -25,10 +25,10 @@ class MintService {
         return this.m_store.queryMintRecordByAddress(
             address,
             //limit == 0 || limit == null ? Number.MAX_SAFE_INTEGER : limit,
-            limit || 0,
-            offset || 0,
+            limit && _.isNumber(limit) ? limit : 0,
+            offset && _.isNumber(offset) ? offset : 0,
             state ? state.toUpperCase() : "ALL",
-            order ? order.toUpperCase() : "DESC"
+            order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
 
@@ -47,9 +47,9 @@ class MintService {
 
         return this.m_store.queryLuckyMintRecord(
             //length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
-            limit || 0,
-            offset || 0,
-            order ? order.toUpperCase() : "DESC"
+            limit && _.isNumber(limit) ? limit : 0,
+            offset && _.isNumber(offset) ? offset : 0,
+            order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
 
