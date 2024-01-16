@@ -42,7 +42,7 @@ const TOKEN_DECIMAL = 18;
 const DIFFICULTY_INSCRIBE_DATA_HASH_THRESHOLD = 32;
 
 // difficulty of inscribe lucky mint block height
-const DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD = 32;
+const DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD = 8;
 
 // difficulty of chant block height
 const DIFFICULTY_CHANT_BLOCK_THRESHOLD = 32;
