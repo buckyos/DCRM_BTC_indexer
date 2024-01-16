@@ -29,8 +29,6 @@ class LuckyMintHelper {
                 config.token.difficulty.lucky_mint_block_threshold;
             assert(_.isNumber(this.lucky_mint_block_threshold));
         }
-
-        this.lucky_mint_block_threshold = 10;
     }
 
     convert_timestamp(timestamp) {

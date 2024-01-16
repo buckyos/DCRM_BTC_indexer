@@ -46,9 +46,10 @@ class MintOperator {
             `invalid inscription_item on_mint`,
         );
 
-        // check amt is exists and is number
+        
         const content = inscription_item.content;
 
+        // check lucky if exists, then must be string
         if (content.lucky != null) {
             if (!_.isString(content.lucky)) {
                 console.error(
@@ -61,6 +62,7 @@ class MintOperator {
             }
         }
 
+        // check amt is exists and is number
         if (!BigNumberUtil.is_positive_number_string(content.amt)) {
             console.error(
                 `amt should be number ${inscription_item.inscription_id} ${content.amt}`,
@@ -71,6 +73,8 @@ class MintOperator {
             };
         }
 
+
+        // check the mint type: normal mint, lucky mint, burn mint
         let amt;
         let mint_type = MintType.NormalMint;
         if (content.lucky != null) {
@@ -88,6 +92,8 @@ class MintOperator {
             }
 
             if (valid) {
+                assert(_.isString(burn_amount), `burn_amount should be string: ${burn_amount}`);
+
                 mint_type = MintType.BurnMint;
                 amt = burn_amount;
             } else {
@@ -96,23 +102,23 @@ class MintOperator {
                     mint_type = MintType.LuckyMint;
 
                     console.log(
-                        `lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.lucky}`,
+                        `lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.lucky} ${content.amt}`,
                     );
 
-                    // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT
+                    // lucky mint amount is 10 times of normal mint
+                    amt = BigNumberUtil.multiply(content.amt, 10);
+
+                    // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT, then will use the max amount
                     if (
                         BigNumberUtil.compare(
-                            content.amt,
+                            amt,
                             constants.LUCKY_MINT_MAX_AMOUNT,
                         ) > 0
                     ) {
                         console.warn(
-                            `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt}`,
+                            `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt} ${amt}`,
                         );
-                        content.origin_amt = amt;
                         amt = constants.LUCKY_MINT_MAX_AMOUNT;
-                    } else {
-                        amt = content.amt;
                     }
                 }
             }
@@ -120,13 +126,15 @@ class MintOperator {
 
         if (mint_type === MintType.NormalMint) {
             console.log(
-                `mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.amount}`,
+                `normal mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.amt}`,
             );
+            
+            amt = content.amt;
 
-            // if content.amt > constants.NORMAL_MINT_MAX_AMOUNT
+            // if content.amt > constants.NORMAL_MINT_MAX_AMOUNT then will use the max amount
             if (
                 BigNumberUtil.compare(
-                    content.amt,
+                    amt,
                     constants.NORMAL_MINT_MAX_AMOUNT,
                 ) > 0
             ) {
@@ -135,8 +143,6 @@ class MintOperator {
                 );
 
                 amt = constants.NORMAL_MINT_MAX_AMOUNT;
-            } else {
-                amt = content.amt;
             }
         }
 
