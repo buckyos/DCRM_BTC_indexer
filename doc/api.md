@@ -1400,3 +1400,40 @@ const InscriptionOpState = {
         }
     }
     ```
+
+#### 根据块高度查询block信息
+
+    /btc/block/:block_height
+
+    参数
+
+    block_height: 块高度
+
+    返回
+
+    ```json
+    {
+        "err": 0,
+        "msg": null,
+        "result": {
+            "hash": "00000000000000000001df1fe4f1e469840955004d19e870c2c83ceb1afd2468",
+            "confirmations": 2,
+            "height": 826117,
+            "version": 767868928,
+            "versionHex": "2dc4c000",
+            "merkleroot": "a15e4c439a5c6d8cd7277d41d828703316c6c6efbfe39bb167e43cd34b540e56",
+            "time": 1705489549,
+            "mediantime": 1705484665,
+            "nonce": 2161775123,
+            "bits": "1703d869",
+            "difficulty": "73197634206448.34",
+            "chainwork": "000000000000000000000000000000000000000065e92849750a37cc38e354b6",
+            "nTx": 3862,
+            "previousblockhash": "000000000000000000029949b74e99f843a409bdfc1b464b76e50b7830475fda",
+            "nextblockhash": "000000000000000000004690f6b881e1caef2fffd5ecf6ec7d94b1d0d0b24ae0",
+            "strippedsize": 769718,
+            "size": 1683706,
+            "weight": 3992860
+        }
+    }
+    ```
