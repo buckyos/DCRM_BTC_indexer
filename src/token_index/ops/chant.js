@@ -167,7 +167,7 @@ class ChantOperator {
         );
 
         // 2. check hash relation
-        const hash_num = Util.address_number(hash);
+        const hash_num = Util.hash_number(hash);
         if (
             Math.abs(hash_num - inscription_item.block_height) %
                 this.chant_block_threshold !==

@@ -47,17 +47,52 @@ class Util {
         return sb.toSatoshi(btc);
     }
 
+    static _calc_string_number(str) {
+        assert(_.isString(str), `str should be string ${str}`);
+        assert(str.length >= 8, `string length should >= 8 ${str}`);
+
+        let sum = 0;
+        for (let i = 0; i < 8; i++) {
+            sum += str.charCodeAt(str.length - 1 - i);
+        }
+
+        return sum;
+    }
+
+    /**
+     * @comment calc hash number, hash should be hex string
+     * @param {string} hash
+     * @returns {number}
+     */
+    static hash_number(hash) {
+        assert(_.isString(hash), `hash should be string ${hash}`);
+        assert(hash.length >= 8, `hash length should >= 8 ${hash}`);
+        hash = hash.toLowerCase();
+
+        return this._calc_string_number(hash);
+    }
+
     // the last 8 bytes of the address sum to 0x00
     static address_number(address) {
         assert(_.isString(address), `address should be string ${address}`);
         assert(address.length >= 8, `address length should >= 8 ${address}`);
 
-        let sum = 0;
-        for (let i = 0; i < 8; i++) {
-            sum += address.charCodeAt(address.length - 1 - i);
+        switch (this.get_btc_address_type(address)) {
+            case 'legacy':
+            case 'segwit':
+            case 'unknown':
+                // case sensitive
+                break;
+            case 'bech32':
+                // case insensitive
+                address = address.toLowerCase();
+
+                break;
+            default:
+                throw new Error(`unknown address type ${address}`);
         }
 
-        return sum;
+        return this._calc_string_number(address);
     }
 
     static get_data_dir(config) {
@@ -392,7 +427,7 @@ class Util {
     */
     /**
      *
-     * @param {string} hash in base58
+     * @param {string} hash in hex
      * @param {string} txid in hex
      * @returns {boolean}
      */
@@ -404,8 +439,8 @@ class Util {
             `hash_threshold should be greater than 0 ${hash_threshold}`,
         );
 
-        const hash_number = this.address_number(hash);
-        const txid_number = this.address_number(txid);
+        const hash_number = this.hash_number(hash);
+        const txid_number = this.hash_number(txid);
         const ret = Math.abs(hash_number - txid_number) % hash_threshold;
 
         return ret === 0;
@@ -413,15 +448,15 @@ class Util {
 
     /**
      *
-     * @param {string} hash base58
-     * @param {string} address base58
+     * @param {string} hash hex
+     * @param {string} address btc address
      * @returns {number}
      */
     static calc_distance_with_hash_and_address(hash, address) {
         assert(_.isString(hash), `hash should be string ${hash}`);
         assert(_.isString(address), `address should be string ${address}`);
 
-        const hash_number = this.address_number(hash);
+        const hash_number = this.hash_number(hash);
         const address_number = this.address_number(address);
         const distance = Math.abs(hash_number - address_number);
         return distance;
@@ -433,6 +468,31 @@ class Util {
      */
     static get_now_as_timestamp() {
         return Math.floor(Date.now() / 1000);
+    }
+
+    /**
+     * @comment get btc address type
+     * @param {string} address
+     * @returns {string} legacy, segwit, bech32, unknown
+     */
+    static get_btc_address_type(address) {
+        assert(_.isString(address), `address should be string ${address}`);
+        address = address.trim().toLowerCase();
+
+        if (address.startsWith('1')) {
+            return 'legacy';
+        }
+
+        if (address.startsWith('3')) {
+            return 'segwit';
+        }
+
+        if (address.startsWith('bc1')) {
+            return 'bech32';
+        }
+
+        console.error(`unknown address type ${address}`);
+        return 'unknown';
     }
 }
 

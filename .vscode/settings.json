@@ -2,6 +2,7 @@
     "editor.fontLigatures": false,
     "editor.formatOnSave": true,
     "cSpell.words": [
+        "bech",
         "bignumber",
         "bitcoind",
         "blockheight",
@@ -15,6 +16,7 @@
         "ordi",
         "satoshi",
         "satpoint",
+        "segwit",
         "txid",
         "txids",
         "unmint",
