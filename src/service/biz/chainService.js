@@ -79,7 +79,7 @@ class ChainService {
     async _getBlockByHeight(ctx) {
         try {
             this._init();
-            const blockHeight = ctx.params.block_height;
+            const blockHeight = parseInt(ctx.params.block_height);
             const { ret, block } = await this.m_btcClient.get_block(blockHeight);
             if (ret !== 0) {
                 logger.warn('get btc block failed. ret:', ret);
