@@ -29,8 +29,8 @@ class InscribeService {
 
         return this.m_store.queryInscriptionByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
@@ -45,8 +45,8 @@ class InscribeService {
         return this.m_store.queryInscriptionByBlock(
             beginBlock,
             endBlock == 0 || endBlock == null ? Number.MAX_SAFE_INTEGER : endBlock,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
@@ -60,8 +60,8 @@ class InscribeService {
 
         return this.m_store.queryInscribeByHash(
             hash,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc",
         );
@@ -76,8 +76,8 @@ class InscribeService {
 
         return this.m_store.queryInscribeByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -94,8 +94,8 @@ class InscribeService {
         return this.m_store.queryInscribeByHashAndAddress(
             hash,
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -118,8 +118,8 @@ class InscribeService {
 
         return this.m_store.queryResonanceByHash(
             hash,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -135,8 +135,8 @@ class InscribeService {
 
         return this.m_store.queryResonanceByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc",
             stage ? stage.toLowerCase() : "all"
@@ -154,8 +154,8 @@ class InscribeService {
         return this.m_store.queryResonanceByHashAndAddress(
             hash,
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -178,8 +178,8 @@ class InscribeService {
 
         return this.m_store.queryChantByHash(
             hash,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -194,8 +194,8 @@ class InscribeService {
 
         return this.m_store.queryChantByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -212,8 +212,8 @@ class InscribeService {
         return this.m_store.queryChantByHashAndAddress(
             hash,
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -236,8 +236,8 @@ class InscribeService {
 
         return this.m_store.querySetPriceByHash(
             hash,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -252,8 +252,8 @@ class InscribeService {
 
         return this.m_store.querySetPriceByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -281,8 +281,8 @@ class InscribeService {
 
         return this.m_store.queryTransferByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc",
             stage && _.isString(stage) ? stage.toLowerCase() : "all"
@@ -306,8 +306,8 @@ class InscribeService {
 
         return this.m_store.queryInscribeDataTransferByHash(
             hash,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -322,8 +322,8 @@ class InscribeService {
 
         return this.m_store.queryInscribeDataTransferByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -346,8 +346,8 @@ class InscribeService {
 
         return this.m_store.queryOpsByAddress(
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -362,8 +362,8 @@ class InscribeService {
 
         return this.m_store.queryOpsByInscription(
             inscription,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -380,8 +380,8 @@ class InscribeService {
         return this.m_store.queryOpsByInscriptionAndAddress(
             inscription,
             address,
-            limit && _.isNumber(limit) ? limit : 0,
-            offset && _.isNumber(offset) ? offset : 0,
+            limit || 0,
+            offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
