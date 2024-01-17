@@ -85,7 +85,10 @@ class ChainService {
                 logger.warn('get btc block failed. ret:', ret);
                 return makeResponse(ERR_CODE.UNKNOWN_ERROR);
             }
-
+            if (block.tx) {
+                //remove tx, maybe too large
+                delete block.tx;
+            }
             return makeSuccessResponse(block);
 
         } catch (error) {
