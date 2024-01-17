@@ -9,13 +9,7 @@ class ChainService {
 
     _init() {
         if (!this.m_btcClient) {
-            const { host, network, auth } = this.m_config.btcConfig;
-
-            this.m_btcClient = new BTCClient(
-                host,
-                network,
-                auth,
-            );
+            this.m_btcClient = BTCClient.new_from_config(this.m_config.config);
         }
     }
 
@@ -82,6 +76,25 @@ class ChainService {
         }
     }
 
+    async _getBlockByHeight(ctx) {
+        try {
+            this._init();
+            const blockHeight = ctx.params.block_height;
+            const { ret, block } = await this.m_btcClient.get_block(blockHeight);
+            if (ret !== 0) {
+                logger.warn('get btc block failed. ret:', ret);
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+            }
+
+            return makeSuccessResponse(block);
+
+        } catch (error) {
+            logger.error('get btc block failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
     registerRouter(router) {
         router.get("/btc/block_height", async (ctx) => {
             ctx.response.body = await this._getLastBtcBlockHeight();
@@ -95,8 +108,8 @@ class ChainService {
             ctx.response.body = await this._getTx(ctx);
         });
 
-        router.get("/utxo_by_inscription/:inscription_id", async (ctx) => {
-            ctx.response.body = await this._getUtxoByInscriptionId(ctx);
+        router.get("/btc/block/:block_height", async (ctx) => {
+            ctx.response.body = await this._getBlockByHeight(ctx);
         });
     }
 }

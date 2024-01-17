@@ -62,6 +62,14 @@ class Config {
 
         return this.m_config.interface;
     }
+
+    get config() {
+        if (!this.m_config) {
+            throw new Error(`config not loaded`);
+        }
+
+        return this.m_config;
+    }
 }
 
 const config = new Config();
