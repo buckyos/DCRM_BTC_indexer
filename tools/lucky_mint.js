@@ -167,7 +167,7 @@ async function main() {
         return { ret };
     }
 
-    console.log(`next ${argv.n} lucky mint: ${JSON.stringify(list, null, 2)}`);
+    console.log(`next ${argv.n} lucky mint forecast (estimated at 12 minutes of block time): \n${JSON.stringify(list, null, 2)}`);
     return { ret: 0 };
 }
 

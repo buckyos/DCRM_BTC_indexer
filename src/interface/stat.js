@@ -96,6 +96,16 @@ class TokenStat {
 
             all.mint = stat;
 
+            // stat balance
+            const { ret: balance_ret, stat: balance_stat } =
+                await this.stat_balance(100);
+            if (balance_ret !== 0) {
+                console.error(`failed to stat balance: ${balance_ret}`);
+                return { ret: balance_ret };
+            }
+
+            all.balance = balance_stat;
+            
             return { ret: 0, stat: all };
         }
 
@@ -118,6 +128,10 @@ class TokenStat {
     async _stat_mint(start_time, end_time) {
         const stat = {};
 
+        // stat total mint amount and count
+        let all_amount = new BigNumber(0);
+        let all_count = 0;
+
         // stat all mint types
         for (const [key, value] of Object.entries(MintType)) {
             // calc total mint amount for each mint type
@@ -128,12 +142,20 @@ class TokenStat {
                 return { ret };
             }
 
+            all_amount = all_amount.plus(new BigNumber(total_amount));
+            all_count += total_count;
+
             stat[key] = {
                 total_amount,
                 total_count,
             };
         }
 
+        stat.all = {
+            total_amount: all_amount.toString(),
+            total_count: all_count,
+        };
+        
         const start = moment(start_time * 1000).format(
             'YYYY-MM-DD_HH:mm:ss.SSS',
         );
@@ -229,6 +251,63 @@ class TokenStat {
                     });
                 },
             );
+        });
+    }
+
+    async stat_balance(top_n) {
+        assert(this.db != null, `db should be connected`);
+        if (!_.isNumber(top_n)) {
+            console.error(`top_n should be number: ${top_n}`);
+            return { ret: -1, status: 400 };
+        }
+
+        const { ret, stat } = await this._stat_balance(top_n);
+        if (ret !== 0) {
+            console.error(`failed to stat balance: ${ret}`);
+            return { ret };
+        }
+
+        // remove item that address that length short than 5
+        const new_stat = [];
+        let index = 1;
+        for (const item of stat) {
+            if (item.address.length < 5) {
+                continue;
+            }
+
+            item.index = index;
+            ++index;
+            new_stat.push(item);
+        }
+
+        return { ret: 0, status: 200, stat: new_stat };
+    }
+
+    /**
+     * 
+     * @param {number} top_n 
+     * @returns {Promise<{ret: number, stat: Array<{address: string, amount: string}>}>}
+     */
+    async _stat_balance(top_n) {
+        assert(this.db != null, `db should be connected`);
+        assert(_.isNumber(top_n), `top_n should be number`);
+
+        return new Promise((resolve, reject) => {
+            const sql = `
+                    SELECT address, amount
+                    FROM balance
+                    ORDER BY CAST(amount AS DECIMAL(65, 0)) DESC
+                    LIMIT ?;
+                `;
+
+            this.db.all(sql, [top_n], (err, rows) => {
+                if (err) {
+                    console.error(`failed to stat balance: ${err}`);
+                    reject(err);
+                } else {
+                    resolve({ ret: 0, stat: rows });
+                }
+            });
         });
     }
 }

@@ -318,7 +318,7 @@ class IndexLocalInterface {
             }
         });
 
-        router.get('/stat/:type', async (ctx) => {
+        const stat_routine = async (ctx) => {
             const type = ctx.params.type || 'all';
             const start = ctx.query.start || 0;
             const end = ctx.query.end || 0;
@@ -333,11 +333,38 @@ class IndexLocalInterface {
 
             if (status == null || (status >= 200 && status < 300)) {
                 ctx.status = 200;
-                ctx.body = stat;
+                ctx.body = JSON.stringify(stat, null, 2);
             } else {
                 ctx.status = status;
             }
-    
+        };
+
+        router.get('/stat/:type', stat_routine);
+        router.get('/stat', stat_routine);
+
+        // stat top n balance
+        router.get('/stat/balances/:n', async (ctx) => {
+            let n = ctx.params.n || '100';
+            n = parseInt(n);
+            if (isNaN(n)) {
+                ctx.status = 400;
+                ctx.body = `Bad request with invalid n: ${n}`;
+                return;
+            }
+
+            const { ret, status, stat } = await this.state_service.stat.stat_balance(n);
+            if (ret !== 0) {
+                ctx.status = 500;
+                ctx.body = `Internal server error ${ret}`;
+                return;
+            }
+
+            if (status == null || (status >= 200 && status < 300)) {
+                ctx.status = 200;
+                ctx.body = JSON.stringify(stat, null, 2);
+            } else {
+                ctx.status = status;
+            }
         });
     }
 }
