@@ -156,8 +156,6 @@ class MintStore {
                 total = BigNumberUtil.add(total, item.amount);
             }
 
-            console.log('ret:', ret);
-
             logger.debug(
                 'queryTotalMintByTime',
                 beginTime,
