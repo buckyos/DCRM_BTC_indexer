@@ -73,9 +73,25 @@ class MintOperator {
             };
         }
 
+        // first set amt to normal mint value, max is NORMAL_MINT_MAX_AMOUNT(210)
+        let amt = content.amt;
+
+        // if content.amt > constants.NORMAL_MINT_MAX_AMOUNT then will use the max amount
+        if (
+            BigNumberUtil.compare(
+                amt,
+                constants.NORMAL_MINT_MAX_AMOUNT,
+            ) > 0
+        ) {
+            console.warn(
+                `mint amount is too large ${inscription_item.inscription_id} ${inscription_item.address} ${content.amt}`,
+            );
+
+            amt = constants.NORMAL_MINT_MAX_AMOUNT;
+        }
+
 
         // check the mint type: normal mint, lucky mint, burn mint
-        let amt;
         let mint_type = MintType.NormalMint;
         if (content.lucky != null) {
             // first query is if the burn mint from eth
@@ -95,7 +111,9 @@ class MintOperator {
                 assert(_.isString(burn_amount), `burn_amount should be string: ${burn_amount}`);
 
                 mint_type = MintType.BurnMint;
-                amt = burn_amount;
+
+                // burn mint amount = normal mint amount + burn mint amount
+                amt = BigNumberUtil.add(burn_amount, amt);
             } else {
                 // not burn mint, now check if it is lucky mint
                 if (this._is_lucky_block_mint(inscription_item)) {
@@ -106,7 +124,7 @@ class MintOperator {
                     );
 
                     // lucky mint amount is 10 times of normal mint
-                    amt = BigNumberUtil.multiply(content.amt, 10);
+                    amt = BigNumberUtil.multiply(amt, 10);
 
                     // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT, then will use the max amount
                     if (
@@ -126,24 +144,8 @@ class MintOperator {
 
         if (mint_type === MintType.NormalMint) {
             console.log(
-                `normal mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.amt}`,
+                `normal mint ${inscription_item.inscription_id} ${inscription_item.address} ${amt}`,
             );
-            
-            amt = content.amt;
-
-            // if content.amt > constants.NORMAL_MINT_MAX_AMOUNT then will use the max amount
-            if (
-                BigNumberUtil.compare(
-                    amt,
-                    constants.NORMAL_MINT_MAX_AMOUNT,
-                ) > 0
-            ) {
-                console.warn(
-                    `mint amount is too large ${inscription_item.inscription_id} ${inscription_item.address} ${content.amt}`,
-                );
-
-                amt = constants.NORMAL_MINT_MAX_AMOUNT;
-            }
         }
 
         // first update mint pool balance
