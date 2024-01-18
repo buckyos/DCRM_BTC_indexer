@@ -74,15 +74,24 @@ function main() {
             choices: ['formal', 'test'],
             default: 'formal',
         })
+        .option('log', {
+            type: 'string',
+            describe: 'Log level',
+            choices: ['debug', 'info', 'warn'],
+        })
         .help().argv;
     const config_name = argv.config;
     console.log(`config name: ${config_name}`);
+
+    const logLevel = argv.log;
+
+    console.log('loglevel:', logLevel);
 
     const configPath = path.resolve(__dirname, `../../config/${config_name}.js`);
     assert(fs.existsSync(configPath), `config file not found: ${configPath}`);
 
     config.init(configPath);
-    logger.level = config.service.log_level || 'info';
+    logger.level = logLevel || config.service.log_level || 'info';
 
     store.init(config);
 
