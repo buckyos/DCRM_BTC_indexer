@@ -55,7 +55,7 @@ class MintService {
 
     async _getTotalMintLast24(ctx) {
         const endTime = Math.floor(Date.now() / 1000);
-        const beginTime = end_time - 24 * 3600;
+        const beginTime = endTime - 24 * 3600;
 
         return this.m_store.queryTotalMintByTime(beginTime, endTime + 1);
     }
