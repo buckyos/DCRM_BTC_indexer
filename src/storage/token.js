@@ -35,6 +35,9 @@ const UserOp = {
     Mint: 'mint',
     Chant: 'chant',
 
+    InscribeDataPay: 'inscribe_data_pay',
+    TransferDataPay: 'transfer_data_pay',
+
     InscribeData: 'inscribe_data',
     TransferData: 'transfer_data',
 
@@ -187,6 +190,49 @@ class TokenIndexStorage {
                         }
 
                         console.log(`created index on mint_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
+                // Create inscribe_data_pay_records table
+                this.db.run(
+                    `CREATE TABLE IF NOT EXISTS inscribe_data_pay_records (
+                        inscription_id TEXT PRIMARY KEY,
+                        stage STRING,
+
+                        genesis_block_height INTEGER,
+                        genesis_timestamp INTEGER,
+                        genesis_txid TEXT,
+                        from_address TEXT,
+                        content TEXT,
+
+                        hash TEXT,
+                        mint_amount TEXT,
+                        service_charge TEXT,
+                        price TEXT,
+                        hash_point INTEGER,
+                        hash_weight TEXT,
+                        
+                        block_height INTEGER,
+                        timestamp INTEGER,
+                        txid TEXT,
+                        to_address TEXT,
+
+                        state INTEGER DEFAULT 0
+                    )`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to inscribe_data_pay_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created inscribe_data_pay_records table`);
                     },
                 );
 
@@ -830,6 +876,255 @@ class TokenIndexStorage {
                     resolve({ ret: 0, data: row });
                 }
             });
+        });
+    }
+
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} address
+     * @param {string} content
+     * @param {string} hash
+     * @param {string} mint_amount
+     * @param {string} service_charge
+     * @param {string} price
+     * @param {number} hash_point
+     * @param {string} hash_weight
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_inscribe_data_pay_on_inscribed(
+        inscription_id,
+        block_height,
+        timestamp,
+        txid,
+        address,
+        content,
+
+        hash,
+        mint_amount,
+        service_charge,
+        price,
+        hash_point,
+        hash_weight,
+
+        state,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            `block_height should be non-negative integer`,
+        );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
+        assert(typeof address === 'string', `address should be string`);
+        assert(typeof content === 'string', `content should be string`);
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(
+            BigNumberUtil.is_positive_number_string(mint_amount),
+            `mint_amount should be positive number string`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(service_charge),
+            `service_charge should be positive number string`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(price),
+            `price should be positive number string`,
+        );
+        assert(
+            Number.isInteger(hash_point) && hash_point >= 0,
+            `hash_point should be non-negative integer`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(hash_weight),
+            `hash_weight should be positive number string`,
+        );
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            UserOp.InscribeDataPay,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user inscribe data pay op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO inscribe_data_pay_records (
+                    inscription_id, 
+                    stage,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    from_address,
+                    content,
+        
+                    hash,
+                    mint_amount,
+                    service_charge,
+                    price,
+                    hash_point,
+                    hash_weight,
+
+                    block_height, 
+                    timestamp,
+                    txid,
+                    to_address,
+
+                    state
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    inscription_id,
+                    InscriptionStage.Inscribe,
+
+                    block_height,
+                    timestamp,
+                    txid,
+                    address,
+                    content,
+
+                    hash,
+                    mint_amount,
+                    service_charge,
+                    price,
+                    hash_point,
+                    hash_weight,
+
+                    0,
+                    0,
+                    null,
+                    null,
+
+                    state,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `failed to add inscribe data pay record on inscribed ${inscription_id} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} genesis_block_height
+     * @param {number} genesis_timestamp
+     * @param {string} genesis_txid
+     * @param {string} from_address
+     * @param {string} content
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} to_address
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_inscribe_data_pay_record_on_transferred(
+        inscription_id,
+
+        from_address,
+
+        block_height,
+        timestamp,
+        txid,
+        to_address,
+
+        state,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            `block_height should be non-negative integer`,
+        );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
+        assert(typeof to_address === 'string', `to_address should be string`);
+
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            from_address,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            UserOp.TransferDataPay,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user transfer op ${inscription_id} ${from_address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
+        // update the inscribe_data_pay_records
+        return new Promise((resolve) => {
+            this.db.run(
+                `UPDATE inscribe_data_pay_records 
+                    SET block_height = ?, 
+                        timestamp = ?, 
+                        txid = ?, 
+                        to_address = ?,
+                        state = ?
+                    WHERE inscription_id = ?`,
+                [
+                    block_height,
+                    timestamp,
+                    txid,
+                    to_address,
+                    state,
+                    inscription_id,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `failed to update inscribe data pay record on transferred ${inscription_id} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
         });
     }
 
