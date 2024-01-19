@@ -48,6 +48,7 @@ class Util {
     }
 
     static _calc_string_number(str) {
+        str = str.trim();
         assert(_.isString(str), `str should be string ${str}`);
         assert(str.length >= 8, `string length should >= 8 ${str}`);
 
