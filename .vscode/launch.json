@@ -1,124 +1,86 @@
 {
-    // 使用 IntelliSense 了解相关属性。 
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "type": "node",
             "request": "launch",
             "name": "test",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/test/test.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "test_eth",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/test/test_eth.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "test_transfer",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/test/test_transfer.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "test_token_index",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/test/test_token_index.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "main-test",
-            "args": [
-                "--config",
-                "test",
-                "--mode",
-                "both",
-            ],
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "args": ["--config", "test", "--mode", "both"],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/main.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "main",
-            "args": [
-                "--config",
-                "formal",
-                "--mode",
-                "both",
-            ],
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "args": ["--config", "formal", "--mode", "both"],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/main.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "service-main",
-            "args": [
-                "--config",
-                "formal"
-            ],
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "args": ["--config", "formal"],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/service/main.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "cli",
-            "args": [
-                "--config",
-                "test"
-            ],
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
+            "args": ["--config", "test"],
+            "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/tools/cli.js",
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+            "outFiles": ["${workspaceFolder}/**/*.js"]
+        },
+        {
+            "name": "Python-Lucky Mint",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/lucky_mint.py",
+            "args": [
+                "--address",
+                "00000000000000000000000",
+                "--timezone",
+                "Asia/Singapore"
+            ],
+            "justMyCode": true
         }
     ]
 }
