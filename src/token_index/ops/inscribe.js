@@ -588,6 +588,7 @@ class InscribeDataOperator {
         const { ret: update_pool_ret } =
             await this.balance_storage.update_pool_balance_on_ops(
                 UpdatePoolBalanceOp.InscribeData,
+                '0',
                 mint_amt,
             );
         if (update_pool_ret !== 0) {

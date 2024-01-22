@@ -622,25 +622,32 @@ class TokenBalanceStorage {
      * @comment update pool balance on mint or chant or resonance
      * @param {UpdatePoolBalanceOp} op
      * @param {string} amount
+     * @param {string} inner_amount
      * @returns {ret: number}
      */
-    async update_pool_balance_on_ops(op, amount) {
+    async update_pool_balance_on_ops(op, amount, inner_amount) {
         assert(this.db != null, `db should not be null`);
         assert(
             BigNumberUtil.is_positive_number_string(amount),
             `amount should be >= 0 number string: ${amount}`,
         );
+        assert(
+            BigNumberUtil.is_positive_number_string(inner_amount),
+            `inner_amount should be >= 0 number string: ${inner_amount}`,
+        );
 
         switch (op) {
             case UpdatePoolBalanceOp.Mint:
                 {
+                    const total = BigNumberUtil.add(amount, inner_amount);
+
                     const { ret: update_ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        BigNumberUtil.multiply(amount, -1),
+                        BigNumberUtil.multiply(total, -1),
                     );
                     if (update_ret != 0) {
                         console.error(
-                            `Could not update pool balance on mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${amount}`,
+                            `Could not update pool balance on mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${total}`,
                         );
                         return { ret: update_ret };
                     }
@@ -649,24 +656,28 @@ class TokenBalanceStorage {
                 break;
             case UpdatePoolBalanceOp.LuckyMint:
                 {
+                    const total = BigNumberUtil.add(amount, inner_amount);
+
+                    // first stat all amount to lucky mint
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
-                        amount,
+                        total,
                     );
                     if (ret != 0) {
                         console.error(
-                            `Could not update lucky mint balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS} ${amount}`,
+                            `Could not update lucky mint balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS} ${total}`,
                         );
                         return { ret };
                     }
 
+                    // then subtract the total amount from mint pool
                     const { ret: update_ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        BigNumberUtil.multiply(amount, -1),
+                        BigNumberUtil.multiply(total, -1),
                     );
                     if (update_ret != 0) {
                         console.error(
-                            `Could not update pool balance on lucky mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${amount}`,
+                            `Could not update pool balance on lucky mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${total}`,
                         );
                         return { ret: update_ret };
                     }
@@ -675,9 +686,12 @@ class TokenBalanceStorage {
                 break;
             case UpdatePoolBalanceOp.BurnMint: {
                 {
+                    const total = BigNumberUtil.add(amount, inner_amount);
+
+                    // first stat all amount to burn mint
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
-                        amount,
+                        total,
                     );
                     if (ret != 0) {
                         console.error(
@@ -685,12 +699,26 @@ class TokenBalanceStorage {
                         );
                         return { ret };
                     }
+
+                    // then subtract the amount from mint pool
+                    const { ret: update_ret } = await this.update_inner_balance(
+                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+                        BigNumberUtil.multiply(amount, -1),
+                    );
+                    if (update_ret != 0) {
+                        console.error(
+                            `Could not update pool balance on burn mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${amount}`,
+                        );
+                        return { ret: update_ret };
+                    }
                 }
 
                 break;
             }
             case UpdatePoolBalanceOp.Chant:
                 {
+                    assert(amount === '0', `amount should be 0 on chant: ${amount}`);
+
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
                         amount,
@@ -717,6 +745,8 @@ class TokenBalanceStorage {
                 break;
             case UpdatePoolBalanceOp.InscribeData:
                 {
+                    assert(amount === '0', `amount should be 0 on inscribe data: ${amount}`);
+
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
                         amount,

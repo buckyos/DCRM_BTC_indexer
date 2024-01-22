@@ -8,7 +8,7 @@ const ETH_INDEX_DB_FILE = 'eth_index.db';
 const INSCRIPTION_DB_FILE = 'inscriptions.db';
 const TRANSFER_DB_FILE = 'transfer.db';
 
-const LUCKY_MINT_MAX_AMOUNT = '2100';
+const LUCKY_MINT_MAX_AMOUNT = '1890';   // 2100 - 210 = 1890
 const NORMAL_MINT_MAX_AMOUNT = '210';
 
 // the token init amount in mint pool: 210 million.
