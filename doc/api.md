@@ -693,6 +693,49 @@ const InscriptionOpState = {
     }
     ```
 
+#### 获取某地址的mint记录：
+
+    /lucky_mint_record_by_address/:address/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    address: 地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,              // 总数
+            list: [
+                {
+                    inscription_id,     // mint id
+                    content,            // 铭文内容
+                    block_height,       // mint区块
+                    timestamp,          // 时间
+                    address,            // mint地址
+                    amount,             // mint金额 string
+                    lucky,              // 幸运字串
+                    mint_type,          // int 0 -- 普通mint 1 -- 幸运mint
+                    state,
+                }
+            ]
+        }
+    }
+    ```
+
 #### 根据tx查询mint
 
     /mint_record_by_tx/:txid

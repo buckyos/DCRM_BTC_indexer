@@ -31,7 +31,7 @@ class MintStore {
 
     queryMintRecordByAddress(address, limit, offset, state, order) {
         if (!address) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'Invalid param');
         }
 
         order = order == "asc" ? "asc" : "desc";
@@ -77,9 +77,46 @@ class MintStore {
         return makeSuccessResponse({ count, list });
     }
 
+    queryLuckyMintRecordByAddress(address, limit, offset, state, order) {
+        if (!address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'Invalid param');
+        }
+
+        order = order == "asc" ? "asc" : "desc";
+        let count = 0;
+        let list = [];
+
+        try {
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.MINT_RECORDS}
+                WHERE address = ? AND mint_type = ?`;
+            sql += stateCondition(state);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(address, MintType.LuckyMint);
+            count = countResult.count;
+
+            if (count > 0) {
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.MINT_RECORDS}
+                    WHERE address = ? AND mint_type = ?`;
+                sql += stateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(address, MintType.LuckyMint, limit, offset);
+            }
+
+            return makeSuccessResponse({ count, list });
+        } catch (error) {
+            logger.error('queryLuckyMintRecordByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
     queryMintRecordByTx(txid) {
         if (!txid) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'Invalid param');
         }
 
         try {
@@ -140,7 +177,7 @@ class MintStore {
 
     queryTotalMintByTime(beginTime, endTime) {
         if (!beginTime || !endTime) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'Invalid param');
         }
 
         try {
@@ -208,7 +245,7 @@ class MintStore {
 
     queryBalanceByAddress(address) {
         if (!address) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, 'invalid param');
+            return makeResponse(ERR_CODE.INVALID_PARAM, 'Invalid param');
         }
 
         try {

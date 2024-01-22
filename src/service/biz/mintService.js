@@ -27,7 +27,23 @@ class MintService {
             //limit == 0 || limit == null ? Number.MAX_SAFE_INTEGER : limit,
             limit || 0,
             offset || 0,
-            state ? state.toLowerCase() : "all",
+            state && _.isString(state) ? state.toLowerCase() : "all",
+            order && _.isString(order) ? order.toLowerCase() : "desc"
+        );
+    }
+
+    async _getLuckyMintRecordByAddress(ctx) {
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const order = ctx.params.order;
+        const state = ctx.params.state;
+
+        return this.m_store.queryLuckyMintRecordByAddress(
+            address,
+            limit || 0,
+            offset || 0,
+            state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
@@ -111,6 +127,10 @@ class MintService {
 
         router.get("/mint_record_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
             ctx.response.body = await this._getMintRecordByAddress(ctx);
+        });
+
+        router.get("/lucky_mint_record_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
+            ctx.response.body = await this._getLuckyMintRecordByAddress(ctx);
         });
 
         router.get("/mint_record_by_tx/:txid", async (ctx) => {
