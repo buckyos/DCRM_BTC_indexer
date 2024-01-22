@@ -35,12 +35,60 @@ class MintOperator {
         }
     }
 
-    /*
-    使用标准的Ordinal协议进行Mint，根据现在部署的BRC20，成功获得210个DMC 我们的扩展增加了“lucky”关键字（最长32个字节），当带有该关键字的交易进入被 区块高度与自己的地址的和被64整除的区块时，用户会得到2100个DMC。lucky mint在未进入正确区块时，蜕化成普通mint,获得上限规定的210个DMC.
+    /**
+     * @comment mint
+     * @param {InscriptionNewItem} inscription_item 
+     * @returns {Promise<{ret: number}>}
+     */
+    async mint(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
-    {"p":"brc-20","op":"mint","tick":"DMC ","amt":"2100","lucky":"dmc-discord"}
+        // do mint
+        let { ret, state, amt, mint_type } = await this._on_mint(inscription_item);
+        if (ret !== 0) {
+            return { ret };
+        }
+
+        assert(_.isNumber(state), `state should be number ${state}`);
+
+        if (amt == null) {
+            amt = '0';
+        }
+        if (mint_type == null) {
+            mint_type = MintType.NormalMint;
+        }
+
+        //  add mint record for any state
+        const { ret: mint_ret } = await this.storage.add_mint_record(
+            inscription_item.inscription_id,
+            inscription_item.block_height,
+            inscription_item.timestamp,
+            inscription_item.txid,
+            inscription_item.address,
+            JSON.stringify(inscription_item.content),
+            amt,
+            inscription_item.content.lucky,
+            mint_type,
+            state,
+        );
+
+        if (mint_ret !== 0) {
+            console.error(
+                `failed to add mint record ${inscription_item.inscription_id}`,
+            );
+            return { ret: mint_ret };
+        }
+
+        return { ret: 0 };
+    }
+
+
+    /**
+    * 
+    * @param {InscriptionNewItem} inscription_item 
+    * @returns {Promise<{ret: number, state: InscriptionOpState, amt: string | null, mint_type: MintType | null}>}
     */
-    async on_mint(inscription_item) {
+    async _on_mint(inscription_item) {
         assert(
             inscription_item instanceof InscriptionNewItem,
             `invalid inscription_item on_mint`,
@@ -58,26 +106,40 @@ class MintOperator {
 
                 return {
                     ret: 0,
+                    state: InscriptionOpState.INVALID_PARAMS,
                 };
             }
         }
 
         // check amt is exists and is number
-        if (!BigNumberUtil.is_positive_number_string(content.amt)) {
+        if (content.amt == null || !BigNumberUtil.is_positive_number_string(content.amt)) {
             console.error(
                 `amt should be number ${inscription_item.inscription_id} ${content.amt}`,
             );
 
             return {
                 ret: 0,
+                state: InscriptionOpState.INVALID_PARAMS,
             };
         }
 
+        // amt should <= NORMAL_MINT_MAX_AMOUNT
+        if (!BigNumberUtil.compare(content.amt, constants.NORMAL_MINT_MAX_AMOUNT)) {
+            console.error(
+                `amt should be less than ${constants.NORMAL_MINT_MAX_AMOUNT} ${inscription_item.inscription_id} ${content.amt}`,
+            );
+
+            return {
+                ret: 0,
+                state: InscriptionOpState.INVALID_PARAMS,
+            };
+        }
 
         // check the mint type: normal mint, lucky mint, burn mint
+        // only can be lucky mint or burn mint if lucky field exists and is valid string!
         let amt;
         let mint_type = MintType.NormalMint;
-        if (content.lucky != null) {
+        if (content.lucky != null && _.isString(content.lucky)) {
             // first query is if the burn mint from eth
             const {
                 ret,
@@ -198,27 +260,7 @@ class MintOperator {
             }
         }
 
-        // at last add mint record for any state
-        const { ret: mint_ret } = await this.storage.add_mint_record(
-            inscription_item.inscription_id,
-            inscription_item.block_height,
-            inscription_item.timestamp,
-            inscription_item.txid,
-            inscription_item.address,
-            JSON.stringify(content),
-            amt,
-            content.lucky,
-            mint_type,
-            state,
-        );
-        if (mint_ret !== 0) {
-            console.error(
-                `failed to add mint record ${inscription_item.inscription_id}`,
-            );
-            return { ret: mint_ret };
-        }
-
-        return { ret: 0 };
+        return { ret: 0, state, amt, mint_type };
     }
 
     /**

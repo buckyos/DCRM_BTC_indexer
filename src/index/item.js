@@ -37,43 +37,19 @@ const InscriptionOp = {
 };
 
 class MintOp {
-    constructor(amt, lucky) {
-        assert(_.isString(amt), `amt should be string`);
-        assert(
-            lucky == null || _.isString(lucky),
-            `lucky should be string or null`,
-        );
-
+    constructor() {
         this.op = InscriptionOp.Mint;
-        this.amt = amt;
-        this.lucky = lucky;
     }
 
     static parse_content(content) {
         assert(_.isObject(content), `mint content should be object`);
 
-        const { amt, lucky } = content;
+      
+        // do not check content here any more
+        // we should check content in the later process to record the error
+        // lucky field is optional and can be any value, but only if it's string then we can use it as lucky mint or burn mint
 
-        // check amt
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.warn(`invalid mint content amt ${amt} ${typeof amt}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check lucky if exists
-        if (lucky != null) {
-            if (!_.isString(lucky)) {
-                console.error(`invalid content lucky value: ${lucky}`);
-                return { ret: 0, valid: false };
-            }
-
-            if (lucky.length > 32) {
-                console.error(`invalid content lucky value: ${lucky}`);
-                return { ret: 0, valid: false };
-            }
-        }
-
-        const item = new MintOp(amt, lucky);
+        const item = new MintOp();
         return { ret: 0, valid: true, item };
     }
 }
@@ -130,7 +106,7 @@ class ChantOp {
 
         // do not check content here any more
         // we should check content in the later process to record the error
-        
+
         const item = new ChantOp();
         return { ret: 0, valid: true, item };
     }
