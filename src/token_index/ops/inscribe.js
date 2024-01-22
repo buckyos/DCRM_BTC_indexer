@@ -261,7 +261,9 @@ class InscribeDataOperator {
         inscription_item.hash_point = 0;
         inscription_item.hash_weight = '0';
 
-        // first check if hash and amt field is exists
+        // first check if params is valid
+        
+        // check hash is string and valid mixhash
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
             console.warn(
@@ -272,12 +274,40 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
+        if (!Util.is_valid_mixhash(hash)) {
+            console.warn(`invalid inscribe content ph ${hash}, ${inscription_item.inscription_id}`);
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        // check amt is exists and valid
         const amt = inscription_item.content.amt;
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(
+        if (amt == null || !BigNumberUtil.is_positive_number_string(amt)) {
+            console.warn(
                 `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        // check text is valid if exists
+        const text = inscription_item.content.text;
+        if (text != null && !_.isString(text)) {
+            console.warn(
+                `invalid inscription text ${inscription_item.inscription_id} ${text}`,
+            );
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        // check price is valid if exists
+        const price = inscription_item.content.price;
+        if (price != null) {
+            if (!BigNumberUtil.is_positive_number_string(price)) {
+                console.warn(`invalid inscribe content price ${price}`);
+                return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+            }
+            inscription_item.price = price;
+        } else {
+            // set to default value
+            inscription_item.price = '0';
         }
 
         // 1. check if hash already been inscribed
@@ -345,8 +375,8 @@ class InscribeDataOperator {
         const max_price = BigNumberUtil.multiply(hash_weight, 2);
 
         // 4. try fix price if exists
-        if (inscription_item.content.price != null) {
-            const price = inscription_item.content.price;
+        if (inscription_item.price != null && inscription_item.price !== '0') {
+            const price = inscription_item.price;
             assert(
                 BigNumberUtil.is_positive_number_string(price),
                 `invalid price ${price}`,
@@ -358,8 +388,8 @@ class InscribeDataOperator {
                     `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
                 );
 
-                inscription_item.content.origin_price = price;
-                inscription_item.content.price = max_price;
+                
+                inscription_item.price = max_price;
             }
         }
 
@@ -477,7 +507,7 @@ class InscribeDataOperator {
                     mint_amt,
                     service_charge,
                     op.inscription_item.content.text,
-                    op.inscription_item.content.price,
+                    op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
                     op.inscription_item.hash_point,
                     op.inscription_item.hash_weight,
                     op.state,
@@ -569,7 +599,7 @@ class InscribeDataOperator {
         }
 
         console.info(
-            `new inscribe record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.content.price}`,
+            `new inscribe record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.price}`,
         );
 
         // 4. update inscribe_data table if ready
@@ -581,7 +611,7 @@ class InscribeDataOperator {
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,
                 op.inscription_item.content.text,
-                op.inscription_item.content.price,
+                op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
                 0,
             );
 

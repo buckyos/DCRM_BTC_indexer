@@ -79,20 +79,8 @@ class MintOp {
 }
 
 class InscribeDataOp {
-    constructor(ph, text, amt, price) {
-        assert(_.isString(ph), `ph should be string`);
-        assert(
-            text == null || _.isString(text),
-            `text should be string or null`,
-        );
-        assert(_.isString(amt), `amt should be string`);
-        assert(_.isString(price), `price should be string`);
-
+    constructor() {
         this.op = InscriptionOp.Inscribe;
-        this.ph = ph;
-        this.text = text;
-        this.amt = amt;
-        this.price = price;
     }
 
     /**
@@ -103,44 +91,7 @@ class InscribeDataOp {
     static parse_content(content) {
         assert(_.isObject(content), `inscribe content should be object`);
 
-        let { ph, text, amt, price } = content;
-
-        // check ph
-        if (!_.isString(ph)) {
-            console.warn(`invalid inscribe content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        if (!Util.is_valid_mixhash(ph)) {
-            console.warn(`invalid inscribe content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check text
-        if (text != null) {
-            if (!_.isString(text)) {
-                console.warn(`invalid inscribe content text ${text}`);
-                return { ret: 0, valid: false };
-            }
-        }
-        // check amt
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.warn(`invalid inscribe content amt ${amt}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check price
-        if (price != null) {
-            if (!BigNumberUtil.is_positive_number_string(price)) {
-                console.warn(`invalid inscribe content price ${price}`);
-                return { ret: 0, valid: false };
-            }
-        } else {
-            content.price = '0';
-            price = '0';
-        }
-
-        const item = new InscribeDataOp(ph, text, amt, price);
+        const item = new InscribeDataOp();
         return { ret: 0, valid: true, item };
     }
 }
