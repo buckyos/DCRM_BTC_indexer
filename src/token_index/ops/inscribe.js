@@ -42,6 +42,7 @@ class InscribeDataOperator {
 
         this.config = config;
         this.storage = storage;
+        this.balance_storage = storage.get_balance_storage();
         this.hash_helper = hash_helper;
         this.relation_storage = relation_storage;
 
@@ -406,7 +407,7 @@ class InscribeDataOperator {
 
         // 6. check if address balance is enough
         const { ret: get_balance_ret, amount: balance } =
-            await this.storage.get_balance(inscription_item.address);
+            await this.balance_storage.get_inner_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
             console.error(
                 `failed to get balance ${inscription_item.inscription_id} ${inscription_item.address}`,
@@ -417,11 +418,10 @@ class InscribeDataOperator {
         assert(_.isString(balance), `invalid balance ${balance}`);
         if (BigNumberUtil.compare(balance, amt) < 0) {
             console.warn(
-                `balance is not enough ${inscription_item.inscription_id} ${inscription_item.address} ${balance} < ${amt}`,
+                `inner token balance is not enough ${inscription_item.inscription_id} ${inscription_item.address} ${balance} < ${amt}`,
             );
 
-            // balance is not enough, so this inscription will failed
-
+            // inner token balance is not enough, so this inscription will failed
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
@@ -556,7 +556,7 @@ class InscribeDataOperator {
         );
 
         // 2. subtract mint_amt from address
-        const { ret: update_balance_ret } = await this.storage.update_balance(
+        const { ret: update_balance_ret } = await this.balance_storage.update_inner_balance(
             op.inscription_item.address,
             BigNumberUtil.multiply(mint_amt, '-1'),
         );
@@ -564,13 +564,13 @@ class InscribeDataOperator {
             // the balance has been checked in on_inscribe, so should not reach here
             assert(update_balance_ret < 0);
             console.error(
-                `failed to transfer balance to mint pool ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${mint_amt}`,
+                `failed to transfer inner balance to mint pool ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${mint_amt}`,
             );
             return { ret: update_balance_ret };
         }
 
         // 2. transfer service_charge from address to foundation address
-        const { ret: transfer_ret2 } = await this.storage.transfer_balance(
+        const { ret: transfer_ret2 } = await this.balance_storage.transfer_inner_balance(
             op.inscription_item.address,
             this.config.token.account.foundation_address,
             service_charge,
@@ -586,7 +586,7 @@ class InscribeDataOperator {
 
         // 3. update the pool balance
         const { ret: update_pool_ret } =
-            await this.storage.update_pool_balance_on_ops(
+            await this.balance_storage.update_pool_balance_on_ops(
                 UpdatePoolBalanceOp.InscribeData,
                 mint_amt,
             );

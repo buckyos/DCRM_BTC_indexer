@@ -52,6 +52,7 @@ class ResonanceOperator {
 
         this.config = config;
         this.storage = storage;
+        this.balance_storage = storage.get_balance_storage();
         this.hash_helper = hash_helper;
         this.relation_storage = relation_storage;
         this.resonance_verifier = resonance_verifier;
@@ -253,7 +254,7 @@ class ResonanceOperator {
 
         // 4. check user's balance
         const { ret: get_balance_ret, amount: balance } =
-            await this.storage.get_balance(inscription_item.address);
+            await this.balance_storage.get_inner_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
             console.error(`get_balance failed ${inscription_item.address}`);
             return { ret: get_balance_ret };
@@ -341,7 +342,7 @@ class ResonanceOperator {
         const owner_bonus = BigNumberUtil.subtract(amt, service_charge); // amt - service_charge;
 
         if (BigNumberUtil.compare(service_charge, 0) > 0) {
-            const { ret } = await this.storage.transfer_balance(
+            const { ret } = await this.balance_storage.transfer_inner_balance(
                 inscription_item.address,
                 this.config.token.account.foundation_address,
                 service_charge,
@@ -358,7 +359,7 @@ class ResonanceOperator {
             BigNumberUtil.compare(owner_bonus, 0) > 0 &&
             inscription_item.address !== inscription_item.output_address
         ) {
-            const { ret } = await this.storage.transfer_balance(
+            const { ret } = await this.balance_storage.transfer_inner_balance(
                 inscription_item.address,
                 inscription_item.output_address,
                 owner_bonus,
