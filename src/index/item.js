@@ -199,13 +199,8 @@ class ChantOp {
 }
 
 class SetPriceOp {
-    constructor(ph, price) {
-        assert(_.isString(ph), `ph should be string`);
-        assert(_.isString(price), `price should be string`);
-
+    constructor() {
         this.op = InscriptionOp.SetPrice;
-        this.ph = ph;
-        this.price = price;
     }
 
     /**
@@ -216,26 +211,11 @@ class SetPriceOp {
     static parse_content(content) {
         assert(_.isObject(content), `setPrice content should be object`);
 
-        const { ph, price } = content;
+        // do not check content here any more
+        // we should check content in the later process to record the error
 
-        // check ph
-        if (!_.isString(ph)) {
-            console.error(`invalid setPrice content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
+        const item = new SetPriceOp();
 
-        if (!Util.is_valid_mixhash(ph)) {
-            console.error(`invalid setPrice content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check price
-        if (!BigNumberUtil.is_positive_number_string(price)) {
-            console.error(`invalid setPrice content price ${price}`);
-            return { ret: 0, valid: false };
-        }
-
-        const item = new SetPriceOp(ph, price);
         return { ret: 0, valid: true, item };
     }
 }
