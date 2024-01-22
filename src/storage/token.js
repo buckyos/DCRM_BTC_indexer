@@ -33,15 +33,11 @@ const UpdatePoolBalanceOp = {
 // the user ops
 const UserOp = {
     Mint: 'mint',
-    Chant: 'chant',
-
-    InscribeDataPay: 'inscribe_data_pay',
-    TransferDataPay: 'transfer_data_pay',
 
     InscribeData: 'inscribe_data',
     TransferData: 'transfer_data',
 
-    InscribeResonance: 'inscribe_res',
+    Chant: 'chant',
     Resonance: 'res',
 
     InscribeTransfer: 'inscribe_transfer',
@@ -483,19 +479,13 @@ class TokenIndexStorage {
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS resonance_records (
                         inscription_id TEXT PRIMARY KEY,
-                        stage STRING,
-
-                        genesis_block_height INTEGER,
-                        genesis_timestamp INTEGER,
-                        genesis_txid TEXT,
-                        address TEXT,
-                        hash TEXT,
-                        content TEXT,
-
+                        
                         block_height INTEGER,
                         timestamp INTEGER,
                         txid TEXT,
-                        owner_address TEXT,
+                        content TEXT,
+                        hash TEXT,
+                        address TEXT,
 
                         owner_bonus TEXT,
                         service_charge TEXT,
@@ -523,7 +513,7 @@ class TokenIndexStorage {
                 this.db.exec(
                     `CREATE INDEX IF NOT EXISTS idx_resonance_records_hash ON resonance_records (hash);
                      CREATE INDEX IF NOT EXISTS idx_resonance_records_address ON resonance_records (address);
-                     CREATE INDEX IF NOT EXISTS idx_resonance_records_genesis_txid ON resonance_records (genesis_txid);
+                     CREATE INDEX IF NOT EXISTS idx_resonance_records_txid ON resonance_records (txid);
                      `,
                     (err) => {
                         if (err) {
@@ -1955,10 +1945,12 @@ class TokenIndexStorage {
      * @param {string} address
      * @param {string} hash
      * @param {string} content
+     * @param {string} owner_bonus
+     * @param {string} service_charge
      * @param {number} state
      * @returns {ret: number}
      */
-    async add_resonance_record_on_inscribed(
+    async add_resonance_record(
         inscription_id,
         block_height,
         timestamp,
@@ -1966,6 +1958,10 @@ class TokenIndexStorage {
         address,
         hash,
         content,
+
+        owner_bonus,
+        service_charge,
+
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -1987,6 +1983,16 @@ class TokenIndexStorage {
             `state should be non-negative integer`,
         );
 
+        assert(
+            BigNumberUtil.is_positive_number_string(owner_bonus),
+            `owner_bonus should be positive number string ${owner_bonus}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(service_charge),
+            `service_charge should be positive number string ${service_charge}`,
+        );
+        assert(_.isNumber(state), `state should be number ${state}`);
+
         // first append user op
         const { ret: user_op_ret } = await this.add_user_op(
             address,
@@ -1994,12 +2000,12 @@ class TokenIndexStorage {
             block_height,
             timestamp,
             txid,
-            UserOp.InscribeResonance,
+            UserOp.Resonance,
             state,
         );
         if (user_op_ret !== 0) {
             console.error(
-                `failed to add user inscribe res op ${inscription_id} ${address} ${block_height}`,
+                `failed to add user res op ${inscription_id} ${address} ${block_height}`,
             );
             return { ret: user_op_ret };
         }
@@ -2009,28 +2015,21 @@ class TokenIndexStorage {
                 `INSERT OR REPLACE INTO resonance_records 
                 (
                     inscription_id, 
-                    stage,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    address,
-                    hash,
-                    content,
-                    
+ 
                     block_height,
                     timestamp,
                     txid,
-                    owner_address,
+                    address,
+                    hash,
+                    content,
 
                     owner_bonus,
                     service_charge,
 
                     state
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
-                    InscriptionStage.Inscribe,
 
                     block_height,
                     timestamp,
@@ -2039,20 +2038,15 @@ class TokenIndexStorage {
                     hash,
                     content,
 
-                    0,
-                    0,
-                    null,
-                    null,
-
-                    0,
-                    0,
+                    owner_bonus,
+                    service_charge,
 
                     state,
                 ],
                 (err) => {
                     if (err) {
                         console.error(
-                            'failed to add resonance inscribed record',
+                            'failed to add resonance record',
                             err,
                         );
                         resolve({ ret: -1 });
@@ -2067,187 +2061,24 @@ class TokenIndexStorage {
     /**
      *
      * @param {string} inscription_id
-     * @param {number} genesis_block_height
-     * @param {number} genesis_timestamp
-     * @param {string} genesis_txid
-     * @param {string} address
-     * @param {string} hash
-     * @param {string} content
-     * @param {number} block_height
-     * @param {number} timestamp
-     * @param {string} txid
-     * @param {string} owner_address
-     * @param {string} owner_bonus
-     * @param {string} service_charge
-     * @param {number} state
-     * @returns {ret: number}
-     */
-    async add_resonance_record_on_transferred(
-        inscription_id,
-
-        genesis_block_height,
-        genesis_timestamp,
-        genesis_txid,
-        address,
-        hash,
-        content,
-
-        block_height,
-        timestamp,
-        txid,
-        owner_address,
-
-        owner_bonus,
-        service_charge,
-
-        state,
-    ) {
-        assert(this.db != null, `db should not be null`);
-        assert(
-            typeof inscription_id === 'string',
-            `inscription_id should be string`,
-        );
-
-        assert(
-            Number.isInteger(genesis_block_height) && genesis_block_height >= 0,
-            `genesis_block_height should be non-negative integer`,
-        );
-        assert(
-            Number.isInteger(genesis_timestamp),
-            `genesis_timestamp should be integer`,
-        );
-        assert(
-            typeof genesis_txid === 'string',
-            `genesis_txid should be string`,
-        );
-        assert(typeof address === 'string', `address should be string`);
-        assert(typeof hash === 'string', `hash should be string`);
-        assert(typeof content === 'string', `content should be string`);
-
-        assert(
-            Number.isInteger(block_height) && block_height >= 0,
-            `block_height should be non-negative integer`,
-        );
-        assert(Number.isInteger(timestamp), `timestamp should be integer`);
-        assert(typeof txid === 'string', `txid should be string`);
-        assert(
-            typeof owner_address === 'string',
-            `owner_address should be string`,
-        );
-
-        assert(
-            BigNumberUtil.is_positive_number_string(owner_bonus),
-            `owner_bonus should be positive number string ${owner_bonus}`,
-        );
-        assert(
-            BigNumberUtil.is_positive_number_string(service_charge),
-            `service_charge should be positive number string ${service_charge}`,
-        );
-
-        assert(
-            Number.isInteger(state) && state >= 0,
-            `state should be non-negative integer`,
-        );
-
-        // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
-            address,
-            inscription_id,
-            block_height,
-            timestamp,
-            txid,
-            UserOp.Resonance,
-            state,
-        );
-        if (user_op_ret !== 0) {
-            console.error(
-                `failed to add user resonance op ${inscription_id} ${address} ${block_height}`,
-            );
-            return { ret: user_op_ret };
-        }
-
-        return new Promise((resolve) => {
-            this.db.run(
-                `INSERT OR REPLACE INTO resonance_records 
-                (
-                    inscription_id,
-                    stage,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    address,
-                    hash,
-                    content,
-                    
-                    block_height,
-                    timestamp,
-                    txid,
-                    owner_address,
-
-                    owner_bonus,
-                    service_charge,
-
-                    state
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-                [
-                    inscription_id,
-                    InscriptionStage.Transfer,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    address,
-                    hash,
-                    content,
-
-                    block_height,
-                    timestamp,
-                    txid,
-                    owner_address,
-
-                    owner_bonus,
-                    service_charge,
-
-                    state,
-                ],
-                (err) => {
-                    if (err) {
-                        console.error(
-                            `failed to add resonance transferred record: ${inscription_id} ${err}`,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        resolve({ ret: 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    /**
-     *
-     * @param {string} inscription_id
-     * @param {string} stage
      * @returns {ret: number, data: object | null}
      */
-    async query_resonance_record(inscription_id, stage) {
+    async query_resonance_record(inscription_id) {
         assert(this.db != null, `db should not be null`);
         assert(typeof inscription_id === 'string', `should be string`);
-        assert(typeof stage === 'string', `stage should be string: ${stage}`);
 
         const sql = `
             SELECT * 
             FROM resonance_records 
-            WHERE inscription_id = ? AND stage = ?
+            WHERE inscription_id = ?
             LIMIT 1
         `;
 
         return new Promise((resolve) => {
-            this.db.get(sql, [inscription_id, stage], (err, row) => {
+            this.db.get(sql, [inscription_id], (err, row) => {
                 if (err) {
                     console.error(
-                        `Could not query resonance ${inscription_id} ${stage} ${err}`,
+                        `Could not query resonance ${inscription_id} ${err}`,
                     );
                     resolve({ ret: -1 });
                 } else {

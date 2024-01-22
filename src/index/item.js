@@ -29,7 +29,6 @@ const InscriptionOp = {
         switch (op) {
             case InscriptionOp.Transfer:
             case InscriptionOp.Inscribe:
-            case InscriptionOp.Resonance:
                 return true;
             default:
                 return false;
