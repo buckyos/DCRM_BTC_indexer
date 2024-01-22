@@ -241,13 +241,8 @@ class SetPriceOp {
 }
 
 class ResonanceOp {
-    constructor(ph, amt) {
-        assert(_.isString(ph), `ph should be string`);
-        assert(_.isString(amt), `amt should be string`);
-
+    constructor() {
         this.op = InscriptionOp.Resonance;
-        this.ph = ph;
-        this.amt = amt;
     }
 
     /**
@@ -258,26 +253,10 @@ class ResonanceOp {
     static parse_content(content) {
         assert(_.isObject(content), `resonance content should be object`);
 
-        const { ph, amt } = content;
+        // do not check content here any more
+        // we should check content in the later process to record the error
 
-        // check ph
-        if (!_.isString(ph)) {
-            console.error(`invalid resonance content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        if (!Util.is_valid_mixhash(ph)) {
-            console.error(`invalid resonance content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check amt
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(`invalid resonance content amt ${amt}`);
-            return { ret: 0, valid: false };
-        }
-
-        const item = new ResonanceOp(ph, amt);
+        const item = new ResonanceOp();
         return { ret: 0, valid: true, item };
     }
 }
@@ -677,7 +656,7 @@ class InscriptionTransferItem {
 
     /**
      * @comment set the previous satpoint for later use
-     * @param {SatPoint} prev_satpoint 
+     * @param {SatPoint} prev_satpoint
      */
     set_prev_satpoint(prev_satpoint) {
         assert(
