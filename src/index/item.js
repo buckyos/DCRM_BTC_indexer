@@ -121,30 +121,17 @@ class TransferOp {
 }
 
 class ChantOp {
-    constructor(ph) {
-        assert(_.isString(ph), `ph should be string`);
-
+    constructor() {
         this.op = InscriptionOp.Chant;
-        this.ph = ph;
     }
 
     static parse_content(content) {
         assert(_.isObject(content), `chant content should be object`);
 
-        const { ph } = content;
-
-        // check ph
-        if (!_.isString(ph)) {
-            console.error(`invalid chant content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        if (!Util.is_valid_mixhash(ph)) {
-            console.error(`invalid chant content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        const item = new ChantOp(ph);
+        // do not check content here any more
+        // we should check content in the later process to record the error
+        
+        const item = new ChantOp();
         return { ret: 0, valid: true, item };
     }
 }

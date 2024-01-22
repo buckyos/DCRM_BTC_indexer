@@ -115,7 +115,7 @@ class ChantOperator {
         inscription_item.user_bonus = '0';
         inscription_item.owner_bonus = '0';
 
-        // first check if hash field is exists
+        // first check if hash field is exists and valid
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
             console.warn(
@@ -123,6 +123,11 @@ class ChantOperator {
             );
 
             // invalid format, so we should ignore this inscription
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        if (!Util.is_valid_mixhash(hash)) {
+            console.error(`invalid chant content ph ${hash} ${inscription_item.inscription_id}`);
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
