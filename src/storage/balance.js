@@ -280,6 +280,61 @@ class TokenBalanceStorage {
         return { ret: 0 };
     }
 
+    async set_all_balance(address, balance) {
+        assert(this.db != null, `db should not be null`);
+        assert(typeof address === 'string', `address should be string`);
+        assert(balance != null, `balance should not be null`);
+        assert(_.isObject(balance), `balance should be object`);
+        assert(
+            BigNumberUtil.is_positive_number_string(balance.amount),
+            `amount should be valid number string: ${balance.amount}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(
+                balance.transferable_amount,
+            ),
+            `transferable_amount should be valid number string: ${balance.transferable_amount}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(balance.inner_amount),
+            `inner_amount should be valid number string: ${balance.inner_amount}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(
+                balance.inner_transferable_amount,
+            ),
+            `inner_transferable_amount should be valid number string: ${balance.inner_transferable_amount}`,
+        );
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO balance 
+                    (address, 
+                    amount,
+                    transferable_amount,
+                    inner_amount,
+                    inner_transferable_amount
+                 )
+                 VALUES (?, ?, ?, ?, ?)`,
+                [
+                    address,
+                    balance.amount,
+                    balance.transferable_amount,
+                    balance.inner_amount,
+                    balance.inner_transferable_amount,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error('failed to set all balance', err);
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
     /**
      * @comment set the brc-20 token's balance for address, if address exists, update it
      * @param {string} address
@@ -490,7 +545,7 @@ class TokenBalanceStorage {
     async update_transferable_balance(address, amount) {
         return await this._update_transferable_balance(
             address,
-            'transferable_amount',
+            'amount',
             amount,
         );
     }
@@ -504,7 +559,7 @@ class TokenBalanceStorage {
     async update_inner_transferable_balance(address, amount) {
         return await this._update_transferable_balance(
             address,
-            'inner_transferable_amount',
+            'inner_amount',
             amount,
         );
     }
@@ -525,13 +580,11 @@ class TokenBalanceStorage {
             `amount should be valid number string: ${amount}`,
         );
 
-        let amount_field, transferable_amount_field;
+        let transferable_amount_field;
         if (field === 'amount') {
-            amount_field = 'amount';
             transferable_amount_field = 'transferable_amount';
         } else {
             assert(field === 'inner_amount');
-            amount_field = 'inner_amount';
             transferable_amount_field = 'inner_transferable_amount';
         }
 
@@ -570,33 +623,20 @@ class TokenBalanceStorage {
                                     '0',
                                 ) < 0
                             ) {
-                                // should not happen?
+                                // should not happen
                                 console.error(
                                     `new transferable amount ${new_transferable_amount} is negative, current transferable amount ${current_transferable_amount}, amount ${amount}`,
                                 );
 
-                                new_transferable_amount = '0';
-                                amount = current_transferable_amount;
-                            }
-
-                            // update the amount, append the transferable amount to total amount
-                            const current_amount = row[amount_field];
-                            const new_amount = BigNumberUtil.subtract(
-                                current_amount,
-                                amount,
-                            );
-                            if (BigNumberUtil.compare(new_amount, '0') < 0) {
-                                console.warn(
-                                    `new ${field} amount ${new_amount} is negative, current amount ${current_amount}, amount ${amount}`,
-                                );
                                 resolve({
                                     ret: InscriptionOpState.INSUFFICIENT_BALANCE,
                                 });
+                                return;
                             }
 
                             this.db.run(
-                                `UPDATE balance SET ${amount_field} = ?, ${transferable_amount_field} = ? WHERE address = ?`,
-                                [new_amount, new_transferable_amount, address],
+                                `UPDATE balance SET ${transferable_amount_field} = ? WHERE address = ?`,
+                                [new_transferable_amount, address],
                                 (err) => {
                                     if (err) {
                                         console.error(
@@ -717,7 +757,10 @@ class TokenBalanceStorage {
             }
             case UpdatePoolBalanceOp.Chant:
                 {
-                    assert(amount === '0', `amount should be 0 on chant: ${amount}`);
+                    assert(
+                        amount === '0',
+                        `amount should be 0 on chant: ${amount}`,
+                    );
 
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
@@ -745,7 +788,10 @@ class TokenBalanceStorage {
                 break;
             case UpdatePoolBalanceOp.InscribeData:
                 {
-                    assert(amount === '0', `amount should be 0 on inscribe data: ${amount}`);
+                    assert(
+                        amount === '0',
+                        `amount should be 0 on inscribe data: ${amount}`,
+                    );
 
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
@@ -819,8 +865,8 @@ class TokenBalanceStorage {
 
     /**
      * @comment get brc-20 token's balance for address
-     * @param {string} address 
-     * @returns 
+     * @param {string} address
+     * @returns
      */
     async get_balance(address) {
         const sql = `
@@ -864,7 +910,10 @@ class TokenBalanceStorage {
                             row.amount,
                             row.transferable_amount,
                         );
-                        assert(BigNumberUtil.is_positive_number_string(amount), `amount should be positive number string: ${amount}`);
+                        assert(
+                            BigNumberUtil.is_positive_number_string(amount),
+                            `amount should be positive number string: ${amount}`,
+                        );
                     }
 
                     resolve({
@@ -875,7 +924,7 @@ class TokenBalanceStorage {
             });
         });
     }
-    
+
     /**
      * @comment get inner balance for address
      * @param {string} address
@@ -903,7 +952,7 @@ class TokenBalanceStorage {
 
     /**
      * @comment get available inner token's balance for address
-     * @param {string} address 
+     * @param {string} address
      * @returns {ret: number, amount: string}
      */
     async get_available_inner_balance(address) {
@@ -923,7 +972,10 @@ class TokenBalanceStorage {
                             row.inner_amount,
                             row.inner_transferable_amount,
                         );
-                        assert(BigNumberUtil.is_positive_number_string(amount), `amount should be positive number string: ${amount}`);
+                        assert(
+                            BigNumberUtil.is_positive_number_string(amount),
+                            `amount should be positive number string: ${amount}`,
+                        );
                     }
 
                     resolve({
@@ -967,9 +1019,9 @@ class TokenBalanceStorage {
 
     /**
      * @comment transfer brc-20 token's balance from from_address to to_address, return InscriptionOpState.INSUFFICIENT_BALANCE if balance is not enough, return -1 on error, return 0 on success
-     * @param {string} from_address 
-     * @param {string} to_address 
-     * @param {string} amount 
+     * @param {string} from_address
+     * @param {string} to_address
+     * @param {string} amount
      * @returns {ret: number}
      */
     async transfer_balance(from_address, to_address, amount) {
@@ -983,9 +1035,9 @@ class TokenBalanceStorage {
 
     /**
      * @comment transfer inner token's balance from from_address to to_address, return InscriptionOpState.INSUFFICIENT_BALANCE if balance is not enough, return -1 on error, return 0 on success
-     * @param {string} from_address 
-     * @param {string} to_address 
-     * @param {string} amount 
+     * @param {string} from_address
+     * @param {string} to_address
+     * @param {string} amount
      * @returns {ret: number}
      */
     async transfer_inner_balance(from_address, to_address, amount) {

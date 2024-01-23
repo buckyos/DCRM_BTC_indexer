@@ -122,7 +122,7 @@ class TokenBlockIndex {
             user_hash_relation_storage,
         );
         this.mint_operator = new MintOperator(config, storage, eth_index);
-        this.transfer_operator = new TransferOperator(storage);
+        this.transfer_operator = new TransferOperator(config, storage);
         this.chant_operator = new ChantOperator(
             config,
             storage,

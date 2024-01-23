@@ -1569,11 +1569,6 @@ class TokenIndexStorage {
     /**
      *
      * @param {string} inscription_id
-     * @param {number} genesis_block_height
-     * @param {number} genesis_timestamp
-     * @param {string} genesis_txid
-     * @param {string} from_address
-     * @param {string} content
      * @param {number} block_height
      * @param {number} timestamp
      * @param {string} txid
@@ -1581,14 +1576,9 @@ class TokenIndexStorage {
      * @param {number} state
      * @returns {ret: number}
      */
-    async add_transfer_record_on_transferred(
+    async update_transfer_record_on_transferred(
         inscription_id,
-
-        genesis_block_height,
-        genesis_timestamp,
-        genesis_txid,
         from_address,
-        content,
 
         block_height,
         timestamp,
@@ -1602,24 +1592,7 @@ class TokenIndexStorage {
             typeof inscription_id === 'string',
             `inscription_id should be string`,
         );
-        assert(
-            Number.isInteger(genesis_block_height) && genesis_block_height >= 0,
-            `genesis_block_height should be non-negative integer`,
-        );
-        assert(
-            Number.isInteger(genesis_timestamp),
-            `genesis_timestamp should be integer`,
-        );
-        assert(
-            typeof genesis_txid === 'string',
-            `genesis_txid should be string`,
-        );
-        assert(
-            typeof from_address === 'string',
-            `from_address should be string`,
-        );
-        assert(typeof content === 'string', `content should be string`);
-
+        assert(typeof from_address === 'string', `from_address should be string`);
         assert(
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
@@ -1650,45 +1623,31 @@ class TokenIndexStorage {
             return { ret: user_op_ret };
         }
 
+        // then update the transfer_records
         return new Promise((resolve) => {
             this.db.run(
-                `INSERT OR REPLACE INTO transfer_records (
-                    inscription_id,
-                    stage,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    from_address,
-                    content,
-
-                    block_height, 
-                    timestamp,
-                    txid,
-                    to_address,
-
-                    state
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `UPDATE transfer_records 
+                    SET stage = ?,
+                        block_height = ?, 
+                        timestamp = ?, 
+                        txid = ?, 
+                        to_address = ?,
+                        state = ?
+                    WHERE inscription_id = ?`,
                 [
-                    inscription_id,
                     InscriptionStage.Transfer,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    from_address,
-                    content,
-
                     block_height,
                     timestamp,
                     txid,
                     to_address,
-
                     state,
+                    inscription_id,
                 ],
                 (err) => {
                     if (err) {
-                        console.error('failed to add transfer record', err);
+                        console.error(
+                            `failed to update transfer record on transferred ${inscription_id} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0 });
