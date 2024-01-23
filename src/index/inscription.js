@@ -547,6 +547,12 @@ class InscriptionIndex {
                 continue;
             }
 
+            // check inscription number, we only process inscription number >= 0
+            if (inscription.inscription_number < 0) {
+                console.warn(`invalid inscription number ${inscription_id}, ${inscription.inscription_number} < 0`);
+                continue;
+            }
+
             assert(_.isObject(content), `invalid inscription content`);
             assert(_.isObject(op), `invalid inscription op item`);
 
