@@ -114,7 +114,7 @@ class TokenBalanceStorage {
             '0',
             max_mint_amount,
         );
-        
+
         if (ret !== 0) {
             console.error(`failed to init balance for mint pool`);
             return { ret };
@@ -507,12 +507,13 @@ class TokenBalanceStorage {
 
                             // new_amount should >= 0
                             if (BigNumberUtil.compare(new_amount, '0') < 0) {
-                                console.error(
+                                console.warn(
                                     `new amount ${new_amount} is negative, current amount ${current_amount}, amount ${amount}`,
                                 );
                                 resolve({
                                     ret: InscriptionOpState.INSUFFICIENT_BALANCE,
                                 });
+                                return;
                             }
 
                             this.db.run(

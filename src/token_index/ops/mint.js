@@ -9,6 +9,7 @@ const { InscriptionNewItem } = require('../../index/item');
 const { InscriptionOpState, MintType } = require('./state');
 const {
     DIFFICULTY_INSCRIBE_LUCKY_MINT_BLOCK_THRESHOLD,
+    TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
 } = require('../../constants');
 const { ETHIndex } = require('../../eth/index');
 
@@ -223,14 +224,53 @@ class MintOperator {
         }
 
         if (mint_type === MintType.NormalMint) {
+            amt = content.amt;
+            inner_amt = '0';
+
             console.log(
                 `normal mint ${inscription_item.inscription_id} ${inscription_item.address} ${amt}`,
             );
-
-            amt = content.amt;
-            inner_amt = '0';
         }
 
+        // check mint pool limit
+        const { ret: get_mint_pool_balance_ret, amount: mint_pool_amount } =
+            await this.balance_storage.get_inner_balance(
+                TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+            );
+        if (get_mint_pool_balance_ret !== 0) {
+            console.error(
+                `failed to get mint pool balance ${inscription_item.inscription_id}`,
+            );
+            return { ret: get_mint_pool_balance_ret };
+        }
+
+        // if the mint pool balance is exhausted, then return with insufficient balance state
+        if (BigNumberUtil.compare(mint_pool_amount, '0') <= 0) {
+            console.warn(
+                `mint pool balance is not enough ${inscription_item.inscription_id} ${mint_pool_amount}`,
+            );
+            return {
+                ret: 0,
+                state: InscriptionOpState.INSUFFICIENT_BALANCE,
+            };
+        }
+
+        // if total > mint_pool_amount, then first try to deduct inner_amt, then try to deduct amt
+        const total = BigNumberUtil.add(amt, inner_amt);
+        if (BigNumberUtil.compare(total, mint_pool_amount) > 0) {
+            console.warn(
+                `mint pool limit exceeded ${inscription_item.inscription_id} ${total} ${mint_pool_amount}`,
+            );
+
+            // try to deduct inner_amt
+            const extend_amount = BigNumberUtil.subtract(total, mint_pool_amount);
+            inner_amt = BigNumberUtil.subtract(inner_amt, extend_amount);
+            if (BigNumberUtil.compare(inner_amt, '0') < 0) {
+                amt = BigNumberUtil.add(amt, inner_amt);
+                inner_amt = '0';
+            }
+        }
+        
         // first update mint pool balance
         let update_pool_op;
         switch (mint_type) {
