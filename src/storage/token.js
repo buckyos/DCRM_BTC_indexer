@@ -142,6 +142,7 @@ class TokenIndexStorage {
                         address TEXT,
                         content TEXT,   
                         amount TEXT,
+                        inner_amount TEXT,
                         lucky TEXT DEFAULT NULL,
                         mint_type INTEGER,
                         state INTEGER DEFAULT 0
@@ -664,6 +665,7 @@ class TokenIndexStorage {
         address,
         content,
         amount,
+        inner_amount,
         lucky,
         mint_type,
         state,
@@ -684,6 +686,10 @@ class TokenIndexStorage {
         assert(
             BigNumberUtil.is_positive_number_string(amount),
             `amount should be positive number string`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(inner_amount),
+            `inner_amount should be positive number string`,
         );
         assert(
             lucky == null || typeof lucky === 'string',
@@ -724,12 +730,13 @@ class TokenIndexStorage {
                     txid,
                     address, 
                     content, 
-                    amount, 
+                    amount,
+                    inner_amount,
                     lucky,
                     mint_type,
                     state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -738,6 +745,7 @@ class TokenIndexStorage {
                     address,
                     content,
                     amount,
+                    inner_amount,
                     lucky,
                     mint_type,
                     state,

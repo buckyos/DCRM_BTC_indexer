@@ -68,7 +68,7 @@ class MintOperator {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
         // do mint
-        let { ret, state, amt, mint_type } = await this._on_mint(
+        let { ret, state, amt, inner_amt, mint_type } = await this._on_mint(
             inscription_item,
         );
         if (ret !== 0) {
@@ -79,6 +79,9 @@ class MintOperator {
 
         if (amt == null) {
             amt = '0';
+        }
+        if (inner_amt == null) {
+            inner_amt = '0';
         }
         if (mint_type == null) {
             mint_type = MintType.NormalMint;
@@ -93,6 +96,7 @@ class MintOperator {
             inscription_item.address,
             JSON.stringify(inscription_item.content),
             amt,
+            inner_amt,
             inscription_item.content.lucky,
             mint_type,
             state,
@@ -111,7 +115,7 @@ class MintOperator {
     /**
      *
      * @param {InscriptionNewItem} inscription_item
-     * @returns {Promise<{ret: number, state: InscriptionOpState, amt: string | null, mint_type: MintType | null}>}
+     * @returns {Promise<{ret: number, state: InscriptionOpState, amt: string | null, inner_amt: string | null, mint_type: MintType | null}>}
      */
     async _on_mint(inscription_item) {
         assert(
