@@ -27,6 +27,7 @@ class SetPriceOperator {
      */
     async on_set_price(inscription_item) {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+        assert(_.isObject(inscription_item.content), `invalid content`);
 
         // do set price
         const { ret, state } = await this._set_price(inscription_item);

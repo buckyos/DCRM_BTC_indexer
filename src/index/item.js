@@ -29,7 +29,6 @@ const InscriptionOp = {
         switch (op) {
             case InscriptionOp.Transfer:
             case InscriptionOp.Inscribe:
-            case InscriptionOp.Resonance:
                 return true;
             default:
                 return false;
@@ -38,62 +37,26 @@ const InscriptionOp = {
 };
 
 class MintOp {
-    constructor(amt, lucky) {
-        assert(_.isString(amt), `amt should be string`);
-        assert(
-            lucky == null || _.isString(lucky),
-            `lucky should be string or null`,
-        );
-
+    constructor() {
         this.op = InscriptionOp.Mint;
-        this.amt = amt;
-        this.lucky = lucky;
     }
 
     static parse_content(content) {
         assert(_.isObject(content), `mint content should be object`);
 
-        const { amt, lucky } = content;
+      
+        // do not check content here any more
+        // we should check content in the later process to record the error
+        // lucky field is optional and can be any value, but only if it's string then we can use it as lucky mint or burn mint
 
-        // check amt
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.warn(`invalid mint content amt ${amt} ${typeof amt}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check lucky if exists
-        if (lucky != null) {
-            if (!_.isString(lucky)) {
-                console.error(`invalid content lucky value: ${lucky}`);
-                return { ret: 0, valid: false };
-            }
-
-            if (lucky.length > 32) {
-                console.error(`invalid content lucky value: ${lucky}`);
-                return { ret: 0, valid: false };
-            }
-        }
-
-        const item = new MintOp(amt, lucky);
+        const item = new MintOp();
         return { ret: 0, valid: true, item };
     }
 }
 
 class InscribeDataOp {
-    constructor(ph, text, amt, price) {
-        assert(_.isString(ph), `ph should be string`);
-        assert(
-            text == null || _.isString(text),
-            `text should be string or null`,
-        );
-        assert(_.isString(amt), `amt should be string`);
-        assert(_.isString(price), `price should be string`);
-
+    constructor() {
         this.op = InscriptionOp.Inscribe;
-        this.ph = ph;
-        this.text = text;
-        this.amt = amt;
-        this.price = price;
     }
 
     /**
@@ -104,44 +67,7 @@ class InscribeDataOp {
     static parse_content(content) {
         assert(_.isObject(content), `inscribe content should be object`);
 
-        let { ph, text, amt, price } = content;
-
-        // check ph
-        if (!_.isString(ph)) {
-            console.warn(`invalid inscribe content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        if (!Util.is_valid_mixhash(ph)) {
-            console.warn(`invalid inscribe content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check text
-        if (text != null) {
-            if (!_.isString(text)) {
-                console.warn(`invalid inscribe content text ${text}`);
-                return { ret: 0, valid: false };
-            }
-        }
-        // check amt
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.warn(`invalid inscribe content amt ${amt}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check price
-        if (price != null) {
-            if (!BigNumberUtil.is_positive_number_string(price)) {
-                console.warn(`invalid inscribe content price ${price}`);
-                return { ret: 0, valid: false };
-            }
-        } else {
-            content.price = '0';
-            price = '0';
-        }
-
-        const item = new InscribeDataOp(ph, text, amt, price);
+        const item = new InscribeDataOp();
         return { ret: 0, valid: true, item };
     }
 }
@@ -171,42 +97,24 @@ class TransferOp {
 }
 
 class ChantOp {
-    constructor(ph) {
-        assert(_.isString(ph), `ph should be string`);
-
+    constructor() {
         this.op = InscriptionOp.Chant;
-        this.ph = ph;
     }
 
     static parse_content(content) {
         assert(_.isObject(content), `chant content should be object`);
 
-        const { ph } = content;
+        // do not check content here any more
+        // we should check content in the later process to record the error
 
-        // check ph
-        if (!_.isString(ph)) {
-            console.error(`invalid chant content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        if (!Util.is_valid_mixhash(ph)) {
-            console.error(`invalid chant content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        const item = new ChantOp(ph);
+        const item = new ChantOp();
         return { ret: 0, valid: true, item };
     }
 }
 
 class SetPriceOp {
-    constructor(ph, price) {
-        assert(_.isString(ph), `ph should be string`);
-        assert(_.isString(price), `price should be string`);
-
+    constructor() {
         this.op = InscriptionOp.SetPrice;
-        this.ph = ph;
-        this.price = price;
     }
 
     /**
@@ -217,38 +125,18 @@ class SetPriceOp {
     static parse_content(content) {
         assert(_.isObject(content), `setPrice content should be object`);
 
-        const { ph, price } = content;
+        // do not check content here any more
+        // we should check content in the later process to record the error
 
-        // check ph
-        if (!_.isString(ph)) {
-            console.error(`invalid setPrice content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
+        const item = new SetPriceOp();
 
-        if (!Util.is_valid_mixhash(ph)) {
-            console.error(`invalid setPrice content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check price
-        if (!BigNumberUtil.is_positive_number_string(price)) {
-            console.error(`invalid setPrice content price ${price}`);
-            return { ret: 0, valid: false };
-        }
-
-        const item = new SetPriceOp(ph, price);
         return { ret: 0, valid: true, item };
     }
 }
 
 class ResonanceOp {
-    constructor(ph, amt) {
-        assert(_.isString(ph), `ph should be string`);
-        assert(_.isString(amt), `amt should be string`);
-
+    constructor() {
         this.op = InscriptionOp.Resonance;
-        this.ph = ph;
-        this.amt = amt;
     }
 
     /**
@@ -259,26 +147,10 @@ class ResonanceOp {
     static parse_content(content) {
         assert(_.isObject(content), `resonance content should be object`);
 
-        const { ph, amt } = content;
+        // do not check content here any more
+        // we should check content in the later process to record the error
 
-        // check ph
-        if (!_.isString(ph)) {
-            console.error(`invalid resonance content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        if (!Util.is_valid_mixhash(ph)) {
-            console.error(`invalid resonance content ph ${ph}`);
-            return { ret: 0, valid: false };
-        }
-
-        // check amt
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(`invalid resonance content amt ${amt}`);
-            return { ret: 0, valid: false };
-        }
-
-        const item = new ResonanceOp(ph, amt);
+        const item = new ResonanceOp();
         return { ret: 0, valid: true, item };
     }
 }
@@ -508,12 +380,6 @@ class InscriptionContentLoader {
             if (content.op === 'mint') {
                 return MintOp.parse_content(content);
             } else if (content.op === 'transfer') {
-                if (content.call === 'pdi-inscribe') {
-                    return InscribeDataOp.parse_content(content);
-                } else if (content.call === 'pdi-res') {
-                    return ResonanceOp.parse_content(content);
-                }
-
                 return TransferOp.parse_content(content);
             } else if (content.op === 'deploy') {
                 // TODO: check if deploy inscription is matched
@@ -678,7 +544,7 @@ class InscriptionTransferItem {
 
     /**
      * @comment set the previous satpoint for later use
-     * @param {SatPoint} prev_satpoint 
+     * @param {SatPoint} prev_satpoint
      */
     set_prev_satpoint(prev_satpoint) {
         assert(

@@ -23,6 +23,7 @@ class MintOperator {
 
         this.config = config;
         this.storage = storage;
+        this.balance_storage = storage.get_balance_storage();
         this.eth_index = eth_index;
 
         // load lucky mint block threshold from config
@@ -35,18 +36,66 @@ class MintOperator {
         }
     }
 
-    /*
-    使用标准的Ordinal协议进行Mint，根据现在部署的BRC20，成功获得210个DMC 我们的扩展增加了“lucky”关键字（最长32个字节），当带有该关键字的交易进入被 区块高度与自己的地址的和被64整除的区块时，用户会得到2100个DMC。lucky mint在未进入正确区块时，蜕化成普通mint,获得上限规定的210个DMC.
-
-    {"p":"brc-20","op":"mint","tick":"DMC ","amt":"2100","lucky":"dmc-discord"}
-    */
+    /**
+     * @comment mint
+     * @param {InscriptionNewItem} inscription_item
+     * @returns {Promise<{ret: number}>}
+     */
     async on_mint(inscription_item) {
+        assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+
+        // do mint
+        let { ret, state, amt, mint_type } = await this._on_mint(
+            inscription_item,
+        );
+        if (ret !== 0) {
+            return { ret };
+        }
+
+        assert(_.isNumber(state), `state should be number ${state}`);
+
+        if (amt == null) {
+            amt = '0';
+        }
+        if (mint_type == null) {
+            mint_type = MintType.NormalMint;
+        }
+
+        //  add mint record for any state
+        const { ret: mint_ret } = await this.storage.add_mint_record(
+            inscription_item.inscription_id,
+            inscription_item.block_height,
+            inscription_item.timestamp,
+            inscription_item.txid,
+            inscription_item.address,
+            JSON.stringify(inscription_item.content),
+            amt,
+            inscription_item.content.lucky,
+            mint_type,
+            state,
+        );
+
+        if (mint_ret !== 0) {
+            console.error(
+                `failed to add mint record ${inscription_item.inscription_id}`,
+            );
+            return { ret: mint_ret };
+        }
+
+        return { ret: 0 };
+    }
+
+    /**
+     *
+     * @param {InscriptionNewItem} inscription_item
+     * @returns {Promise<{ret: number, state: InscriptionOpState, amt: string | null, mint_type: MintType | null}>}
+     */
+    async _on_mint(inscription_item) {
         assert(
             inscription_item instanceof InscriptionNewItem,
             `invalid inscription_item on_mint`,
         );
 
-        
         const content = inscription_item.content;
 
         // check lucky if exists, then must be string
@@ -58,42 +107,50 @@ class MintOperator {
 
                 return {
                     ret: 0,
+                    state: InscriptionOpState.INVALID_PARAMS,
                 };
             }
         }
 
         // check amt is exists and is number
-        if (!BigNumberUtil.is_positive_number_string(content.amt)) {
+        if (
+            content.amt == null ||
+            !BigNumberUtil.is_positive_number_string(content.amt)
+        ) {
             console.error(
                 `amt should be number ${inscription_item.inscription_id} ${content.amt}`,
             );
 
             return {
                 ret: 0,
+                state: InscriptionOpState.INVALID_PARAMS,
             };
         }
 
-        // first set amt to normal mint value, max is NORMAL_MINT_MAX_AMOUNT(210)
-        let amt = content.amt;
-
-        // if content.amt > constants.NORMAL_MINT_MAX_AMOUNT then will use the max amount
+        // amt should <= NORMAL_MINT_MAX_AMOUNT
         if (
             BigNumberUtil.compare(
-                amt,
+                content.amt,
                 constants.NORMAL_MINT_MAX_AMOUNT,
             ) > 0
         ) {
             console.warn(
-                `mint amount is too large ${inscription_item.inscription_id} ${inscription_item.address} ${content.amt}`,
+                `amt should be less than ${constants.NORMAL_MINT_MAX_AMOUNT} ${inscription_item.inscription_id} ${content.amt}`,
             );
 
-            amt = constants.NORMAL_MINT_MAX_AMOUNT;
+            return {
+                ret: 0,
+                state: InscriptionOpState.INVALID_PARAMS,
+            };
         }
 
-
         // check the mint type: normal mint, lucky mint, burn mint
+        // only can be lucky mint or burn mint if lucky field exists and is valid string!
+        let amt;
+        let inner_amt;
         let mint_type = MintType.NormalMint;
-        if (content.lucky != null) {
+
+        if (content.lucky != null && _.isString(content.lucky)) {
             // first query is if the burn mint from eth
             const {
                 ret,
@@ -108,12 +165,14 @@ class MintOperator {
             }
 
             if (valid) {
-                assert(_.isString(burn_amount), `burn_amount should be string: ${burn_amount}`);
+                assert(
+                    _.isString(burn_amount),
+                    `burn_amount should be string: ${burn_amount}`,
+                );
 
                 mint_type = MintType.BurnMint;
-
-                // burn mint amount = normal mint amount + burn mint amount
-                amt = BigNumberUtil.add(burn_amount, amt);
+                amt = content.amt;
+                inner_amt = burn_amount;
             } else {
                 // not burn mint, now check if it is lucky mint
                 if (this._is_lucky_block_mint(inscription_item)) {
@@ -123,20 +182,22 @@ class MintOperator {
                         `lucky mint ${inscription_item.inscription_id} ${inscription_item.address} ${content.lucky} ${content.amt}`,
                     );
 
-                    // lucky mint amount is 10 times of normal mint
-                    amt = BigNumberUtil.multiply(amt, 10);
+                    amt = content.amt;
+
+                    // lucky mint amount is 10 times of normal mint - normal mint amount
+                    inner_amt = BigNumberUtil.multiply(content.amt, 9);
 
                     // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT, then will use the max amount
                     if (
                         BigNumberUtil.compare(
-                            amt,
+                            inner_amt,
                             constants.LUCKY_MINT_MAX_AMOUNT,
                         ) > 0
                     ) {
                         console.warn(
                             `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt} ${amt}`,
                         );
-                        amt = constants.LUCKY_MINT_MAX_AMOUNT;
+                        inner_amt = constants.LUCKY_MINT_MAX_AMOUNT;
                     }
                 }
             }
@@ -146,6 +207,9 @@ class MintOperator {
             console.log(
                 `normal mint ${inscription_item.inscription_id} ${inscription_item.address} ${amt}`,
             );
+
+            amt = content.amt;
+            inner_amt = '0';
         }
 
         // first update mint pool balance
@@ -169,7 +233,11 @@ class MintOperator {
         }
 
         const { ret: update_mint_pool_balance_ret } =
-            await this.storage.update_pool_balance_on_ops(update_pool_op, amt);
+            await this.balance_storage.update_pool_balance_on_ops(
+                update_pool_op,
+                amt,
+                inner_amt,
+            );
         if (update_mint_pool_balance_ret < 0) {
             console.error(
                 `failed to update mint pool balance ${inscription_item.inscription_id}`,
@@ -186,7 +254,7 @@ class MintOperator {
             state = InscriptionOpState.INSUFFICIENT_BALANCE;
         } else {
             // then update balance for the address if the pool balance is enough
-            const { ret } = await this.storage.update_balance(
+            const { ret } = await this.balance_storage.update_balance(
                 inscription_item.address,
                 amt,
             );
@@ -198,29 +266,26 @@ class MintOperator {
 
                 return { ret };
             }
+
+            // then update inner balance for the address if the pool balance is enough
+            if (inner_amt !== '0') {
+                const { ret: inner_ret } =
+                    await this.balance_storage.update_inner_balance(
+                        inscription_item.address,
+                        inner_amt,
+                    );
+                if (inner_ret !== 0) {
+                    assert(inner_ret < 0);
+                    console.error(
+                        `failed to update inner balance ${inscription_item.inscription_id}`,
+                    );
+
+                    return { ret: inner_ret };
+                }
+            }
         }
 
-        // at last add mint record for any state
-        const { ret: mint_ret } = await this.storage.add_mint_record(
-            inscription_item.inscription_id,
-            inscription_item.block_height,
-            inscription_item.timestamp,
-            inscription_item.txid,
-            inscription_item.address,
-            JSON.stringify(content),
-            amt,
-            content.lucky,
-            mint_type,
-            state,
-        );
-        if (mint_ret !== 0) {
-            console.error(
-                `failed to add mint record ${inscription_item.inscription_id}`,
-            );
-            return { ret: mint_ret };
-        }
-
-        return { ret: 0 };
+        return { ret: 0, state, amt, inner_amt, mint_type };
     }
 
     /**

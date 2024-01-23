@@ -1,44 +1,22 @@
 const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
-const {
-    InscriptionStage,
-    InscriptionOpState,
-} = require('../token_index/ops/state');
+const { InscriptionStage } = require('../token_index/ops/state');
 const { BigNumberUtil } = require('../util');
-const {
-    TOKEN_INDEX_DB_FILE,
-    TOKEN_MINT_POOL_INIT_AMOUNT,
-    TOKEN_MINT_POOL_BURN_INIT_AMOUNT,
-    TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-    TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
-    TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
-    TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
-    TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
-    TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
-} = require('../constants');
+const { TOKEN_INDEX_DB_FILE } = require('../constants');
 const { InscriptionOp } = require('../index/item');
 const { UserHashRelationStorage } = require('./relation');
-const { default: BigNumber } = require('bignumber.js');
+const { TokenBalanceStorage, UpdatePoolBalanceOp } = require('./balance');
 
-// the ops that can update pool balance
-const UpdatePoolBalanceOp = {
-    Mint: 'mint',
-    LuckyMint: 'lucky_mint',
-    BurnMint: 'burn_mint',
-    Chant: 'chant',
-    InscribeData: 'inscribe_data',
-};
 
 // the user ops
 const UserOp = {
     Mint: 'mint',
-    Chant: 'chant',
 
     InscribeData: 'inscribe_data',
     TransferData: 'transfer_data',
 
-    InscribeResonance: 'inscribe_res',
+    Chant: 'chant',
     Resonance: 'res',
 
     InscribeTransfer: 'inscribe_transfer',
@@ -58,6 +36,7 @@ class TokenIndexStorage {
         this.db = null;
         this.during_transaction = false;
         this.user_hash_relation_storage = new UserHashRelationStorage();
+        this.balance_storage = new TokenBalanceStorage(this);
     }
 
     /**
@@ -81,10 +60,10 @@ class TokenIndexStorage {
             return { ret: ret2 };
         }
 
-        // then init data
-        const { ret: ret3 } = await this._init_data();
+        // then init balance storage
+        const { ret: ret3 } = await this.balance_storage.init(this.db);
         if (ret3 !== 0) {
-            console.error(`failed to init token storage data`);
+            console.error(`failed to init token balance storage`);
             return { ret: ret3 };
         }
 
@@ -105,6 +84,14 @@ class TokenIndexStorage {
      */
     get_user_hash_relation_storage() {
         return this.user_hash_relation_storage;
+    }
+
+    /**
+     * 
+     * @returns {TokenBalanceStorage}
+     */
+    get_balance_storage() {
+        return this.balance_storage;
     }
 
     /**
@@ -187,6 +174,49 @@ class TokenIndexStorage {
                         }
 
                         console.log(`created index on mint_records table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
+                // Create inscribe_data_pay_records table
+                this.db.run(
+                    `CREATE TABLE IF NOT EXISTS inscribe_data_pay_records (
+                        inscription_id TEXT PRIMARY KEY,
+                        stage STRING,
+
+                        genesis_block_height INTEGER,
+                        genesis_timestamp INTEGER,
+                        genesis_txid TEXT,
+                        from_address TEXT,
+                        content TEXT,
+
+                        hash TEXT,
+                        mint_amount TEXT,
+                        service_charge TEXT,
+                        price TEXT,
+                        hash_point INTEGER,
+                        hash_weight TEXT,
+                        
+                        block_height INTEGER,
+                        timestamp INTEGER,
+                        txid TEXT,
+                        to_address TEXT,
+
+                        state INTEGER DEFAULT 0
+                    )`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to inscribe_data_pay_records table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                        }
+
+                        console.log(`created inscribe_data_pay_records table`);
                     },
                 );
 
@@ -437,19 +467,13 @@ class TokenIndexStorage {
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS resonance_records (
                         inscription_id TEXT PRIMARY KEY,
-                        stage STRING,
-
-                        genesis_block_height INTEGER,
-                        genesis_timestamp INTEGER,
-                        genesis_txid TEXT,
-                        address TEXT,
-                        hash TEXT,
-                        content TEXT,
-
+                        
                         block_height INTEGER,
                         timestamp INTEGER,
                         txid TEXT,
-                        owner_address TEXT,
+                        content TEXT,
+                        hash TEXT,
+                        address TEXT,
 
                         owner_bonus TEXT,
                         service_charge TEXT,
@@ -477,7 +501,7 @@ class TokenIndexStorage {
                 this.db.exec(
                     `CREATE INDEX IF NOT EXISTS idx_resonance_records_hash ON resonance_records (hash);
                      CREATE INDEX IF NOT EXISTS idx_resonance_records_address ON resonance_records (address);
-                     CREATE INDEX IF NOT EXISTS idx_resonance_records_genesis_txid ON resonance_records (genesis_txid);
+                     CREATE INDEX IF NOT EXISTS idx_resonance_records_txid ON resonance_records (txid);
                      `,
                     (err) => {
                         if (err) {
@@ -489,27 +513,6 @@ class TokenIndexStorage {
                         }
 
                         console.log(`created index on resonance_records table`);
-                    },
-                );
-
-                if (has_error) {
-                    return;
-                }
-
-                // Create balance table
-                this.db.run(
-                    `CREATE TABLE IF NOT EXISTS balance (
-                        address TEXT PRIMARY KEY,
-                        amount TEXT
-                    );`,
-                    (err) => {
-                        if (err) {
-                            console.error(`failed to balance table: ${err}`);
-                            has_error = true;
-                            resolve({ ret: -1 });
-                        }
-
-                        console.log(`created balance table`);
                     },
                 );
 
@@ -574,59 +577,6 @@ class TokenIndexStorage {
                 );
             });
         });
-    }
-
-    /**
-     *
-     * @returns {ret: number}
-     */
-    async _init_data() {
-        assert(this.db != null, `db should not be null`);
-
-        const { ret } = await this.init_balance(
-            TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-            TOKEN_MINT_POOL_INIT_AMOUNT,
-        );
-        if (ret !== 0) {
-            console.error(`failed to init balance for mint pool`);
-            return { ret };
-        }
-
-        const { ret: ret2 } = await this.init_balance(
-            TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
-            '0',
-        );
-        if (ret2 !== 0) {
-            console.error(`failed to init balance for mint pool charged`);
-            return { ret: ret2 };
-        }
-
-        const { ret: ret3 } = await this.init_balance(
-            TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
-            '0',
-        );
-        if (ret3 !== 0) {
-            console.error(`failed to init balance for mint pool lucky mint`);
-            return { ret: ret3 };
-        }
-
-        const { ret: ret4 } = await this.init_balance(
-            TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
-            '0',
-        );
-        if (ret4 !== 0) {
-            console.error(`failed to init balance for mint pool chant`);
-            return { ret: ret4 };
-        }
-
-        // init burn mint balance
-        const { ret: ret5 } = await this._init_burn_mint_balance();
-        if (ret5 !== 0) {
-            console.error(`failed to init balance for burn mint pool`);
-            return { ret: ret5 };
-        }
-
-        return { ret: 0 };
     }
 
     /**
@@ -830,6 +780,254 @@ class TokenIndexStorage {
                     resolve({ ret: 0, data: row });
                 }
             });
+        });
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} address
+     * @param {string} content
+     * @param {string} hash
+     * @param {string} mint_amount
+     * @param {string} service_charge
+     * @param {string} price
+     * @param {number} hash_point
+     * @param {string} hash_weight
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_inscribe_data_pay_on_inscribed(
+        inscription_id,
+        block_height,
+        timestamp,
+        txid,
+        address,
+        content,
+
+        hash,
+        mint_amount,
+        service_charge,
+        price,
+        hash_point,
+        hash_weight,
+
+        state,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            `block_height should be non-negative integer`,
+        );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
+        assert(typeof address === 'string', `address should be string`);
+        assert(typeof content === 'string', `content should be string`);
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(
+            BigNumberUtil.is_positive_number_string(mint_amount),
+            `mint_amount should be positive number string`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(service_charge),
+            `service_charge should be positive number string`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(price),
+            `price should be positive number string`,
+        );
+        assert(
+            Number.isInteger(hash_point) && hash_point >= 0,
+            `hash_point should be non-negative integer`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(hash_weight),
+            `hash_weight should be positive number string`,
+        );
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            address,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            UserOp.InscribeDataPay,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user inscribe data pay op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO inscribe_data_pay_records (
+                    inscription_id, 
+                    stage,
+
+                    genesis_block_height,
+                    genesis_timestamp,
+                    genesis_txid,
+                    from_address,
+                    content,
+        
+                    hash,
+                    mint_amount,
+                    service_charge,
+                    price,
+                    hash_point,
+                    hash_weight,
+
+                    block_height, 
+                    timestamp,
+                    txid,
+                    to_address,
+
+                    state
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    inscription_id,
+                    InscriptionStage.Inscribe,
+
+                    block_height,
+                    timestamp,
+                    txid,
+                    address,
+                    content,
+
+                    hash,
+                    mint_amount,
+                    service_charge,
+                    price,
+                    hash_point,
+                    hash_weight,
+
+                    0,
+                    0,
+                    null,
+                    null,
+
+                    state,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `failed to add inscribe data pay record on inscribed ${inscription_id} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {number} genesis_block_height
+     * @param {number} genesis_timestamp
+     * @param {string} genesis_txid
+     * @param {string} from_address
+     * @param {string} content
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {string} txid
+     * @param {string} to_address
+     * @param {number} state
+     * @returns {ret: number}
+     */
+    async add_inscribe_data_pay_record_on_transferred(
+        inscription_id,
+
+        from_address,
+
+        block_height,
+        timestamp,
+        txid,
+        to_address,
+
+        state,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string`,
+        );
+        assert(
+            Number.isInteger(block_height) && block_height >= 0,
+            `block_height should be non-negative integer`,
+        );
+        assert(Number.isInteger(timestamp), `timestamp should be integer`);
+        assert(typeof txid === 'string', `txid should be string`);
+        assert(typeof to_address === 'string', `to_address should be string`);
+
+        assert(
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
+        );
+
+        // first append user op
+        const { ret: user_op_ret } = await this.add_user_op(
+            from_address,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            UserOp.TransferDataPay,
+            state,
+        );
+        if (user_op_ret !== 0) {
+            console.error(
+                `failed to add user transfer op ${inscription_id} ${from_address} ${block_height}`,
+            );
+            return { ret: user_op_ret };
+        }
+
+        // update the inscribe_data_pay_records
+        return new Promise((resolve) => {
+            this.db.run(
+                `UPDATE inscribe_data_pay_records 
+                    SET block_height = ?, 
+                        timestamp = ?, 
+                        txid = ?, 
+                        to_address = ?,
+                        state = ?
+                    WHERE inscription_id = ?`,
+                [
+                    block_height,
+                    timestamp,
+                    txid,
+                    to_address,
+                    state,
+                    inscription_id,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `failed to update inscribe data pay record on transferred ${inscription_id} ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
         });
     }
 
@@ -1371,11 +1569,6 @@ class TokenIndexStorage {
     /**
      *
      * @param {string} inscription_id
-     * @param {number} genesis_block_height
-     * @param {number} genesis_timestamp
-     * @param {string} genesis_txid
-     * @param {string} from_address
-     * @param {string} content
      * @param {number} block_height
      * @param {number} timestamp
      * @param {string} txid
@@ -1383,14 +1576,9 @@ class TokenIndexStorage {
      * @param {number} state
      * @returns {ret: number}
      */
-    async add_transfer_record_on_transferred(
+    async update_transfer_record_on_transferred(
         inscription_id,
-
-        genesis_block_height,
-        genesis_timestamp,
-        genesis_txid,
         from_address,
-        content,
 
         block_height,
         timestamp,
@@ -1404,24 +1592,7 @@ class TokenIndexStorage {
             typeof inscription_id === 'string',
             `inscription_id should be string`,
         );
-        assert(
-            Number.isInteger(genesis_block_height) && genesis_block_height >= 0,
-            `genesis_block_height should be non-negative integer`,
-        );
-        assert(
-            Number.isInteger(genesis_timestamp),
-            `genesis_timestamp should be integer`,
-        );
-        assert(
-            typeof genesis_txid === 'string',
-            `genesis_txid should be string`,
-        );
-        assert(
-            typeof from_address === 'string',
-            `from_address should be string`,
-        );
-        assert(typeof content === 'string', `content should be string`);
-
+        assert(typeof from_address === 'string', `from_address should be string`);
         assert(
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
@@ -1452,45 +1623,31 @@ class TokenIndexStorage {
             return { ret: user_op_ret };
         }
 
+        // then update the transfer_records
         return new Promise((resolve) => {
             this.db.run(
-                `INSERT OR REPLACE INTO transfer_records (
-                    inscription_id,
-                    stage,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    from_address,
-                    content,
-
-                    block_height, 
-                    timestamp,
-                    txid,
-                    to_address,
-
-                    state
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `UPDATE transfer_records 
+                    SET stage = ?,
+                        block_height = ?, 
+                        timestamp = ?, 
+                        txid = ?, 
+                        to_address = ?,
+                        state = ?
+                    WHERE inscription_id = ?`,
                 [
-                    inscription_id,
                     InscriptionStage.Transfer,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    from_address,
-                    content,
-
                     block_height,
                     timestamp,
                     txid,
                     to_address,
-
                     state,
+                    inscription_id,
                 ],
                 (err) => {
                     if (err) {
-                        console.error('failed to add transfer record', err);
+                        console.error(
+                            `failed to update transfer record on transferred ${inscription_id} ${err}`,
+                        );
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0 });
@@ -1660,147 +1817,19 @@ class TokenIndexStorage {
      * @param {string} address
      * @param {string} hash
      * @param {string} content
-     * @param {number} state
-     * @returns {ret: number}
-     */
-    async add_resonance_record_on_inscribed(
-        inscription_id,
-        block_height,
-        timestamp,
-        txid,
-        address,
-        hash,
-        content,
-        state,
-    ) {
-        assert(this.db != null, `db should not be null`);
-        assert(
-            typeof inscription_id === 'string',
-            `inscription_id should be string`,
-        );
-        assert(
-            Number.isInteger(block_height) && block_height >= 0,
-            `block_height should be non-negative integer`,
-        );
-        assert(Number.isInteger(timestamp), `timestamp should be integer`);
-        assert(typeof txid === 'string', `txid should be string`);
-        assert(typeof address === 'string', `address should be string`);
-        assert(typeof hash === 'string', `hash should be string`);
-        assert(typeof content === 'string', `content should be string`);
-        assert(
-            Number.isInteger(state) && state >= 0,
-            `state should be non-negative integer`,
-        );
-
-        // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
-            address,
-            inscription_id,
-            block_height,
-            timestamp,
-            txid,
-            UserOp.InscribeResonance,
-            state,
-        );
-        if (user_op_ret !== 0) {
-            console.error(
-                `failed to add user inscribe res op ${inscription_id} ${address} ${block_height}`,
-            );
-            return { ret: user_op_ret };
-        }
-
-        return new Promise((resolve) => {
-            this.db.run(
-                `INSERT OR REPLACE INTO resonance_records 
-                (
-                    inscription_id, 
-                    stage,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    address,
-                    hash,
-                    content,
-                    
-                    block_height,
-                    timestamp,
-                    txid,
-                    owner_address,
-
-                    owner_bonus,
-                    service_charge,
-
-                    state
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    inscription_id,
-                    InscriptionStage.Inscribe,
-
-                    block_height,
-                    timestamp,
-                    txid,
-                    address,
-                    hash,
-                    content,
-
-                    0,
-                    0,
-                    null,
-                    null,
-
-                    0,
-                    0,
-
-                    state,
-                ],
-                (err) => {
-                    if (err) {
-                        console.error(
-                            'failed to add resonance inscribed record',
-                            err,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        resolve({ ret: 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    /**
-     *
-     * @param {string} inscription_id
-     * @param {number} genesis_block_height
-     * @param {number} genesis_timestamp
-     * @param {string} genesis_txid
-     * @param {string} address
-     * @param {string} hash
-     * @param {string} content
-     * @param {number} block_height
-     * @param {number} timestamp
-     * @param {string} txid
-     * @param {string} owner_address
      * @param {string} owner_bonus
      * @param {string} service_charge
      * @param {number} state
      * @returns {ret: number}
      */
-    async add_resonance_record_on_transferred(
+    async add_resonance_record(
         inscription_id,
-
-        genesis_block_height,
-        genesis_timestamp,
-        genesis_txid,
-        address,
-        hash,
-        content,
-
         block_height,
         timestamp,
         txid,
-        owner_address,
+        address,
+        hash,
+        content,
 
         owner_bonus,
         service_charge,
@@ -1812,32 +1841,18 @@ class TokenIndexStorage {
             typeof inscription_id === 'string',
             `inscription_id should be string`,
         );
-
-        assert(
-            Number.isInteger(genesis_block_height) && genesis_block_height >= 0,
-            `genesis_block_height should be non-negative integer`,
-        );
-        assert(
-            Number.isInteger(genesis_timestamp),
-            `genesis_timestamp should be integer`,
-        );
-        assert(
-            typeof genesis_txid === 'string',
-            `genesis_txid should be string`,
-        );
-        assert(typeof address === 'string', `address should be string`);
-        assert(typeof hash === 'string', `hash should be string`);
-        assert(typeof content === 'string', `content should be string`);
-
         assert(
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
         );
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof txid === 'string', `txid should be string`);
+        assert(typeof address === 'string', `address should be string`);
+        assert(typeof hash === 'string', `hash should be string`);
+        assert(typeof content === 'string', `content should be string`);
         assert(
-            typeof owner_address === 'string',
-            `owner_address should be string`,
+            Number.isInteger(state) && state >= 0,
+            `state should be non-negative integer`,
         );
 
         assert(
@@ -1848,11 +1863,7 @@ class TokenIndexStorage {
             BigNumberUtil.is_positive_number_string(service_charge),
             `service_charge should be positive number string ${service_charge}`,
         );
-
-        assert(
-            Number.isInteger(state) && state >= 0,
-            `state should be non-negative integer`,
-        );
+        assert(_.isNumber(state), `state should be number ${state}`);
 
         // first append user op
         const { ret: user_op_ret } = await this.add_user_op(
@@ -1866,7 +1877,7 @@ class TokenIndexStorage {
         );
         if (user_op_ret !== 0) {
             console.error(
-                `failed to add user resonance op ${inscription_id} ${address} ${block_height}`,
+                `failed to add user res op ${inscription_id} ${address} ${block_height}`,
             );
             return { ret: user_op_ret };
         }
@@ -1875,41 +1886,29 @@ class TokenIndexStorage {
             this.db.run(
                 `INSERT OR REPLACE INTO resonance_records 
                 (
-                    inscription_id,
-                    stage,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    address,
-                    hash,
-                    content,
-                    
+                    inscription_id, 
+ 
                     block_height,
                     timestamp,
                     txid,
-                    owner_address,
+                    address,
+                    hash,
+                    content,
 
                     owner_bonus,
                     service_charge,
 
                     state
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
-                    InscriptionStage.Transfer,
-
-                    genesis_block_height,
-                    genesis_timestamp,
-                    genesis_txid,
-                    address,
-                    hash,
-                    content,
 
                     block_height,
                     timestamp,
                     txid,
-                    owner_address,
+                    address,
+                    hash,
+                    content,
 
                     owner_bonus,
                     service_charge,
@@ -1918,9 +1917,7 @@ class TokenIndexStorage {
                 ],
                 (err) => {
                     if (err) {
-                        console.error(
-                            `failed to add resonance transferred record: ${inscription_id} ${err}`,
-                        );
+                        console.error('failed to add resonance record', err);
                         resolve({ ret: -1 });
                     } else {
                         resolve({ ret: 0 });
@@ -1933,26 +1930,24 @@ class TokenIndexStorage {
     /**
      *
      * @param {string} inscription_id
-     * @param {string} stage
      * @returns {ret: number, data: object | null}
      */
-    async query_resonance_record(inscription_id, stage) {
+    async query_resonance_record(inscription_id) {
         assert(this.db != null, `db should not be null`);
         assert(typeof inscription_id === 'string', `should be string`);
-        assert(typeof stage === 'string', `stage should be string: ${stage}`);
 
         const sql = `
             SELECT * 
             FROM resonance_records 
-            WHERE inscription_id = ? AND stage = ?
+            WHERE inscription_id = ?
             LIMIT 1
         `;
 
         return new Promise((resolve) => {
-            this.db.get(sql, [inscription_id, stage], (err, row) => {
+            this.db.get(sql, [inscription_id], (err, row) => {
                 if (err) {
                     console.error(
-                        `Could not query resonance ${inscription_id} ${stage} ${err}`,
+                        `Could not query resonance ${inscription_id} ${err}`,
                     );
                     resolve({ ret: -1 });
                 } else {
@@ -1988,496 +1983,6 @@ class TokenIndexStorage {
                 }
             });
         });
-    }
-
-    /**
-     * @comment set the init balance for address, if address exists, do nothing
-     * @param {string} address
-     * @param {string} amount
-     * @returns {ret: number}
-     */
-    async init_balance(address, amount) {
-        assert(this.db != null, `db should not be null`);
-        assert(typeof address === 'string', `address should be string`);
-        assert(
-            BigNumberUtil.is_positive_number_string(amount),
-            `amount should be valid number string: ${amount}`,
-        );
-
-        return new Promise((resolve) => {
-            this.db.run(
-                `INSERT OR IGNORE INTO balance (address, amount) VALUES (?, ?)`,
-                [address, amount],
-                (err) => {
-                    if (err) {
-                        console.error('failed to init balance', err);
-                        resolve({ ret: -1 });
-                    } else {
-                        resolve({ ret: 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    async _init_burn_mint_balance() {
-        // run in transaction
-        const { ret } = await this.begin_transaction();
-        if (ret != 0) {
-            console.error(`failed to begin transaction`);
-            return { ret };
-        }
-
-        let process_result = 0;
-        try {
-            const { ret } = await this._init_burn_mint_balance_impl();
-            process_result = ret;
-        } catch (error) {
-            console.error(
-                `failed to init burn mint balance: ${error}, ${error.stack}`,
-            );
-            process_result = -1;
-        } finally {
-            const is_success = process_result === 0;
-
-            const { ret: commit_ret } = await this.end_transaction(is_success);
-            if (commit_ret !== 0) {
-                console.error(
-                    `failed to commit transaction for init burn mint balance`,
-                );
-                process_result = commit_ret;
-            } else {
-                console.log(
-                    `finish init burn mint balance: ${TOKEN_MINT_POOL_BURN_INIT_AMOUNT}`,
-                );
-            }
-        }
-
-        return { ret: process_result };
-    }
-
-    async _init_burn_mint_balance_impl() {
-        const { ret: get_ret, amount } = await this.get_balance(
-            TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
-        );
-        if (get_ret !== 0) {
-            console.error(
-                `failed to get balance for ${TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS}`,
-            );
-            return { ret: get_ret };
-        }
-
-        const current_amount = new BigNumber(amount);
-        const init_amount = new BigNumber(TOKEN_MINT_POOL_BURN_INIT_AMOUNT);
-        if (current_amount.isEqualTo(init_amount)) {
-            console.log(
-                `burn mint balance already to update: ${TOKEN_MINT_POOL_BURN_INIT_AMOUNT}`,
-            );
-            return { ret: 0 };
-        }
-
-        // mint_pool_balance := mint_pool_balance + current_amount - init_amount
-        const diff = current_amount.minus(init_amount);
-
-        // update mint pool balance
-        const { ret: update_ret } = await this.update_balance(
-            TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-            diff.toString(),
-        );
-        if (update_ret != 0) {
-            console.error(
-                `failed to update balance for mint pool with burn mint balance changed: ${current_amount.toString()} -> ${init_amount.toString()}`,
-            );
-            return { ret: update_ret };
-        }
-
-        // set burn mint balance
-        const { ret: set_burn_ret } = await this.set_balance(
-            TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
-            TOKEN_MINT_POOL_BURN_INIT_AMOUNT,
-        );
-        if (set_burn_ret != 0) {
-            console.error(
-                `failed to set burn mint balance: ${init_amount.toString()}`,
-            );
-            return { ret: set_burn_ret };
-        }
-
-        return { ret: 0 };
-    }
-
-    /**
-     * @comment set the balance for address, if address exists, update it
-     * @param {string} address
-     * @param {string} amount
-     * @returns {ret: number}
-     */
-    async set_balance(address, amount) {
-        assert(this.db != null, `db should not be null`);
-        assert(typeof address === 'string', `address should be string`);
-        assert(
-            BigNumberUtil.is_positive_number_string(amount),
-            `amount should be valid number string: ${amount}`,
-        );
-
-        return new Promise((resolve) => {
-            this.db.run(
-                `INSERT OR REPLACE INTO balance (address, amount) VALUES (?, ?)`,
-                [address, amount],
-                (err) => {
-                    if (err) {
-                        console.error('failed to add balance', err);
-                        resolve({ ret: -1 });
-                    } else {
-                        resolve({ ret: 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    /**
-     * @comment update balance for address, return InscriptionOpState.INSUFFICIENT_BALANCE if balance is not enough, return -1 on error, return 0 on success
-     * @param {string} address
-     * @param {string} amount
-     * @returns {ret: number}
-     */
-    async update_balance(address, amount) {
-        assert(this.db != null, `db should not be null`);
-        assert(typeof address === 'string', `address should be string`);
-        assert(
-            BigNumberUtil.is_number_string(amount),
-            `amount should be valid number string: ${amount}`,
-        );
-
-        return new Promise((resolve) => {
-            this.db.get(
-                'SELECT amount FROM balance WHERE address = ?',
-                [address],
-                (err, row) => {
-                    if (err) {
-                        console.error(
-                            `Could not get balance for address ${address}, ${err}`,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        if (row == null) {
-                            // balance should >= 0
-                            if (BigNumberUtil.compare(amount, '0') < 0) {
-                                console.error(
-                                    `init amount ${amount} is negative`,
-                                );
-                                resolve({
-                                    ret: InscriptionOpState.INSUFFICIENT_BALANCE,
-                                });
-                            }
-
-                            this.db.run(
-                                'INSERT INTO balance (address, amount) VALUES (?, ?)',
-                                [address, amount],
-                                (err) => {
-                                    if (err) {
-                                        console.error(
-                                            `Could not insert balance for address ${address}, ${err}`,
-                                        );
-                                        resolve({ ret: -1 });
-                                    } else {
-                                        console.log(
-                                            `first inserted balance for address ${address} ${amount}`,
-                                        );
-                                        resolve({ ret: 0 });
-                                    }
-                                },
-                            );
-                        } else {
-                            const current_amount = row.amount;
-                            const new_amount = BigNumberUtil.add(
-                                current_amount,
-                                amount,
-                            );
-
-                            // new_amount should >= 0
-                            if (BigNumberUtil.compare(new_amount, '0') < 0) {
-                                console.error(
-                                    `new amount ${new_amount} is negative, current amount ${current_amount}, amount ${amount}`,
-                                );
-                                resolve({
-                                    ret: InscriptionOpState.INSUFFICIENT_BALANCE,
-                                });
-                            }
-
-                            this.db.run(
-                                'UPDATE balance SET amount = ? WHERE address = ?',
-                                [new_amount, address],
-                                (err) => {
-                                    if (err) {
-                                        console.error(
-                                            `Could not update balance for address ${address}, ${err}`,
-                                        );
-                                        resolve({ ret: -1 });
-                                    } else {
-                                        console.log(
-                                            `updated balance for address ${address} ${current_amount} -> ${new_amount}`,
-                                        );
-                                        resolve({ ret: 0 });
-                                    }
-                                },
-                            );
-                        }
-                    }
-                },
-            );
-        });
-    }
-
-    /**
-     * @comment update pool balance on mint or chant or resonance
-     * @param {UpdatePoolBalanceOp} op
-     * @param {string} amount
-     * @returns {ret: number}
-     */
-    async update_pool_balance_on_ops(op, amount) {
-        assert(this.db != null, `db should not be null`);
-        assert(
-            BigNumberUtil.is_positive_number_string(amount),
-            `amount should be >= 0 number string: ${amount}`,
-        );
-
-        switch (op) {
-            case UpdatePoolBalanceOp.Mint:
-                {
-                    const { ret: update_ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        BigNumberUtil.multiply(amount, -1),
-                    );
-                    if (update_ret != 0) {
-                        console.error(
-                            `Could not update pool balance on mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${amount}`,
-                        );
-                        return { ret: update_ret };
-                    }
-                }
-
-                break;
-            case UpdatePoolBalanceOp.LuckyMint:
-                {
-                    const { ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS,
-                        amount,
-                    );
-                    if (ret != 0) {
-                        console.error(
-                            `Could not update lucky mint balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS} ${amount}`,
-                        );
-                        return { ret };
-                    }
-
-                    const { ret: update_ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        BigNumberUtil.multiply(amount, -1),
-                    );
-                    if (update_ret != 0) {
-                        console.error(
-                            `Could not update pool balance on lucky mint ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS} ${amount}`,
-                        );
-                        return { ret: update_ret };
-                    }
-                }
-
-                break;
-            case UpdatePoolBalanceOp.BurnMint: {
-                {
-                    const { ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS,
-                        amount,
-                    );
-                    if (ret != 0) {
-                        console.error(
-                            `Could not update burn mint balance ${TOKEN_MINT_POOL_BURN_MINT_VIRTUAL_ADDRESS} ${amount}`,
-                        );
-                        return { ret };
-                    }
-                }
-
-                break;
-            }
-            case UpdatePoolBalanceOp.Chant:
-                {
-                    const { ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
-                        amount,
-                    );
-                    if (ret != 0) {
-                        console.error(
-                            `Could not update chant balance ${TOKEN_MINT_POOL_LUCKY_MINT_VIRTUAL_ADDRESS}`,
-                        );
-                        return { ret };
-                    }
-
-                    const { ret: update_ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        BigNumberUtil.multiply(amount, -1),
-                    );
-                    if (update_ret != 0) {
-                        console.error(
-                            `Could not update pool balance on chant ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
-                        );
-                        return { ret: update_ret };
-                    }
-                }
-
-                break;
-            case UpdatePoolBalanceOp.InscribeData:
-                {
-                    const { ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
-                        amount,
-                    );
-                    if (ret != 0) {
-                        assert(ret < 0);
-                        console.error(
-                            `Could not update inscribe data service charge balance ${TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS}`,
-                        );
-                        return { ret };
-                    }
-
-                    const { ret: update_ret } = await this.update_balance(
-                        TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        amount,
-                    );
-                    if (update_ret != 0) {
-                        assert(ret < 0);
-                        console.error(
-                            `Could not update pool balance on resonance ${TOKEN_MINT_POOL_VIRTUAL_ADDRESS}`,
-                        );
-                        return { ret: update_ret };
-                    }
-                }
-
-                break;
-
-            default: {
-                console.error(`Unknown update_pool_balance_on_ops op ${op}`);
-                return { ret: -1 };
-            }
-        }
-
-        return { ret: 0 };
-    }
-    /**
-     *
-     * @param {string} address
-     * @returns {ret: number, amount: string}
-     */
-    async get_balance(address) {
-        const sql = `
-            SELECT amount FROM balance WHERE address = ?
-        `;
-
-        return new Promise((resolve) => {
-            this.db.get(sql, [address], (err, row) => {
-                if (err) {
-                    console.error('Could not get balance', err);
-                    resolve({ ret: -1 });
-                } else {
-                    resolve({ ret: 0, amount: row ? row.amount : '0' });
-                }
-            });
-        });
-    }
-
-    /**
-     * @comment get balances for addresses
-     * @param {Array} addresses
-     * @returns {ret: number, balances: object}
-     */
-    async get_balances(addresses) {
-        assert(Array.isArray(addresses), `addresses should be array`);
-
-        const sql = `
-            SELECT address, amount FROM balance WHERE address IN (${addresses
-                .map(() => '?')
-                .join(',')})
-        `;
-
-        return new Promise((resolve) => {
-            this.db.all(sql, addresses, (err, rows) => {
-                if (err) {
-                    console.error('Could not get balances', err);
-                    resolve({ ret: -1 });
-                } else {
-                    const balances = {};
-                    for (const row of rows) {
-                        balances[row.address] = row.amount;
-                    }
-                    resolve({ ret: 0, balances });
-                }
-            });
-        });
-    }
-
-    /**
-     * @comment transfer balance from from_address to to_address, return InscriptionOpState.INSUFFICIENT_BALANCE if balance is not enough, return -1 on error, return 0 on success
-     * @param {string} from_address
-     * @param {string} to_address
-     * @param {string} amount
-     * @returns {ret: number}
-     */
-    async transfer_balance(from_address, to_address, amount) {
-        assert(
-            from_address != to_address,
-            `from_address should not be equal to to_address ${from_address}`,
-        );
-
-        assert(this.db != null, `db should not be null`);
-        assert(
-            typeof from_address === 'string',
-            `from_address should be string`,
-        );
-        assert(typeof to_address === 'string', `to_address should be string`);
-        assert(
-            BigNumberUtil.is_positive_number_string(amount),
-            `amount should be valid number string: ${amount}`,
-        );
-
-        // should exec in transaction
-        assert(this.during_transaction, `should be during transaction`);
-
-        const { ret: get_from_balance_ret, amount: from_balance } =
-            await this.get_balance(from_address);
-        if (get_from_balance_ret != 0) {
-            console.error(`Could not get balance ${from_address}`);
-            return { ret: get_from_balance_ret };
-        }
-
-        if (BigNumberUtil.compare(from_balance, amount) < 0) {
-            console.error(
-                `Insufficient balance ${from_address} : ${from_balance} < ${amount}`,
-            );
-            return { ret: InscriptionOpState.INSUFFICIENT_BALANCE };
-        }
-
-        const new_amount = BigNumberUtil.subtract(from_balance, amount);
-        const { ret: update_from_balance_ret } = await this.set_balance(
-            from_address,
-            new_amount,
-        );
-        if (update_from_balance_ret != 0) {
-            console.error(`Could not update balance ${from_address}`);
-            return { ret: update_from_balance_ret };
-        }
-
-        const { ret: update_to_balance_ret } = await this.update_balance(
-            to_address,
-            amount,
-        );
-        if (update_to_balance_ret != 0) {
-            console.error(`Could not update balance ${to_address}`);
-            return { ret: -1 };
-        }
-
-        console.log(`transfer balance ${from_address} ${to_address} ${amount}`);
-        return { ret: 0 };
     }
 
     // inscribe_data related methods
@@ -2869,4 +2374,4 @@ class TokenIndexStorage {
     }
 }
 
-module.exports = { UpdatePoolBalanceOp, TokenIndexStorage, UserOp };
+module.exports = { TokenIndexStorage, UserOp, UpdatePoolBalanceOp };

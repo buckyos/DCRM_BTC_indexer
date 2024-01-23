@@ -42,6 +42,7 @@ class InscribeDataOperator {
 
         this.config = config;
         this.storage = storage;
+        this.balance_storage = storage.get_balance_storage();
         this.hash_helper = hash_helper;
         this.relation_storage = relation_storage;
 
@@ -261,7 +262,9 @@ class InscribeDataOperator {
         inscription_item.hash_point = 0;
         inscription_item.hash_weight = '0';
 
-        // first check if hash and amt field is exists
+        // first check if params is valid
+        
+        // check hash is string and valid mixhash
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
             console.warn(
@@ -272,12 +275,40 @@ class InscribeDataOperator {
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
+        if (!Util.is_valid_mixhash(hash)) {
+            console.warn(`invalid inscribe content ph ${hash}, ${inscription_item.inscription_id}`);
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        // check amt is exists and valid
         const amt = inscription_item.content.amt;
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(
+        if (amt == null || !BigNumberUtil.is_positive_number_string(amt)) {
+            console.warn(
                 `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        // check text is valid if exists
+        const text = inscription_item.content.text;
+        if (text != null && !_.isString(text)) {
+            console.warn(
+                `invalid inscription text ${inscription_item.inscription_id} ${text}`,
+            );
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        // check price is valid if exists
+        const price = inscription_item.content.price;
+        if (price != null) {
+            if (!BigNumberUtil.is_positive_number_string(price)) {
+                console.warn(`invalid inscribe content price ${price}`);
+                return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+            }
+            inscription_item.price = price;
+        } else {
+            // set to default value
+            inscription_item.price = '0';
         }
 
         // 1. check if hash already been inscribed
@@ -345,8 +376,8 @@ class InscribeDataOperator {
         const max_price = BigNumberUtil.multiply(hash_weight, 2);
 
         // 4. try fix price if exists
-        if (inscription_item.content.price != null) {
-            const price = inscription_item.content.price;
+        if (inscription_item.price != null && inscription_item.price !== '0') {
+            const price = inscription_item.price;
             assert(
                 BigNumberUtil.is_positive_number_string(price),
                 `invalid price ${price}`,
@@ -358,8 +389,8 @@ class InscribeDataOperator {
                     `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
                 );
 
-                inscription_item.content.origin_price = price;
-                inscription_item.content.price = max_price;
+                
+                inscription_item.price = max_price;
             }
         }
 
@@ -376,7 +407,7 @@ class InscribeDataOperator {
 
         // 6. check if address balance is enough
         const { ret: get_balance_ret, amount: balance } =
-            await this.storage.get_balance(inscription_item.address);
+            await this.balance_storage.get_inner_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
             console.error(
                 `failed to get balance ${inscription_item.inscription_id} ${inscription_item.address}`,
@@ -387,11 +418,10 @@ class InscribeDataOperator {
         assert(_.isString(balance), `invalid balance ${balance}`);
         if (BigNumberUtil.compare(balance, amt) < 0) {
             console.warn(
-                `balance is not enough ${inscription_item.inscription_id} ${inscription_item.address} ${balance} < ${amt}`,
+                `inner token balance is not enough ${inscription_item.inscription_id} ${inscription_item.address} ${balance} < ${amt}`,
             );
 
-            // balance is not enough, so this inscription will failed
-
+            // inner token balance is not enough, so this inscription will failed
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
@@ -477,7 +507,7 @@ class InscribeDataOperator {
                     mint_amt,
                     service_charge,
                     op.inscription_item.content.text,
-                    op.inscription_item.content.price,
+                    op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
                     op.inscription_item.hash_point,
                     op.inscription_item.hash_weight,
                     op.state,
@@ -526,7 +556,7 @@ class InscribeDataOperator {
         );
 
         // 2. subtract mint_amt from address
-        const { ret: update_balance_ret } = await this.storage.update_balance(
+        const { ret: update_balance_ret } = await this.balance_storage.update_inner_balance(
             op.inscription_item.address,
             BigNumberUtil.multiply(mint_amt, '-1'),
         );
@@ -534,13 +564,13 @@ class InscribeDataOperator {
             // the balance has been checked in on_inscribe, so should not reach here
             assert(update_balance_ret < 0);
             console.error(
-                `failed to transfer balance to mint pool ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${mint_amt}`,
+                `failed to transfer inner balance to mint pool ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${mint_amt}`,
             );
             return { ret: update_balance_ret };
         }
 
         // 2. transfer service_charge from address to foundation address
-        const { ret: transfer_ret2 } = await this.storage.transfer_balance(
+        const { ret: transfer_ret2 } = await this.balance_storage.transfer_inner_balance(
             op.inscription_item.address,
             this.config.token.account.foundation_address,
             service_charge,
@@ -556,8 +586,9 @@ class InscribeDataOperator {
 
         // 3. update the pool balance
         const { ret: update_pool_ret } =
-            await this.storage.update_pool_balance_on_ops(
+            await this.balance_storage.update_pool_balance_on_ops(
                 UpdatePoolBalanceOp.InscribeData,
+                '0',
                 mint_amt,
             );
         if (update_pool_ret !== 0) {
@@ -569,7 +600,7 @@ class InscribeDataOperator {
         }
 
         console.info(
-            `new inscribe record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.content.price}`,
+            `new inscribe record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.price}`,
         );
 
         // 4. update inscribe_data table if ready
@@ -581,7 +612,7 @@ class InscribeDataOperator {
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,
                 op.inscription_item.content.text,
-                op.inscription_item.content.price,
+                op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
                 0,
             );
 

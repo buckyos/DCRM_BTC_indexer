@@ -1,5 +1,3 @@
-
-
 // data dir is /opt/dcrm on *nix and C:\\dcrm on windows
 let data_dir;
 if (process.platform === 'win32') {
@@ -16,10 +14,9 @@ const INDEX_CONFIG = {
         network: 'mainnet',
         host: '127.0.0.1',
         auth: {
-            cookie_file: "/btc/.cookie",
+            cookie_file: '/btc/.cookie',
         },
     },
-
 
     eth: {
         // rpc_url: 'https://mainnet.infura.io/v3/8ee80cc4b7c34819957fa2c6d63429e3',
@@ -28,7 +25,8 @@ const INDEX_CONFIG = {
         contract_address: '0x30EeEF94C7cfb7CC2b3BF8F6a2376ec187A95E8d',
         contract_abi: 'contract.json',
 
-        lucky_mint_contract_address: '0x56fEc5fe1c73808762167e1f3815F76B2B358160',
+        lucky_mint_contract_address:
+            '0x56fEc5fe1c73808762167e1f3815F76B2B358160',
         lucky_mint_contract_abi: 'lucky_mint_contract.json',
     },
 
@@ -47,7 +45,10 @@ const INDEX_CONFIG = {
 
     token: {
         account: {
-            foundation_address: 'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
+            foundation_address:
+                'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
+            exchange_address:
+                'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
         },
 
         genesis_block_height: 821884,

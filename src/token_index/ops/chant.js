@@ -45,6 +45,7 @@ class ChantOperator {
 
         this.config = config;
         this.storage = storage;
+        this.balance_storage = storage.get_balance_storage();
         this.hash_helper = hash_helper;
         this.relation_storage = relation_storage;
         this.resonance_verifier = resonance_verifier;
@@ -115,7 +116,7 @@ class ChantOperator {
         inscription_item.user_bonus = '0';
         inscription_item.owner_bonus = '0';
 
-        // first check if hash field is exists
+        // first check if hash field is exists and valid
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
             console.warn(
@@ -123,6 +124,13 @@ class ChantOperator {
             );
 
             // invalid format, so we should ignore this inscription
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+
+        if (!Util.is_valid_mixhash(hash)) {
+            console.error(
+                `invalid chant content ph ${hash} ${inscription_item.inscription_id}`,
+            );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
 
@@ -208,9 +216,9 @@ class ChantOperator {
         let bonus = hash_weight;
         const stamina = BigNumberUtil.divide(hash_weight, 4);
 
-        const { ret: get_balance_ret, amount } = await this.storage.get_balance(
-            inscription_item.address,
-        );
+        // check if user has enough balance as stamina
+        const { ret: get_balance_ret, amount } =
+            await this.balance_storage.get_inner_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
             console.error(
                 `failed to get balance ${inscription_item.inscription_id} ${inscription_item.address}`,
@@ -218,10 +226,10 @@ class ChantOperator {
             return { ret: get_balance_ret };
         }
 
-        assert(_.isString(amount), `invalid balance ${amount}`);
+        assert(_.isString(amount), `invalid inner balance ${amount}`);
         if (BigNumberUtil.compare(amount, stamina) < 0) {
             console.error(
-                `not enough balance ${inscription_item.inscription_id} ${inscription_item.address} ${amount} < ${stamina}`,
+                `not enough inner balance ${inscription_item.inscription_id} ${inscription_item.address} ${amount} < ${stamina}`,
             );
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
@@ -236,9 +244,11 @@ class ChantOperator {
         }
         this.user_chant_ops.set(inscription_item.address, inscription_item);
 
-        // 5. check Mint pool left balance
+        // 5. check if Mint pool left balance
         const { ret: get_mint_pool_ret, amount: mint_pool_balance } =
-            await this.storage.get_balance(TOKEN_MINT_POOL_VIRTUAL_ADDRESS);
+            await this.balance_storage.get_inner_balance(
+                TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
+            );
 
         if (get_mint_pool_ret !== 0) {
             console.error(
@@ -301,7 +311,7 @@ class ChantOperator {
 
         // if user_bonus > 0
         if (BigNumberUtil.compare(user_bonus, 0) > 0) {
-            const { ret } = await this.storage.update_balance(
+            const { ret } = await this.balance_storage.update_inner_balance(
                 inscription_item.address,
                 user_bonus,
             );
@@ -320,7 +330,7 @@ class ChantOperator {
 
         // if owner_bonus > 0
         if (BigNumberUtil.compare(owner_bonus, 0) > 0) {
-            const { ret } = await this.storage.update_balance(
+            const { ret } = await this.balance_storage.update_inner_balance(
                 data.address,
                 owner_bonus,
             );
@@ -342,8 +352,9 @@ class ChantOperator {
 
         // 7. update pool amount
         const { ret: update_pool_ret } =
-            await this.storage.update_pool_balance_on_ops(
+            await this.balance_storage.update_pool_balance_on_ops(
                 UpdatePoolBalanceOp.Chant,
+                '0',
                 bonus,
             );
         if (update_pool_ret !== 0) {

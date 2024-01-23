@@ -2,9 +2,8 @@ const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
 const { TokenIndexStorage } = require('../../storage/token');
 const { HashHelper } = require('./hash');
-const { InscriptionOpState, InscriptionStage } = require('./state');
+const { InscriptionOpState } = require('./state');
 const {
-    InscriptionTransferItem,
     InscriptionNewItem,
 } = require('../../index/item');
 const {
@@ -53,6 +52,7 @@ class ResonanceOperator {
 
         this.config = config;
         this.storage = storage;
+        this.balance_storage = storage.get_balance_storage();
         this.hash_helper = hash_helper;
         this.relation_storage = relation_storage;
         this.resonance_verifier = resonance_verifier;
@@ -66,123 +66,24 @@ class ResonanceOperator {
      * @param {InscriptionNewItem} inscription_item
      * @returns {Promise<{ret: number}>}
      */
-    async on_inscribe(inscription_item) {
+    async on_resonance(inscription_item) {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
+        assert(_.isObject(inscription_item.content), `invalid content`);
 
-        const hash = inscription_item.content.ph;
-        assert(_.isString(hash), `hash should be string`);
-
-        const { ret } = await this.storage.add_resonance_record_on_inscribed(
-            inscription_item.inscription_id,
-
-            inscription_item.block_height,
-            inscription_item.timestamp,
-            inscription_item.txid,
-            inscription_item.address,
-
-            hash,
-            JSON.stringify(inscription_item.content),
-            InscriptionOpState.OK,
-        );
-        if (ret !== 0) {
-            console.error(
-                `failed to record resonance on inscribed ${inscription_item.inscription_id} ${inscription_item.address}`,
-            );
-            return { ret };
-        }
-
-        console.log(
-            `record resonance inscribe ${inscription_item.inscription_id} ${
-                inscription_item.address
-            } ${JSON.stringify(inscription_item.content)}`,
-        );
-
-        return { ret: 0 };
-    }
-    /**
-     *
-     * @param {InscriptionTransferItem} inscription_transfer_item
-     * @returns {Promise<{ret: number}>}
-     */
-    async on_transfer(inscription_transfer_item) {
-        assert(
-            inscription_transfer_item instanceof InscriptionTransferItem,
-            `invalid item`,
-        );
-
-        assert(
-            inscription_transfer_item.index > 0,
-            `invalid resonance transfer index ${inscription_transfer_item.inscription_id}`,
-        );
-
-        // only process on first transfer
-        if (inscription_transfer_item.index > 1) {
-            console.warn(
-                `ignore resonance transfer ${inscription_transfer_item.inscription_id} ${inscription_transfer_item.from_address} -> ${inscription_transfer_item.to_address}, ${inscription_transfer_item.index}`,
-            );
-            return { ret: 0 };
-        }
-
-        // first query the inscription at the inscribed stage
-        const { ret: get_inscribed_ret, data: inscription_item } =
-            await this.storage.query_resonance_record(
-                inscription_transfer_item.inscription_id,
-                InscriptionStage.Inscribe,
-            );
-        if (get_inscribed_ret !== 0) {
-            console.error(
-                `failed to query resonance record ${inscription_transfer_item.inscription_id}`,
-            );
-            return { ret: get_inscribed_ret };
-        }
-
-        if (inscription_item == null) {
-            console.error(
-                `query resonance inscribe record but not found: ${inscription_transfer_item.inscription_id}`,
-            );
-            return { ret: 0 };
-        }
-
-        assert(
-            inscription_item.inscription_id ===
-                inscription_transfer_item.inscription_id,
-            `inscription_id should be the same: ${inscription_item.inscription_id} !== ${inscription_transfer_item.inscription_id}`,
-        );
-        assert(
-            inscription_item.address === inscription_transfer_item.from_address,
-            `inscription creator address should be the same: ${inscription_item.address} !== ${inscription_transfer_item.from_address}`,
-        );
-
-        // parse content in JSON format
-        const content = JSON.parse(inscription_item.content);
-        assert(content.amt != null, `amt should be set`);
-        assert(content.ph != null, `ph should be set`);
-        assert(
-            content.ph === inscription_item.hash,
-            `ph should be the same: ${content.ph} !== ${inscription_item.hash}`,
-        );
-
-        // init some transfer fields from inscription item
-        inscription_item.block_height = inscription_transfer_item.block_height;
-        inscription_item.timestamp = inscription_transfer_item.timestamp;
-        inscription_item.txid = inscription_transfer_item.txid;
-        inscription_item.owner_address = inscription_transfer_item.to_address;
-
-        // then do resonance
         const { ret, state, hash_distance } = await this._pre_process_resonance(
             inscription_item,
-            content,
+            inscription_item.content,
         );
         if (ret !== 0) {
             return { ret };
         }
 
         // add to pending list for further process
-        const hash = content.ph;
+        const hash = inscription_item.content.ph;
         this.pending_resonance_ops.push(
             new PendingResonanceOp(
                 inscription_item,
-                content,
+                inscription_item.content,
                 hash,
                 hash_distance,
                 state,
@@ -234,20 +135,15 @@ class ResonanceOperator {
 
             // record the resonance op for any state
             const { ret: add_resonance_op_ret } =
-                await this.storage.add_resonance_record_on_transferred(
+                await this.storage.add_resonance_record(
                     inscription_item.inscription_id,
-
-                    inscription_item.genesis_block_height,
-                    inscription_item.genesis_timestamp,
-                    inscription_item.genesis_txid,
-                    inscription_item.address,
-                    inscription_item.hash,
-                    inscription_item.content,
 
                     inscription_item.block_height,
                     inscription_item.timestamp,
                     inscription_item.txid,
-                    inscription_item.owner_address,
+                    inscription_item.address,
+                    inscription_item.hash,
+                    JSON.stringify(inscription_item.content),
 
                     owner_bonus,
                     service_charge,
@@ -358,7 +254,7 @@ class ResonanceOperator {
 
         // 4. check user's balance
         const { ret: get_balance_ret, amount: balance } =
-            await this.storage.get_balance(inscription_item.address);
+            await this.balance_storage.get_inner_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
             console.error(`get_balance failed ${inscription_item.address}`);
             return { ret: get_balance_ret };
@@ -446,7 +342,7 @@ class ResonanceOperator {
         const owner_bonus = BigNumberUtil.subtract(amt, service_charge); // amt - service_charge;
 
         if (BigNumberUtil.compare(service_charge, 0) > 0) {
-            const { ret } = await this.storage.transfer_balance(
+            const { ret } = await this.balance_storage.transfer_inner_balance(
                 inscription_item.address,
                 this.config.token.account.foundation_address,
                 service_charge,
@@ -463,7 +359,7 @@ class ResonanceOperator {
             BigNumberUtil.compare(owner_bonus, 0) > 0 &&
             inscription_item.address !== inscription_item.output_address
         ) {
-            const { ret } = await this.storage.transfer_balance(
+            const { ret } = await this.balance_storage.transfer_inner_balance(
                 inscription_item.address,
                 inscription_item.output_address,
                 owner_bonus,

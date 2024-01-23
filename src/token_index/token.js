@@ -122,7 +122,7 @@ class TokenBlockIndex {
             user_hash_relation_storage,
         );
         this.mint_operator = new MintOperator(config, storage, eth_index);
-        this.transfer_operator = new TransferOperator(storage);
+        this.transfer_operator = new TransferOperator(config, storage);
         this.chant_operator = new ChantOperator(
             config,
             storage,
@@ -240,7 +240,7 @@ class TokenBlockIndex {
                     return { ret };
                 }
             } else if (inscription_item.op.op === InscriptionOp.Resonance) {
-                const { ret } = await this.on_inscribe_resonance(
+                const { ret } = await this.on_resonance(
                     inscription_item,
                 );
                 if (ret !== 0) {
@@ -307,16 +307,7 @@ class TokenBlockIndex {
             } else if (
                 inscription_transfer_item.op.op === InscriptionOp.Resonance
             ) {
-                const { ret } = await this.on_transfer_resonance(
-                    inscription_transfer_item,
-                );
-                if (ret !== 0) {
-                    console.error(
-                        `failed to transfer resonance at block ${this.block_height} ${inscription_transfer_item.inscription_id}`,
-                    );
-
-                    return { ret };
-                }
+                console.warn(`resonance op should not be transferred ${inscription_transfer_item.inscription_id}`);
             } else if (
                 inscription_transfer_item.op.op === InscriptionOp.Transfer
             ) {
@@ -390,8 +381,8 @@ class TokenBlockIndex {
         return await this.transfer_operator.on_inscribe(inscription_item);
     }
 
-    async on_transfer(inscription_item) {
-        return await this.transfer_operator.on_transfer(inscription_item);
+    async on_transfer(inscription_transfer_item) {
+        return await this.transfer_operator.on_transfer(inscription_transfer_item);
     }
 
     // set resonance price
@@ -400,14 +391,8 @@ class TokenBlockIndex {
     }
 
     // resonance
-    async on_inscribe_resonance(inscription_item) {
-        return await this.resonance_operator.on_inscribe(inscription_item);
-    }
-
-    async on_transfer_resonance(inscription_transfer_item) {
-        return await this.resonance_operator.on_transfer(
-            inscription_transfer_item,
-        );
+    async on_resonance(inscription_item) {
+        return await this.resonance_operator.on_resonance(inscription_item);
     }
 
     // chant

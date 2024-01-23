@@ -326,7 +326,7 @@ class InscriptionTransferStorage {
                 GROUP BY inscription_id
                 ) it2
                 ON it1.inscription_id = it2.inscription_id AND it1.timestamp = it2.max_timestamp
-                WHERE ((it1.op = 'transfer' OR it1.op = 'resonance') AND it1.idx = 0) OR it1.op = 'inscribe'
+                WHERE (it1.op = '${InscriptionOp.Transfer}' AND it1.idx = 0) OR it1.op = '${InscriptionOp.Inscribe}'
             `;
 
             this.db.all(sql, [], (err, rows) => {

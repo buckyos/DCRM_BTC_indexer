@@ -46,6 +46,8 @@ const INDEX_CONFIG = {
     token: {
         account: {
             foundation_address: 'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
+            exchange_address:
+                'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
         },
 
         genesis_block_height: 2570577,
