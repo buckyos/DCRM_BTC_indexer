@@ -14,10 +14,14 @@ const { BugMonitor } = require('./debug/monitor');
 const { INDEX_VERSION } = require('./constants');
 const moment = require('moment');
 
-
 global._ = require('underscore');
 
+
+
 async function main() {
+    // first scan config dir for all config names
+    const config_names = Util.get_all_config_names();
+
     // first parse args
 
     const argv = yargs(hideBin(process.argv))
@@ -25,7 +29,7 @@ async function main() {
             alias: 'c',
             type: 'string',
             description: 'Select the configuration of bitcoin ethereum network',
-            choices: ['formal', 'test'],
+            choices: config_names,
             default: 'formal',
         })
         .option('mode', {
@@ -79,9 +83,12 @@ function get_del_dir(dir, now) {
     assert(_.isString(dir), `dir should be string, but ${dir}`);
     assert(_.isNumber(now), `now should be number, but ${now}`);
 
-    const del_dir = path.join(dir, `del_${moment(now).format('YYYY_MM_DD_HH_mm_ss')}`);
+    const del_dir = path.join(
+        dir,
+        `del_${moment(now).format('YYYY_MM_DD_HH_mm_ss')}`,
+    );
     fs.mkdirSync(del_dir, { recursive: true });
-    
+
     return del_dir;
 }
 
@@ -106,7 +113,10 @@ function reset_sync(config, now) {
     const sync_state_db_file = path.join(dir, SYNC_STATE_DB_FILE);
     if (fs.existsSync(sync_state_db_file)) {
         console.warn(`remove sync state db: ${sync_state_db_file}`);
-        fs.renameSync(sync_state_db_file, path.join(tmp_dir, SYNC_STATE_DB_FILE));
+        fs.renameSync(
+            sync_state_db_file,
+            path.join(tmp_dir, SYNC_STATE_DB_FILE),
+        );
         // fs.unlinkSync(sync_state_db_file);
     }
 
@@ -120,7 +130,10 @@ function reset_sync(config, now) {
     const inscription_db_file = path.join(dir, INSCRIPTION_DB_FILE);
     if (fs.existsSync(inscription_db_file)) {
         console.warn(`remove inscription db: ${inscription_db_file}`);
-        fs.renameSync(inscription_db_file, path.join(tmp_dir, INSCRIPTION_DB_FILE));
+        fs.renameSync(
+            inscription_db_file,
+            path.join(tmp_dir, INSCRIPTION_DB_FILE),
+        );
         // fs.unlinkSync(inscription_db_file);
     }
 
@@ -145,14 +158,20 @@ function reset_index(config, now) {
     const index_state_db_file = path.join(dir, INDEX_STATE_DB_FILE);
     if (fs.existsSync(index_state_db_file)) {
         console.warn(`remove index state db: ${index_state_db_file}`);
-        fs.renameSync(index_state_db_file, path.join(tmp_dir, INDEX_STATE_DB_FILE));
+        fs.renameSync(
+            index_state_db_file,
+            path.join(tmp_dir, INDEX_STATE_DB_FILE),
+        );
         // fs.unlinkSync(index_state_db_file);
     }
 
     const token_index_db_file = path.join(dir, TOKEN_INDEX_DB_FILE);
     if (fs.existsSync(token_index_db_file)) {
         console.warn(`remove token index db: ${token_index_db_file}`);
-        fs.renameSync(token_index_db_file, path.join(tmp_dir, TOKEN_INDEX_DB_FILE));
+        fs.renameSync(
+            token_index_db_file,
+            path.join(tmp_dir, TOKEN_INDEX_DB_FILE),
+        );
         // fs.unlinkSync(token_index_db_file);
     }
 }

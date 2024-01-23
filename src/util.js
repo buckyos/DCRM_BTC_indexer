@@ -9,6 +9,29 @@ const BigNumber = require('bignumber.js');
 const { TOKEN_DECIMAL, DATA_HASH_START_SIZE } = require('./constants');
 
 class Util {
+
+    /**
+     * @comment get all config names in config dir
+     * @returns {Array<string>}
+     */
+    static get_all_config_names() {
+        const config_dir = path.resolve(__dirname, '../config');
+        let config_files = fs.readdirSync(config_dir);
+    
+        config_files = config_files.filter(
+            (file) =>
+                path.extname(file) === '.js' && !file.endsWith('_template.js'),
+        );
+    
+        const config_names = [];
+        for (const config_file of config_files) {
+            const config_name = config_file.split('.')[0];
+            config_names.push(config_name);
+        }
+    
+        return config_names;
+    }
+
     /**
      * @comment return satpoint all of zero
      * @returns {string}

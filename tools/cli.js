@@ -6,6 +6,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const { Config } = require('../src/config');
+const { Util } = require('../src/util');
 
 // create new container
 const multi_bar = new ProgressBar.MultiBar(
@@ -92,7 +93,7 @@ const argv = yargs(hideBin(process.argv))
         alias: 'c',
         type: 'string',
         description: 'Select the configuration of bitcoin ethereum network',
-        choices: ['formal', 'test'],
+        choices: Util.get_all_config_names(),
         default: 'formal',
     })
     .help().argv;
