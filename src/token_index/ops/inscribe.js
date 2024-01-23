@@ -261,6 +261,10 @@ class InscribeDataOperator {
         // set to default value on start
         inscription_item.hash_point = 0;
         inscription_item.hash_weight = '0';
+        inscription_item.price = '0';
+        inscription_item.hash = '';
+        inscription_item.text = null;
+        inscription_item.amt = '0';
 
         // first check if params is valid
         
@@ -279,6 +283,7 @@ class InscribeDataOperator {
             console.warn(`invalid inscribe content ph ${hash}, ${inscription_item.inscription_id}`);
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        inscription_item.hash = hash;
 
         // check amt is exists and valid
         const amt = inscription_item.content.amt;
@@ -288,6 +293,7 @@ class InscribeDataOperator {
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        inscription_item.amt = amt;
 
         // check text is valid if exists
         const text = inscription_item.content.text;
@@ -297,6 +303,7 @@ class InscribeDataOperator {
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        inscription_item.text = text;
 
         // check price is valid if exists
         const price = inscription_item.content.price;
@@ -502,11 +509,11 @@ class InscribeDataOperator {
                     op.inscription_item.address,
                     op.inscription_item.timestamp,
                     op.inscription_item.txid,
-                    op.inscription_item.content.ph,
+                    op.inscription_item.hash, // use inscription_item.hash instead of inscription_item.content.ph for param check
                     JSON.stringify(op.inscription_item.content),
                     mint_amt,
                     service_charge,
-                    op.inscription_item.content.text,
+                    op.inscription_item.text,
                     op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
                     op.inscription_item.hash_point,
                     op.inscription_item.hash_weight,

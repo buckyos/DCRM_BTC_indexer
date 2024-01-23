@@ -84,7 +84,7 @@ class ChantOperator {
             inscription_item.txid,
             inscription_item.address,
             JSON.stringify(inscription_item.content),
-            inscription_item.content.ph,
+            inscription_item.hash, // use inscription_item.hash instead of inscription_item.content.ph for param check
             inscription_item.user_bonus,
             inscription_item.owner_bonus,
             inscription_item.hash_point,
@@ -110,6 +110,7 @@ class ChantOperator {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
         // should be init to zero on start
+        inscription_item.hash = '';
         inscription_item.hash_point = 0;
         inscription_item.hash_weight = '0';
 
@@ -133,6 +134,8 @@ class ChantOperator {
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+
+        inscription_item.hash = hash;
 
         // at first we should check if user has chant at 12800 consecutive blocks, if that, we should clear all its resonance qualifications
         const { ret: verify_ret } = await this.resonance_verifier.verify_user(

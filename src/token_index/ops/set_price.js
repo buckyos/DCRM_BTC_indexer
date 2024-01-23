@@ -42,9 +42,9 @@ class SetPriceOperator {
             inscription_item.timestamp,
             inscription_item.txid,
             JSON.stringify(inscription_item.content),
-            inscription_item.content.ph,
+            inscription_item.hash,  // use inscription_item.hash instead of inscription_item.content.ph
             inscription_item.address,
-            inscription_item.content.price,
+            inscription_item.price, // use inscription_item.price instead of inscription_item.content.price
             inscription_item.hash_point,
             inscription_item.hash_weight,
             state,
@@ -70,6 +70,8 @@ class SetPriceOperator {
         //  set to default value on start
         inscription_item.hash_point = 0;
         inscription_item.hash_weight = '0';
+        inscription_item.price = '0';
+        inscription_item.hash = '';
 
         // 1. first check if hash and amt field is exists and valid
         const hash = content.ph;
@@ -81,6 +83,7 @@ class SetPriceOperator {
             // invalid format, so we should ignore this inscription
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        inscription_item.hash = hash;
 
         let price = content.price;
         if (!BigNumberUtil.is_positive_number_string(price)) {
@@ -89,6 +92,7 @@ class SetPriceOperator {
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        inscription_item.price = price;
 
         // 2. check if hash is exists already and hash's owner is the same
         const { ret: get_ret, data } = await this.storage.get_inscribe_data(

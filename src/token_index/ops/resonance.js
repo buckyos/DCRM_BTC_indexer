@@ -164,6 +164,9 @@ class ResonanceOperator {
     async _pre_process_resonance(inscription_item, content) {
         assert(content instanceof Object, `content should be object`);
 
+        inscription_item.hash = '';
+        inscription_item.amt = '0';
+        
         // first check if hash and amt field is exists
         const hash = content.ph;
         if (hash == null || !_.isString(hash)) {
@@ -174,6 +177,7 @@ class ResonanceOperator {
             // invalid format, so we should ignore this inscription
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        inscription_item.hash = hash;
 
         const amt = content.amt;
         if (!BigNumberUtil.is_positive_number_string(amt)) {
@@ -182,6 +186,7 @@ class ResonanceOperator {
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        inscription_item.amt = amt;
 
         // at first we should verify the hash's resonance count, check if any user has no chant at 12800 consecutive blocks
         const { ret: verify_ret } = await this.resonance_verifier.verify_hash(hash, inscription_item.block_height);

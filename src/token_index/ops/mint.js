@@ -125,7 +125,7 @@ class MintOperator {
             JSON.stringify(inscription_item.content),
             amt,
             inner_amt,
-            inscription_item.content.lucky,
+            inscription_item.lucky, // use inscription_item.lucky instead of content.lucky for param check
             mint_type,
             state,
         );
@@ -166,6 +166,7 @@ class MintOperator {
                 };
             }
         }
+        inscription_item.lucky = content.lucky;
 
         // check amt is exists and is number
         if (
