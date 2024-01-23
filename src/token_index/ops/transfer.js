@@ -6,6 +6,7 @@ const {
     InscriptionTransferItem,
     InscriptionNewItem,
 } = require('../../index/item');
+const { Util } = require('../../util');
 
 class TransferOperator {
     constructor(config, storage) {
@@ -304,6 +305,15 @@ class TransferOperator {
         if (inscription_item.from_address === inscription_item.to_address) {
             console.info(
                 `transfer to self ${inscription_item.inscription_id} ${inscription_item.to_address}`,
+            );
+
+            return { ret: 0, state: InscriptionOpState.OK };
+        }
+
+        // if the transfer inscription is spend as fee, then the transferable balance will restored, and total balance will not changed
+        if (inscription_item.to_address === Util.zero_btc_address()) {
+            console.warn(
+                `transfer to zero address ${inscription_item.inscription_id} ${inscription_item.to_address}`,
             );
 
             return { ret: 0, state: InscriptionOpState.OK };

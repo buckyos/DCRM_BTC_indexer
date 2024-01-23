@@ -73,25 +73,14 @@ class InscribeDataOp {
 }
 
 class TransferOp {
-    constructor(amt) {
-        assert(_.isString(amt), `amt should be string`);
-
+    constructor() {
         this.op = InscriptionOp.Transfer;
-        this.amt = amt;
     }
 
     static parse_content(content) {
         assert(_.isObject(content), `transfer content should be object`);
 
-        const { amt } = content;
-
-        // check amt
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(`invalid transfer content amt ${amt}`);
-            return { ret: 0, valid: false };
-        }
-
-        const item = new TransferOp(amt);
+        const item = new TransferOp();
         return { ret: 0, valid: true, item };
     }
 }
@@ -540,6 +529,10 @@ class InscriptionTransferItem {
         this.op = op;
 
         this.index = index;
+
+        // as_fee indicates whether this transfer is used as fee
+        // we now treat the transfer as fee if the to_address is zero address
+        this.as_fee = (to_address === Util.zero_btc_address());
     }
 
     /**

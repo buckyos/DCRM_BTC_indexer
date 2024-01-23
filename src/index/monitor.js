@@ -273,6 +273,12 @@ class InscriptionTransferMonitor {
 
         for (let i = 0; i < data.length; ++i) {
             const record = data[i];
+            if (record.to_address === Util.zero_btc_address()) {
+                // ignore fee transfer
+                console.warn(`ignore fee transfer ${JSON.stringify(record)}`);
+                continue;
+            }
+
             const item = InscriptionTransferRecordItem.from_db_record(record);
 
             // ignore invalid satpoint
@@ -504,6 +510,9 @@ class InscriptionTransferMonitor {
                         return { ret };
                     }
 
+                    assert(point, `invalid point`);
+                    assert(address, `invalid address`);
+
                     // load content from inscription storage
                     const { ret: load_ret, data: inscription_data } =
                         await inscription_storage.get_inscription(
@@ -542,80 +551,53 @@ class InscriptionTransferMonitor {
                     assert(valid);
                     assert(_.isObject(op));
 
-                    if (point != null) {
-                        console.log(
-                            `found inscription transfer ${
+                    
+                    console.log(
+                        `found inscription transfer ${
+                            inscription.inscription_id
+                        } ${inscription.satpoint} -> ${point.to_string()}`,
+                    );
+
+                    const { ret: transfer_ret } = await this._on_inscription_transfer(
+                        inscription.inscription_id,
+                        inscription.inscription_number,
+                        block_height,
+                        block.time,
+                        point,
+                        inscription.to_address,
+                        address,
+                        value,
+                        inscription.index + 1,
+                        inscription.op,
+                    );
+                    if (transfer_ret !== 0) {
+                        console.error(
+                            `failed to process inscription transfer ${
                                 inscription.inscription_id
-                            } ${inscription.satpoint} -> ${point.to_string()}`,
+                            } block ${block_height} ${point.to_string()} ${address}`,
                         );
-
-                        const { ret } = await this._on_inscription_transfer(
-                            inscription.inscription_id,
-                            inscription.inscription_number,
-                            block_height,
-                            block.time,
-                            point,
-                            inscription.to_address,
-                            address,
-                            value,
-                            inscription.index + 1,
-                            inscription.op,
-                        );
-                        if (ret !== 0) {
-                            console.error(
-                                `failed to process inscription transfer ${
-                                    inscription.inscription_id
-                                } block ${block_height} ${point.to_string()} ${address}`,
-                            );
-                            return { ret };
-                        }
-                    } else {
-                        // inscription is spent as fee
-                        console.warn(
-                            `inscription ${inscription.inscription_id} is spent as fee on tx ${tx.txid}`,
-                        );
-
-                        const { ret } =
-                            await this._on_inscription_transfer_as_fee(
-                                inscription.inscription_id,
-                                inscription.inscription_number,
-                                block_height,
-                                block.time,
-                                inscription.to_address,
-                                inscription.index + 1,
-                                inscription.op,
-                            );
-
-                        if (ret !== 0) {
-                            console.error(
-                                `failed to process inscription transfer as fee ${inscription.inscription_id} block ${block_height}`,
-                            );
-                            return { ret };
-                        }
+                        return { ret: transfer_ret };
                     }
+                    
 
-                    if (point != null) {
-                        const transfer_item = new InscriptionTransferItem(
-                            inscription.inscription_id,
-                            inscription.inscription_number,
-                            block_height,
-                            block.time,
-                            point,
-                            inscription.to_address,
-                            address,
-                            value == null ? 0 : value,
-                            content,
-                            op,
-                            inscription.index + 1,
-                        );
+                    const transfer_item = new InscriptionTransferItem(
+                        inscription.inscription_id,
+                        inscription.inscription_number,
+                        block_height,
+                        block.time,
+                        point,
+                        inscription.to_address,
+                        address,
+                        value == null ? 0 : value,
+                        content,
+                        op,
+                        inscription.index + 1,
+                    );
 
-                        // set prev satpoint for later remove from monitor
-                        transfer_item.set_prev_satpoint(satpoint);
+                    // set prev satpoint for later remove from monitor
+                    transfer_item.set_prev_satpoint(satpoint);
 
-                        transfer_items.push(transfer_item);
-                    } else {
-                        // FIXME only process the normal transfer, ignore the transfer as fee
-                    }
+                    transfer_items.push(transfer_item);
                 }
             }
         }
@@ -654,7 +636,7 @@ class InscriptionTransferMonitor {
         assert(_.isNumber(value), `invalid value ${value}`);
         assert(_.isNumber(index), `invalid index ${index}`);
         assert(InscriptionOp.contains(op), `invalid op ${op}`);
-
+        
         // update db
         const { ret } = await this.storage.insert_transfer(
             inscription_id,
@@ -675,8 +657,10 @@ class InscriptionTransferMonitor {
             return { ret };
         }
 
+        const as_fee = to_address === Util.zero_btc_address();
+        
         // only cache the transfer record if we should track it
-        if (InscriptionOp.need_track_transfer(op)) {
+        if (!as_fee && InscriptionOp.need_track_transfer(op)) {
             // update cache
             const new_item = new InscriptionTransferRecordItem(
                 inscription_id,
@@ -711,6 +695,7 @@ class InscriptionTransferMonitor {
         return { ret: 0 };
     }
 
+    /*
     // the inscription is spent as fee, like this "58a58d5ccbf032c4ec94decf73531de4fb3d9b073ddcbf1abcdbe7c61b5cd587i0"
     async _on_inscription_transfer_as_fee(
         inscription_id,
@@ -759,6 +744,7 @@ class InscriptionTransferMonitor {
 
         return { ret: 0 };
     }
+    */
 }
 
 module.exports = { InscriptionTransferMonitor };

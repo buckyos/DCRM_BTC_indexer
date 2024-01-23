@@ -60,7 +60,7 @@ class TxSimpleItem {
 
         const index = this.vin.indexOf(satpoint.outpoint.to_string());
         if (index < 0) {
-            // any of the monitored outpoint is spent
+            // none of the monitored outpoint is spent
             return { ret: 0 };
         }
 
@@ -105,12 +105,17 @@ class TxSimpleItem {
         }
 
         console.warn(
-            `failed to find ordinal ${satpoint.to_string()} in ${
+            `ordinal input ${satpoint.to_string()} is spent as fee in ${
                 this.txid
             } ${JSON.stringify(this.vout)}`,
         );
 
-        return { ret: 0 };
+        const point = new SatPoint(new OutPoint(this.txid, this.vout.length), 0);
+        
+        // FIXME use zero address as output address for temp
+        const address = Util.zero_btc_address();
+
+        return { ret: 0, point, address, value: 0 };
     }
 }
 
