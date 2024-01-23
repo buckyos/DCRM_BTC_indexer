@@ -12,6 +12,7 @@ const {
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
 } = require('../../constants');
 const { ETHIndex } = require('../../eth/index');
+const { OkLinkService } = require('../../btc/oklink');
 
 class MintOperator {
     constructor(config, storage, eth_index) {
@@ -57,6 +58,9 @@ class MintOperator {
             );
             this.lucky_mint_max_amount = config.token.lucky_mint_max_amount;
         }
+
+        // use for debug verify
+        // this.oklink_service = new OkLinkService(config);
     }
 
     /**
@@ -76,6 +80,30 @@ class MintOperator {
         }
 
         assert(_.isNumber(state), `state should be number ${state}`);
+
+        /*
+        // verify by oklink service
+        const { ret: verify_ret, info } = await this.oklink_service.get_inscription_detail(inscription_item.inscription_id);
+        if (verify_ret !== 0) {
+            console.error(`failed to verify inscription ${inscription_item.inscription_id}`);
+            return { ret: verify_ret };
+        }
+
+        if (state === 0) {
+            // if state is 0, then should be success
+            assert(info.state === 'success', `invalid state ${info.state}, ${inscription_item.inscription_id}}`);
+            if (info.state !== 'success') {
+                
+            }
+        } else {
+            // if state is not 0, then should be fail
+            console.log(info.msg);
+            assert(info.state === 'fail', `invalid state ${info.state}, ${inscription_item.inscription_id}}`);
+            if (info.state !== 'fail') {
+                
+            }
+        }
+        */
 
         if (amt == null) {
             amt = '0';
@@ -267,14 +295,17 @@ class MintOperator {
             );
 
             // try to deduct inner_amt
-            const extend_amount = BigNumberUtil.subtract(total, mint_pool_amount);
+            const extend_amount = BigNumberUtil.subtract(
+                total,
+                mint_pool_amount,
+            );
             inner_amt = BigNumberUtil.subtract(inner_amt, extend_amount);
             if (BigNumberUtil.compare(inner_amt, '0') < 0) {
                 amt = BigNumberUtil.add(amt, inner_amt);
                 inner_amt = '0';
             }
         }
-        
+
         // first update mint pool balance
         let update_pool_op;
         switch (mint_type) {
