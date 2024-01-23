@@ -34,6 +34,28 @@ class MintOperator {
                 config.token.difficulty.lucky_mint_block_threshold;
             assert(_.isNumber(this.lucky_mint_block_threshold));
         }
+
+        this.normal_mint_max_amount = constants.NORMAL_MINT_MAX_AMOUNT;
+        this.lucky_mint_max_amount = constants.LUCKY_MINT_MAX_AMOUNT;
+        if (_.isString(config.token.normal_mint_max_amount)) {
+            assert(
+                BigNumberUtil.is_positive_number_string(
+                    config.token.normal_mint_max_amount,
+                ),
+                `invalid normal_mint_max_amount ${config.token.normal_mint_max_amount}`,
+            );
+            this.normal_mint_max_amount = config.token.normal_mint_max_amount;
+        }
+
+        if (_.isString(config.token.lucky_mint_max_amount)) {
+            assert(
+                BigNumberUtil.is_positive_number_string(
+                    config.token.lucky_mint_max_amount,
+                ),
+                `invalid lucky_mint_max_amount ${config.token.lucky_mint_max_amount}`,
+            );
+            this.lucky_mint_max_amount = config.token.lucky_mint_max_amount;
+        }
     }
 
     /**
@@ -101,7 +123,7 @@ class MintOperator {
         // check lucky if exists, then must be string
         if (content.lucky != null) {
             if (!_.isString(content.lucky)) {
-                console.error(
+                console.warn(
                     `lucky should be string ${inscription_item.inscription_id} ${content.lucky}`,
                 );
 
@@ -117,8 +139,8 @@ class MintOperator {
             content.amt == null ||
             !BigNumberUtil.is_positive_number_string(content.amt)
         ) {
-            console.error(
-                `amt should be number ${inscription_item.inscription_id} ${content.amt}`,
+            console.warn(
+                `amt should be valid number string ${inscription_item.inscription_id} ${content.amt}`,
             );
 
             return {
@@ -127,15 +149,12 @@ class MintOperator {
             };
         }
 
-        // amt should <= NORMAL_MINT_MAX_AMOUNT
+        // amt should <= this.normal_mint_max_amount
         if (
-            BigNumberUtil.compare(
-                content.amt,
-                constants.NORMAL_MINT_MAX_AMOUNT,
-            ) > 0
+            BigNumberUtil.compare(content.amt, this.normal_mint_max_amount) > 0
         ) {
             console.warn(
-                `amt should be less than ${constants.NORMAL_MINT_MAX_AMOUNT} ${inscription_item.inscription_id} ${content.amt}`,
+                `amt should be less than ${this.normal_mint_max_amount} ${inscription_item.inscription_id} ${content.amt}`,
             );
 
             return {
@@ -187,17 +206,17 @@ class MintOperator {
                     // lucky mint amount is 10 times of normal mint - normal mint amount
                     inner_amt = BigNumberUtil.multiply(content.amt, 9);
 
-                    // if content.amt > constants.LUCKY_MINT_MAX_AMOUNT, then will use the max amount
+                    // if content.amt > this.lucky_mint_max_amount, then will use the max amount
                     if (
                         BigNumberUtil.compare(
                             inner_amt,
-                            constants.LUCKY_MINT_MAX_AMOUNT,
+                            this.lucky_mint_max_amount,
                         ) > 0
                     ) {
                         console.warn(
                             `lucky mint amount is too large ${inscription_item.inscription_id} ${content.amt} ${amt}`,
                         );
-                        inner_amt = constants.LUCKY_MINT_MAX_AMOUNT;
+                        inner_amt = this.lucky_mint_max_amount;
                     }
                 }
             }

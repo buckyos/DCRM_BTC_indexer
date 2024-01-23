@@ -24,10 +24,12 @@ const UpdatePoolBalanceOp = {
 };
 
 class TokenBalanceStorage {
-    constructor(owner) {
+    constructor(owner, config) {
         assert(owner != null, `owner should not be null`);
+        assert(config != null, `config should not be null`);
 
         this.owner = owner;
+        this.config = config;
         this.db = null;
     }
 
@@ -102,11 +104,17 @@ class TokenBalanceStorage {
     async _init_data() {
         assert(this.db != null, `db should not be null`);
 
+        let max_mint_amount = TOKEN_MINT_POOL_INIT_AMOUNT;
+        if (_.isString(this.config.token.max_mint_amount)) {
+            max_mint_amount = this.config.token.max_mint_amount;
+        }
+
         const { ret } = await this.init_balance(
             TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
             '0',
-            TOKEN_MINT_POOL_INIT_AMOUNT,
+            max_mint_amount,
         );
+        
         if (ret !== 0) {
             console.error(`failed to init balance for mint pool`);
             return { ret };

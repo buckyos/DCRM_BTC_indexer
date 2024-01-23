@@ -53,8 +53,11 @@ const INDEX_CONFIG = {
 
         genesis_block_height: 821884,
         token_name: 'dmcs',
-        //genesis_block_height: 779832,
-        //token_name: 'ordi',
+        // normal_mint_max_amount: '210',
+        // lucky_mint_max_amount: '1890',
+        // max_mint_amount: '210000000',
+        // genesis_block_height: 779832,
+        // token_name: 'ordi',
     },
 
     interface: {

@@ -7,7 +7,7 @@ const { TOKEN_INDEX_DB_FILE } = require('../constants');
 const { InscriptionOp } = require('../index/item');
 const { UserHashRelationStorage } = require('./relation');
 const { TokenBalanceStorage, UpdatePoolBalanceOp } = require('./balance');
-
+const { Util } = require('../util');
 
 // the user ops
 const UserOp = {
@@ -26,7 +26,12 @@ const UserOp = {
 };
 
 class TokenIndexStorage {
-    constructor(data_dir) {
+    constructor(config) {
+        const { ret, dir: data_dir } = Util.get_data_dir(config);
+        if (ret !== 0) {
+            throw new Error(`failed to get data dir`);
+        }
+
         assert(
             typeof data_dir === 'string',
             `data_dir should be string: ${data_dir}`,
@@ -36,7 +41,7 @@ class TokenIndexStorage {
         this.db = null;
         this.during_transaction = false;
         this.user_hash_relation_storage = new UserHashRelationStorage();
-        this.balance_storage = new TokenBalanceStorage(this);
+        this.balance_storage = new TokenBalanceStorage(this, config);
     }
 
     /**

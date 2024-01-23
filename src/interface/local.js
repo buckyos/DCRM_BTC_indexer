@@ -18,12 +18,8 @@ class StateService {
         this.config = config;
         this.executor = executor;
 
-        const { ret, dir } = Util.get_data_dir(config);
-        if (ret !== 0) {
-            throw new Error(`failed to get data dir`);
-        }
 
-        this.storage = new TokenIndexStorage(dir);
+        this.storage = new TokenIndexStorage(config);
         this.user_hash_relation_storage =
             this.storage.get_user_hash_relation_storage();
         this.resonance_verifier = new ResonanceVerifier(this.storage);
