@@ -381,8 +381,8 @@ class TokenBlockIndex {
         return await this.transfer_operator.on_inscribe(inscription_item);
     }
 
-    async on_transfer(inscription_item) {
-        return await this.transfer_operator.on_transfer(inscription_item);
+    async on_transfer(inscription_transfer_item) {
+        return await this.transfer_operator.on_transfer(inscription_transfer_item);
     }
 
     // set resonance price

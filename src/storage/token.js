@@ -36,7 +36,7 @@ class TokenIndexStorage {
         this.db = null;
         this.during_transaction = false;
         this.user_hash_relation_storage = new UserHashRelationStorage();
-        this.balance_storage = new TokenBalanceStorage();
+        this.balance_storage = new TokenBalanceStorage(this);
     }
 
     /**

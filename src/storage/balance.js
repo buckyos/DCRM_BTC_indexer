@@ -24,7 +24,10 @@ const UpdatePoolBalanceOp = {
 };
 
 class TokenBalanceStorage {
-    constructor() {
+    constructor(owner) {
+        assert(owner != null, `owner should not be null`);
+
+        this.owner = owner;
         this.db = null;
     }
 
@@ -76,7 +79,7 @@ class TokenBalanceStorage {
 
                         /* for DMCi inner token */
                         inner_amount TEXT,
-                        inner_transferable_amount TEXT,
+                        inner_transferable_amount TEXT
                     );`,
                     (err) => {
                         if (err) {
@@ -170,8 +173,8 @@ class TokenBalanceStorage {
                     amount, 
                     transferable_amount, 
                     inner_amount,
-                    inner_transferable_amount,
-                ) VALUES (?, ?)`,
+                    inner_transferable_amount
+                ) VALUES (?, ?, ?, ?, ?)`,
                 [address, amount, '0', inner_amount, '0'],
                 (err) => {
                     if (err) {
@@ -190,7 +193,7 @@ class TokenBalanceStorage {
 
     async _init_burn_mint_balance() {
         // run in transaction
-        const { ret } = await this.begin_transaction();
+        const { ret } = await this.owner.begin_transaction();
         if (ret != 0) {
             console.error(`failed to begin transaction`);
             return { ret };
@@ -208,7 +211,9 @@ class TokenBalanceStorage {
         } finally {
             const is_success = process_result === 0;
 
-            const { ret: commit_ret } = await this.end_transaction(is_success);
+            const { ret: commit_ret } = await this.owner.end_transaction(
+                is_success,
+            );
             if (commit_ret !== 0) {
                 console.error(
                     `failed to commit transaction for init burn mint balance`,
@@ -266,7 +271,7 @@ class TokenBalanceStorage {
         }
 
         // set burn mint balance
-        const { ret: set_burn_ret } = await this.set_inner_balance(
+        const { ret: set_burn_ret } = await this._set_inner_balance(
             TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
             TOKEN_MINT_POOL_BURN_INIT_AMOUNT,
         );
@@ -336,22 +341,12 @@ class TokenBalanceStorage {
     }
 
     /**
-     * @comment set the brc-20 token's balance for address, if address exists, update it
-     * @param {string} address
-     * @param {string} amount
-     * @returns {ret: number}
-     */
-    async set_balance(address, amount) {
-        return await this._set_balance(address, 'amount', amount);
-    }
-
-    /**
      * @comment set the inner token's balance for address, if address exists, update it
      * @param {string} address
      * @param {string} amount
      * @returns {ret: number}
      */
-    async set_inner_balance(address, amount) {
+    async _set_inner_balance(address, amount) {
         return await this._set_balance(address, 'inner_amount', amount);
     }
 
@@ -866,7 +861,7 @@ class TokenBalanceStorage {
     /**
      * @comment get brc-20 token's balance for address
      * @param {string} address
-     * @returns
+     * @returns {ret: number, amount: string}
      */
     async get_balance(address) {
         const sql = `
@@ -943,7 +938,7 @@ class TokenBalanceStorage {
                 } else {
                     resolve({
                         ret: 0,
-                        value: row ? row.inner_amount : '0',
+                        amount: row ? row.inner_amount : '0',
                     });
                 }
             });
@@ -1077,33 +1072,13 @@ class TokenBalanceStorage {
             `amount should be valid number string: ${amount}`,
         );
 
-        const { ret: get_from_balance_ret, balance: from_balance } =
-            await this.get_balance(from_address);
-        if (get_from_balance_ret != 0) {
-            console.error(`Could not get balance ${from_address}`);
-            return { ret: get_from_balance_ret };
-        }
-
-        assert(
-            _.isString(from_balance[field]),
-            `balance field should be string: ${field} ${from_balance[field]}`,
-        );
-
-        if (BigNumberUtil.compare(from_balance[field], amount) < 0) {
-            console.error(
-                `Insufficient balance ${from_address} : ${from_balance[field]} < ${amount}`,
-            );
-            return { ret: InscriptionOpState.INSUFFICIENT_BALANCE };
-        }
-
-        const new_amount = BigNumberUtil.subtract(from_balance[field], amount);
-        const { ret: update_from_balance_ret } = await this._set_balance(
+        // first subtract the amount from from_address
+        const { ret: update_from_balance_ret } = await this._update_balance(
             from_address,
             field,
-            new_amount,
+            BigNumberUtil.multiply(amount, -1),
         );
         if (update_from_balance_ret != 0) {
-            console.error(`Could not update balance ${from_address}`);
             return { ret: update_from_balance_ret };
         }
 
@@ -1113,11 +1088,13 @@ class TokenBalanceStorage {
             amount,
         );
         if (update_to_balance_ret != 0) {
-            console.error(`Could not update balance ${to_address}`);
-            return { ret: -1 };
+            return { ret: update_to_balance_ret };
         }
 
-        console.log(`transfer balance ${from_address} ${to_address} ${amount}`);
+        console.log(
+            `transfer balance ${from_address} -> ${to_address} ${amount}`,
+        );
+
         return { ret: 0 };
     }
 }

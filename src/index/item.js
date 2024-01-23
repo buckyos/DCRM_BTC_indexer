@@ -380,12 +380,6 @@ class InscriptionContentLoader {
             if (content.op === 'mint') {
                 return MintOp.parse_content(content);
             } else if (content.op === 'transfer') {
-                if (content.call === 'pdi-inscribe') {
-                    return InscribeDataOp.parse_content(content);
-                } else if (content.call === 'pdi-res') {
-                    return ResonanceOp.parse_content(content);
-                }
-
                 return TransferOp.parse_content(content);
             } else if (content.op === 'deploy') {
                 // TODO: check if deploy inscription is matched

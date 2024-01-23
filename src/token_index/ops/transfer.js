@@ -80,7 +80,7 @@ class TransferOperator {
 
         // check amt
         if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(
+            console.warn(
                 `invalid transfer content amt ${amt} ${JSON.stringify(
                     inscription_item.content,
                 )}`,
@@ -102,7 +102,7 @@ class TransferOperator {
 
         assert(_.isString(balance), `balance should be string ${balance}`);
         if (BigNumberUtil.compare(balance, amt) < 0) {
-            console.error(
+            console.warn(
                 `not enough available balance for ${inscription_item.address} ${balance} < ${amt}`,
             );
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };

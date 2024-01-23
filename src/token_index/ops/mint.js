@@ -41,7 +41,7 @@ class MintOperator {
      * @param {InscriptionNewItem} inscription_item
      * @returns {Promise<{ret: number}>}
      */
-    async mint(inscription_item) {
+    async on_mint(inscription_item) {
         assert(inscription_item instanceof InscriptionNewItem, `invalid item`);
 
         // do mint
@@ -134,7 +134,7 @@ class MintOperator {
                 constants.NORMAL_MINT_MAX_AMOUNT,
             ) > 0
         ) {
-            console.error(
+            console.warn(
                 `amt should be less than ${constants.NORMAL_MINT_MAX_AMOUNT} ${inscription_item.inscription_id} ${content.amt}`,
             );
 
