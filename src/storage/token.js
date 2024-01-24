@@ -187,49 +187,6 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create inscribe_data_pay_records table
-                this.db.run(
-                    `CREATE TABLE IF NOT EXISTS inscribe_data_pay_records (
-                        inscription_id TEXT PRIMARY KEY,
-                        stage STRING,
-
-                        genesis_block_height INTEGER,
-                        genesis_timestamp INTEGER,
-                        genesis_txid TEXT,
-                        from_address TEXT,
-                        content TEXT,
-
-                        hash TEXT,
-                        mint_amount TEXT,
-                        service_charge TEXT,
-                        price TEXT,
-                        hash_point INTEGER,
-                        hash_weight TEXT,
-                        
-                        block_height INTEGER,
-                        timestamp INTEGER,
-                        txid TEXT,
-                        to_address TEXT,
-
-                        state INTEGER DEFAULT 0
-                    )`,
-                    (err) => {
-                        if (err) {
-                            console.error(
-                                `failed to inscribe_data_pay_records table: ${err}`,
-                            );
-                            has_error = true;
-                            resolve({ ret: -1 });
-                        }
-
-                        console.log(`created inscribe_data_pay_records table`);
-                    },
-                );
-
-                if (has_error) {
-                    return;
-                }
-
                 // Create inscribe_data_transfer_records table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS inscribe_data_transfer_records (
