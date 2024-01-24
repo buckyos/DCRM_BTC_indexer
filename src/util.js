@@ -503,15 +503,15 @@ class Util {
         assert(_.isString(address), `address should be string ${address}`);
         address = address.trim().toLowerCase();
 
-        if (address.startsWith('1')) {
+        if (address.startsWith('1') || address.startsWith('m') || address.startsWith('n')) {
             return 'legacy';
         }
 
-        if (address.startsWith('3')) {
+        if (address.startsWith('3') || address.startsWith('2')) {
             return 'segwit';
         }
 
-        if (address.startsWith('bc1')) {
+        if (address.startsWith('bc1') || address.startsWith('tb1')) {
             return 'bech32';
         }
 
