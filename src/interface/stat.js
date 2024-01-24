@@ -294,9 +294,9 @@ class TokenStat {
 
         return new Promise((resolve, reject) => {
             const sql = `
-                    SELECT address, amount
+                    SELECT address, CAST(amount AS DECIMAL) + CAST(inner_amount AS DECIMAL) AS total_amount, amount, inner_amount
                     FROM balance
-                    ORDER BY CAST(amount AS DECIMAL(65, 0)) DESC
+                    ORDER BY total_amount DESC
                     LIMIT ?;
                 `;
 
