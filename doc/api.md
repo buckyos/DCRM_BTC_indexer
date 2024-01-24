@@ -678,6 +678,7 @@ const InscriptionOpState = {
                     timestamp,          // 时间
                     address,            // mint地址
                     amount,             // mint金额 string
+                    inner_amount,       // inner token amount string
                     lucky,              // 幸运字串
                     mint_type,          // int 0 -- 普通mint 1 -- 幸运mint
                     state,
@@ -714,17 +715,7 @@ const InscriptionOpState = {
         result: {
             count,              // 总数
             list: [
-                {
-                    inscription_id,     // mint id
-                    content,            // 铭文内容
-                    block_height,       // mint区块
-                    timestamp,          // 时间
-                    address,            // mint地址
-                    amount,             // mint金额 string
-                    lucky,              // 幸运字串
-                    mint_type,          // int 0 -- 普通mint 1 -- 幸运mint
-                    state,
-                }
+                // item内容同上
             ]
         }
     }
