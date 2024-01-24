@@ -114,6 +114,10 @@ class ChainService {
         router.get("/btc/block/:block_height", async (ctx) => {
             ctx.response.body = await this._getBlockByHeight(ctx);
         });
+
+        router.get("/utxo_by_inscription/:inscription_id", async (ctx) => {
+            ctx.response.body = await this._getUtxoByInscriptionId(ctx);
+        });
     }
 }
 
