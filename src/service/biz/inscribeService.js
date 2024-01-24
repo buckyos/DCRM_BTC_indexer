@@ -131,15 +131,13 @@ class InscribeService {
         const limit = ctx.params.limit;
         const order = ctx.params.order;
         const state = ctx.params.state;
-        const stage = ctx.params.stage;
 
         return this.m_store.queryResonanceByAddress(
             address,
             limit || 0,
             offset || 0,
             state && _.isString(state) ? state.toLowerCase() : "all",
-            order && _.isString(order) ? order.toLowerCase() : "desc",
-            stage ? stage.toLowerCase() : "all"
+            order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
 
@@ -475,7 +473,7 @@ class InscribeService {
             ctx.response.body = await this._getResonanceByHash(ctx);
         });
 
-        router.get("/resonance_by_address/:address/:limit?/:offset?/:state?/:order?/:stage?", async (ctx) => {
+        router.get("/resonance_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
             ctx.response.body = await this._getResonanceByAddress(ctx);
         });
 

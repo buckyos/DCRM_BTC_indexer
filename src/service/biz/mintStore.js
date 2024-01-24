@@ -250,18 +250,23 @@ class MintStore {
 
         try {
             const stmt = store.indexDB.prepare(
-                `SELECT amount FROM ${TABLE_NAME.BALANCE} 
+                `SELECT amount, transferable_amount, inner_amount, inner_transferable_amount
+                FROM ${TABLE_NAME.BALANCE} 
                 WHERE address = ?`,
             );
             const ret = stmt.get(address);
             if (ret != null) {
-                const amount = ret.amount;
-                logger.debug('queryBalanceByAddress:', address, 'ret:', amount);
+                logger.debug('queryBalanceByAddress:', address, 'ret:', ret);
 
-                return makeSuccessResponse(amount);
+                return makeSuccessResponse(ret);
             }
 
-            return makeSuccessResponse('0');
+            return makeSuccessResponse({
+                amount: '0',
+                transferable_amount: '0',
+                inner_amount: '0',
+                inner_transferable_amount: '0'
+            });
 
             //return makeResponse(ERR_CODE.NOT_FOUND);
         } catch (error) {

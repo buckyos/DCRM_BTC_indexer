@@ -312,10 +312,6 @@ const InscriptionOpState = {
                     block_height,           // 共鸣区块
                     timestamp,              // 共鸣时间
                     txid,                   // transfer txid
-                    stage,                  // 共鸣处于哪个阶段 'inscribe' or 'transfer'
-                    genesis_block_height,   // reveal tx 块号
-                    genesis_timestamp,      // reveal tx 时间
-                    genesis_txid,           // reveal tx id
                     state,                  // 状态码，见统一说明
                 }
             ]
@@ -325,7 +321,7 @@ const InscriptionOpState = {
 
 #### 获取某地址的共鸣记录：
 
-    /resonance_by_address/:address/:limit?/:offset?/:state?/:order?/:stage?
+    /resonance_by_address/:address/:limit?/:offset?/:state?/:order?
 
     GET
 
@@ -340,8 +336,6 @@ const InscriptionOpState = {
     state: string类型，需要查询的记录状态 'success' or 'failed' or 'all', 默认 'all'
 
     order：desc - 按时间降序（默认）； asc - 按时间升序
-
-    stage: string类型，需要查询的stage状态 'inscribe' or 'transfer' or 'all', 默认 'all'
 
     返回：
 
@@ -815,7 +809,12 @@ const InscriptionOpState = {
     {
         err: 0,
         msg: "错误信息",
-        result: balance     // string
+        result: {
+            amount: '0',
+            transferable_amount: '0',
+            inner_amount: '0',
+            inner_transferable_amount: '0'
+        }
     }
     ```
 
@@ -934,7 +933,7 @@ const InscriptionOpState = {
             genesis_timestamp,      // reveal tx时间
             genesis_txid,           // reveal txid
             from_address,           // 发起地址
-            content TEXT,           // 铭文内容
+            content,                // 铭文内容
             block_height,           // 打包块号
             timestamp,              // 打包时间
             txid,                   // 打包交易
@@ -1127,10 +1126,9 @@ const InscriptionOpState = {
     'chant'             - 吟唱操作  
     'inscribe_data'     - 铭刻数据操作  
     'transfer_data'     - 转移数据操作  
-    'inscribe_res'      - 铭刻共鸣操作  
-    'res'               - 共鸣确认操作  
+    'res'               - 共鸣操作  
     'inscribe_transfer' - 铭刻transfer操作  
-    'transfer'          - brc20转账操作  
+    'transfer'          - 转账操作  
     'set_price'         - 设置共鸣价格  
 
     ```json

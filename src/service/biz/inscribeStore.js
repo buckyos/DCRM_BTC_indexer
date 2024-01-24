@@ -345,7 +345,7 @@ class InscribeStore {
         }
     }
 
-    queryResonanceByAddress(address, limit, offset, state, order, stage) {
+    queryResonanceByAddress(address, limit, offset, state, order) {
         if (!address) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
@@ -359,7 +359,6 @@ class InscribeStore {
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE address = ?`;
             sql += StateCondition(state);
-            sql += StageCondition(stage);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
@@ -367,7 +366,6 @@ class InscribeStore {
             if (count > 0) {
                 sql = `SELECT * FROM ${TABLE_NAME.RESONANCE_RECORDS} WHERE address = ?`;
                 sql += StateCondition(state);
-                sql += StageCondition(stage);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
                 const pageStmt = store.indexDB.prepare(sql);
@@ -1187,8 +1185,6 @@ class InscribeStore {
                 return TABLE_NAME.INSCRIBE_RECORDS;
             case UserOp.TransferData:
                 return TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS;
-            case UserOp.InscribeResonance:
-                return TABLE_NAME.RESONANCE_RECORDS;
             case UserOp.Resonance:
                 return TABLE_NAME.RESONANCE_RECORDS;
             case UserOp.InscribeTransfer:
@@ -1198,6 +1194,12 @@ class InscribeStore {
             case UserOp.SetPrice:
                 return TABLE_NAME.SET_PRICE_RECORDS;
 
+            case InscriptionOp.Mint:
+                return TABLE_NAME.MINT_RECORDS;
+            case InscriptionOp.Transfer:
+                return TABLE_NAME.TRANSFER_RECORDS;
+            case InscriptionOp.Chant:
+                return TABLE_NAME.CHANT_RECORDS;
             case InscriptionOp.Inscribe:
                 return TABLE_NAME.INSCRIBE_RECORDS;
             case InscriptionOp.SetPrice:
