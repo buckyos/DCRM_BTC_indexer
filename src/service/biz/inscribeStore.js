@@ -726,7 +726,7 @@ class InscribeStore {
             let sql =
                 `SELECT COUNT(*) AS count
                 FROM ${TABLE_NAME.TRANSFER_RECORDS}
-                WHERE from_address = ? OR to_address = ?`;
+                WHERE (from_address = ? OR to_address = ?)`;
             sql += StateCondition(state);
             sql += StageCondition(stage);
             logger.debug('queryTransferByAddress count:', sql);
@@ -737,7 +737,7 @@ class InscribeStore {
             if (count > 0) {
                 sql =
                     `SELECT * FROM ${TABLE_NAME.TRANSFER_RECORDS} 
-                    WHERE from_address = ? OR to_address = ?`;
+                    WHERE (from_address = ? OR to_address = ?)`;
                 sql += StateCondition(state);
                 sql += StageCondition(stage);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
