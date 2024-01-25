@@ -745,7 +745,7 @@ class InscribeStore {
                 list = pageStmt.all(address, address, limit, offset);
             }
 
-            logger.debug('queryTransferByAddress:', address, offset, limit, "ret:", count);
+            logger.debug('queryTransferByAddress:', address, offset, limit, state, stage, "ret:", count);
 
             return makeSuccessResponse({ count, list });
 
