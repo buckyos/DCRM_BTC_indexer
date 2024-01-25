@@ -729,6 +729,7 @@ class InscribeStore {
                 WHERE from_address = ? OR to_address = ?`;
             sql += StateCondition(state);
             sql += StageCondition(stage);
+            logger.debug('queryTransferByAddress count:', sql);
             const countStmt = store.indexDB.prepare(sql);
             const countResult = countStmt.get(address, address);
             const count = countResult.count;
@@ -740,6 +741,8 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += StageCondition(stage);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                logger.debug('queryTransferByAddress list:', sql);
 
                 const pageStmt = store.indexDB.prepare(sql);
                 list = pageStmt.all(address, address, limit, offset);
