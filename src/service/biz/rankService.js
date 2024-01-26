@@ -34,3 +34,7 @@ class RankService {
         return 0;
     }
 }
+
+module.exports = {
+    RankService
+};

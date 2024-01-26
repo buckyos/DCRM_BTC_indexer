@@ -97,3 +97,7 @@ class RankStore {
         }
     }
 }
+
+module.exports = {
+    RankStore
+};
