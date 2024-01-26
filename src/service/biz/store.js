@@ -1,6 +1,12 @@
 const Database = require('better-sqlite3');
 const path = require('path');
-const { SYNC_STATE_DB_FILE, INDEX_STATE_DB_FILE, TOKEN_INDEX_DB_FILE, INSCRIPTION_DB_FILE } = require('../../constants');
+const {
+    SYNC_STATE_DB_FILE,
+    INDEX_STATE_DB_FILE,
+    TOKEN_INDEX_DB_FILE,
+    INSCRIPTION_DB_FILE,
+    ETH_INDEX_DB_FILE
+} = require('../../constants');
 const fs = require('fs');
 const chokidar = require('chokidar');
 
@@ -11,7 +17,8 @@ class Store {
         this.m_indexDB = null;
         this.m_syncStateDB = null;
         this.m_indexStateDB = null;
-        this.m_inscriptionOpDB = null;
+        this.m_inscriptionDB = null;
+        this.m_ethIndexDB = null;
 
         this.m_inited = false;
 
@@ -74,9 +81,13 @@ class Store {
         this.m_indexStateDB = this._connectDB(indexStateDBPath, option);
         this._watchAndReconnect(indexStateDBPath, 'm_indexStateDB', option);
 
-        const inscriptionOpDBPath = path.join(this.m_dataDir, INSCRIPTION_DB_FILE);
-        this.m_inscriptionOpDB = this._connectDB(inscriptionOpDBPath, option);
-        this._watchAndReconnect(inscriptionOpDBPath, 'm_inscriptionOpDB', option);
+        const inscriptionDBPath = path.join(this.m_dataDir, INSCRIPTION_DB_FILE);
+        this.m_inscriptionDB = this._connectDB(inscriptionDBPath, option);
+        this._watchAndReconnect(inscriptionDBPath, 'm_inscriptionDB', option);
+
+        const ethIndexDBPath = path.join(this.m_dataDir, ETH_INDEX_DB_FILE);
+        this.m_ethIndexDB = this._connectDB(ethIndexDBPath, option);
+        this._watchAndReconnect(ethIndexDBPath, 'm_ethIndexDB', option);
 
         // logger.info('init db success');
 
@@ -86,7 +97,7 @@ class Store {
     close() {
         this.m_watchers.forEach(watcher => watcher.close());
 
-        ['m_indexDB', 'm_syncStateDB', 'm_indexStateDB', 'm_inscriptionOpDB'].forEach(dbName => {
+        ['m_indexDB', 'm_syncStateDB', 'm_indexStateDB', 'm_inscriptionDB', 'm_ethIndexDB'].forEach(dbName => {
             if (this[dbName]) {
                 this[dbName].close();
                 this[dbName] = null;
@@ -107,8 +118,12 @@ class Store {
         return this.m_indexStateDB;
     }
 
-    get inscriptionOpDB() {
-        return this.m_inscriptionOpDB;
+    get inscriptionDB() {
+        return this.m_inscriptionDB;
+    }
+
+    get ethIndexDb() {
+        return this.m_ethIndexDB;
     }
 }
 
@@ -119,7 +134,7 @@ const TABLE_NAME = {
     BALANCE: 'balance',
     STATE: 'state',
     RELATIONS: 'relations',
-    INSCRIPTION_OP: 'inscriptions',
+    INSCRIPTIONS: 'inscriptions',
 
     RESONANCE_RECORDS: 'resonance_records',
     CHANT_RECORDS: 'chant_records',
@@ -130,6 +145,7 @@ const TABLE_NAME = {
     INSCRIBE_DATA_TRANSFER_RECORDS: 'inscribe_data_transfer_records',
 
     USER_OPS: 'user_ops',
+    POINTS: 'points'
 };
 
 module.exports = {

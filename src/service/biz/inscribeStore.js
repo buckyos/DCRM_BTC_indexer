@@ -746,6 +746,30 @@ class InscribeStore {
 
                 const pageStmt = store.indexDB.prepare(sql);
                 list = pageStmt.all(address, address, limit, offset);
+
+                const inscriptionIds = list.map(obj => obj.inscription_id);
+
+                const chunkSize = 900; // avoid sqlite limit
+                const inscriptionsMap = {};
+
+                for (let i = 0; i < inscriptionIds.length; i += chunkSize) {
+                    const chunk = inscriptionIds.slice(i, i + chunkSize);
+                    const stmt = store.inscriptionDB.prepare(
+                        `SELECT inscription_id, inscription_number 
+                        FROM ${TABLE_NAME.INSCRIPTIONS} 
+                        WHERE inscription_id IN (${chunk.map(() => '?').join(', ')})`
+                    );
+                    const chunkResults = stmt.all(...chunk);
+
+                    chunkResults.forEach(ins => {
+                        inscriptionsMap[ins.inscription_id] = ins.inscription_number;
+                    });
+                }
+
+                list = list.map(item => ({
+                    ...item,
+                    inscription_number: inscriptionsMap[item.inscription_id] || 0
+                }));
             }
 
             logger.debug('queryTransferByAddress:', address, offset, limit, state, stage, "ret:", count);
@@ -758,6 +782,76 @@ class InscribeStore {
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
+
+    queryTransferByFromAddress(address, limit, offset, state, order, stage) {
+        if (!address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "asc" ? "asc" : "desc";
+
+        try {
+            let list = [];
+            let sql =
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.TRANSFER_RECORDS}
+                WHERE from_address = ?`;
+            sql += StateCondition(state);
+            sql += StageCondition(stage);
+            logger.debug('queryTransferByFromAddress count:', sql);
+            const countStmt = store.indexDB.prepare(sql);
+            const countResult = countStmt.get(address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.TRANSFER_RECORDS} 
+                    WHERE from_address = ?`;
+                sql += StateCondition(state);
+                sql += StageCondition(stage);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+
+                logger.debug('queryTransferByFromAddress list:', sql);
+
+                const pageStmt = store.indexDB.prepare(sql);
+                list = pageStmt.all(address, limit, offset);
+
+                const inscriptionIds = list.map(obj => obj.inscription_id);
+
+                const chunkSize = 900; // avoid sqlite limit
+                const inscriptionsMap = {};
+
+                for (let i = 0; i < inscriptionIds.length; i += chunkSize) {
+                    const chunk = inscriptionIds.slice(i, i + chunkSize);
+                    const stmt = store.inscriptionDB.prepare(
+                        `SELECT inscription_id, inscription_number 
+                        FROM ${TABLE_NAME.INSCRIPTIONS} 
+                        WHERE inscription_id IN (${chunk.map(() => '?').join(', ')})`
+                    );
+                    const chunkResults = stmt.all(...chunk);
+
+                    chunkResults.forEach(ins => {
+                        inscriptionsMap[ins.inscription_id] = ins.inscription_number;
+                    });
+                }
+
+                list = list.map(item => ({
+                    ...item,
+                    inscription_number: inscriptionsMap[item.inscription_id] || 0
+                }));
+            }
+
+            logger.debug('queryTransferByAddress:', address, offset, limit, state, stage, "ret:", count);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryTransferByAddress failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
 
     queryTransferByTx(txid) {
         if (!txid) {
@@ -1133,10 +1227,10 @@ class InscribeStore {
         try {
             let sql =
                 `SELECT *
-                FROM ${TABLE_NAME.INSCRIPTION_OP}
+                FROM ${TABLE_NAME.INSCRIPTIONS}
                 WHERE inscription_id = ?`;
 
-            const stmt = store.inscriptionOpDB.prepare(sql);
+            const stmt = store.inscriptionDB.prepare(sql);
             const ret = stmt.get(inscriptionId);
 
             if (!ret) {

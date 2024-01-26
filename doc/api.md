@@ -934,6 +934,49 @@ const InscriptionOpState = {
     }
     ```  
 
+#### 查询某地址发起的转账
+
+    /transfer_from/:address/:limit?/:offset?/:state?/:order?/:stage?
+
+    GET
+
+    参数
+
+    address: 转账发起地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    stage: string类型，需要查询的stage状态 'inscribe' or 'transfer' or 'all', 默认 'all'
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            inscription_id,         // 铭文id
+            stage,                  // 阶段
+            genesis_block_height,   // reveal tx块号
+            genesis_timestamp,      // reveal tx时间
+            genesis_txid,           // reveal txid
+            from_address,           // 发起地址
+            content,                // 铭文内容
+            block_height,           // 打包块号
+            timestamp,              // 打包时间
+            txid,                   // 打包交易
+            to_address,             // 接收地址
+            state                   // 转账状态
+        }
+    }
+    ```  
+
 #### 根据tx获取转账记录
 
     /transfer_by_tx/:txid
