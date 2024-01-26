@@ -226,6 +226,11 @@ class OrdClient {
         }
     }
 
+    /**
+     * @command get content by inscription id
+     * @param {string} inscription_id
+     * @returns {Promise<{ret: number, data: object}>}
+     */
     async get_content_by_inscription(inscription_id) {
         try {
             const response = await this.client.get(

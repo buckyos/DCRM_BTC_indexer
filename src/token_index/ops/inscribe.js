@@ -445,7 +445,7 @@ class InscribeDataOperator {
         for (const op of this.pending_inscribe_ops) {
             if (
                 op.state === InscriptionOpState.OK &&
-                op.inscription_item.content.ph === hash
+                op.inscription_item.hash === hash
             ) {
                 assert(
                     _.isNumber(op.hash_distance),
@@ -607,18 +607,18 @@ class InscribeDataOperator {
         }
 
         console.info(
-            `new inscribe data record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.price}`,
+            `new inscribe data record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.hash} ${op.inscription_item.amt} ${op.inscription_item.text} ${op.inscription_item.price}`,
         );
 
         // 4. update inscribe_data table if ready
         if (op.state === InscriptionOpState.OK) {
             const { ret } = await this.storage.add_inscribe_data(
-                op.inscription_item.content.ph,
+                op.inscription_item.hash,
                 op.inscription_item.inscription_id,
                 op.inscription_item.address,
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,
-                op.inscription_item.content.text,
+                op.inscription_item.text,
                 op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
                 0,
             );
@@ -634,7 +634,7 @@ class InscribeDataOperator {
             const { ret: update_relation_ret } =
                 await this.relation_storage.insert_relation(
                     op.inscription_item.address,
-                    op.inscription_item.content.ph,
+                    op.inscription_item.hash,
                     op.inscription_item.inscription_id,
                     op.inscription_item.block_height,
                     op.inscription_item.timestamp,
@@ -642,7 +642,7 @@ class InscribeDataOperator {
                 );
             if (update_relation_ret !== 0) {
                 console.error(
-                    `failed to update owner relation ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph}`,
+                    `failed to update owner relation ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.hash}`,
                 );
                 return { ret: update_relation_ret };
             }

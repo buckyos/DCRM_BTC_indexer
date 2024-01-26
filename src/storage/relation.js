@@ -135,6 +135,7 @@ class UserHashRelationStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
+                        console.log(`new relations ${address} ${hash} ${relation}`);
                         resolve({
                             ret: 0,
                         });
@@ -250,6 +251,7 @@ class UserHashRelationStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
+                        console.log(`owner relations updated successfully ${from_address} -> ${to_address} ${hash}`);
                         resolve({
                             ret: 0,
                         });
@@ -340,6 +342,12 @@ class UserHashRelationStorage {
         });
     }
 
+    /**
+     * @comment delete resonance relation if exists for (address, hash) pair
+     * @param {string} address 
+     * @param {string} hash 
+     * @returns {Promise<{ret: number, count: number}>}
+     */
     async delete_resonance(address, hash) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
@@ -347,24 +355,24 @@ class UserHashRelationStorage {
 
         return new Promise((resolve) => {
             this.db.run(
-                `DELETE FROM relations WHERE address = ? AND hash = ?`,
-                [address, hash],
+                `DELETE FROM relations WHERE address = ? AND hash = ? AND relation = ?`,
+                [address, hash, UserHashRelation.Resonance],
                 function (err) {
                     if (err) {
                         console.error(
-                            `failed to delete relation: ${address} ${hash} ${err}`,
+                            `failed to delete resonance relation: ${address} ${hash} ${err}`,
                         );
                         resolve({ ret: -1 });
                     } else {
                         if (this.changes === 0) {
                             console.info(
-                                `No relation found: ${address} ${hash}`,
+                                `No resonance relation found: ${address} ${hash}`,
                             );
                             resolve({
                                 ret: 0,
                             });
                         } else {
-                            console.log(`Relations deleted successfully ${address} ${hash}`);
+                            console.log(`Resonance relations deleted successfully ${address} ${hash}`);
                             resolve({
                                 ret: 0,
                             });
@@ -375,6 +383,11 @@ class UserHashRelationStorage {
         });
     }
 
+    /**
+     * @comment delete all resonance relations for address
+     * @param {string} address
+     * @returns {Promise<{ret: number}>}
+     */
     async delete_resonances_by_address(address) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
@@ -407,6 +420,11 @@ class UserHashRelationStorage {
         });
     }
 
+    /**
+     * @comment delete all relations for address
+     * @param {string} address
+     * @returns {Promise<{ret: number}>}
+     */
     async clear_user_all_resonances(address) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
