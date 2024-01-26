@@ -25,8 +25,8 @@ class MintService {
         return this.m_store.queryMintRecordByAddress(
             address,
             //limit == 0 || limit == null ? Number.MAX_SAFE_INTEGER : limit,
-            limit || 0,
-            offset || 0,
+            Math.max((parseInt(limit, 10) || 0), 0),
+            Math.max((parseInt(offset, 10) || 0), 0),
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -41,8 +41,8 @@ class MintService {
 
         return this.m_store.queryLuckyMintRecordByAddress(
             address,
-            limit || 0,
-            offset || 0,
+            Math.max((parseInt(limit, 10) || 0), 0),
+            Math.max((parseInt(offset, 10) || 0), 0),
             state && _.isString(state) ? state.toLowerCase() : "all",
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
@@ -63,8 +63,8 @@ class MintService {
 
         return this.m_store.queryLuckyMintRecord(
             //length == 0 || length == null ? Number.MAX_SAFE_INTEGER : length,
-            limit || 0,
-            offset || 0,
+            Math.max((parseInt(limit, 10) || 0), 0),
+            Math.max((parseInt(offset, 10) || 0), 0),
             order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
