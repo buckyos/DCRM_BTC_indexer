@@ -319,6 +319,10 @@ class TransferOperator {
             return { ret: 0, state: InscriptionOpState.OK };
         }
 
+        const is_exchange =
+            inscription_item.to_address ===
+            this.config.token.account.exchange_address;
+
         // transfer to the output address
         const { ret: transfer_ret } =
             await this.balance_storage.transfer_balance(
@@ -335,16 +339,15 @@ class TransferOperator {
         }
 
         // add balance record for the from_address
-        const { ret: add_ret } =
-            await this.balance_storage.add_balance_record(
-                inscription_item.inscription_id,
-                inscription_item.from_address,
-                BigNumberUtil.multiply(content.amt, '-1'),
-                null,
-                inscription_item.block_height,
-                inscription_item.timestamp,
-                UserOp.Transfer,
-            );
+        const { ret: add_ret } = await this.balance_storage.add_balance_record(
+            inscription_item.inscription_id,
+            inscription_item.from_address,
+            BigNumberUtil.multiply(content.amt, '-1'),
+            null,
+            inscription_item.block_height,
+            inscription_item.timestamp,
+            is_exchange ? UserOp.Exchange : UserOp.Transfer,
+        );
         if (add_ret !== 0) {
             console.error(
                 `failed to add balance record ${inscription_item.from_address} ${inscription_item.to_address} ${content.amt}`,
@@ -353,16 +356,15 @@ class TransferOperator {
         }
 
         // add balance record for the to_address
-        const { ret: add_ret2 } =
-            await this.balance_storage.add_balance_record(
-                inscription_item.inscription_id,
-                inscription_item.to_address,
-                content.amt,
-                null,
-                inscription_item.block_height,
-                inscription_item.timestamp,
-                UserOp.Transfer,
-            );
+        const { ret: add_ret2 } = await this.balance_storage.add_balance_record(
+            inscription_item.inscription_id,
+            inscription_item.to_address,
+            content.amt,
+            null,
+            inscription_item.block_height,
+            inscription_item.timestamp,
+            is_exchange ? UserOp.Exchange : UserOp.Transfer,
+        );
 
         if (add_ret2 !== 0) {
             console.error(
@@ -385,10 +387,7 @@ class TransferOperator {
         }
 
         // if to_address is the exchange address, then send amt inner token to from_address
-        if (
-            inscription_item.to_address ===
-            this.config.token.account.exchange_address
-        ) {
+        if (is_exchange) {
             // transfer to mint pool
             console.info(
                 `exchange inner token ${inscription_item.inscription_id} ${inscription_item.from_address} ${content.amt}`,
@@ -422,24 +421,6 @@ class TransferOperator {
                     `failed to add inner balance record ${inscription_item.from_address} ${inscription_item.to_address} ${content.amt}`,
                 );
                 return { ret: add_ret };
-            }
-
-            // add balance record for the exchange address
-            const { ret: add_ret2 } =
-                await this.balance_storage.add_inner_balance_record(
-                    inscription_item.inscription_id,
-                    inscription_item.to_address,
-                    content.amt,
-                    null,
-                    inscription_item.block_height,
-                    inscription_item.timestamp,
-                    UserOp.Exchange,
-                );
-            if (add_ret2 !== 0) {
-                console.error(
-                    `failed to add inner balance record ${inscription_item.from_address} ${inscription_item.to_address} ${content.amt}`,
-                );
-                return { ret: add_ret2 };
             }
         }
 
