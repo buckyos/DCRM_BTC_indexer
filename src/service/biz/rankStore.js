@@ -96,7 +96,7 @@ class RankStore {
 
             // calc rank = point*size
             for (const item of list) {
-                item.point = pointsMap[item.hash] || 0;
+                item.point = pointsMap[item.hash] || 1;
                 item.size = this.m_hashSizeList[item.hash];
                 item.rank = item.point * item.size;
             }
