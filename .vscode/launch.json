@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+    
         {
             "type": "node",
             "request": "launch",
@@ -23,6 +24,14 @@
             "name": "test_transfer",
             "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/src/test/test_transfer.js",
+            "outFiles": ["${workspaceFolder}/**/*.js"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "test_content_scanner",
+            "skipFiles": ["<node_internals>/**"],
+            "program": "${workspaceFolder}/src/test/content_scanner.js",
             "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
