@@ -364,6 +364,7 @@ class UserHashRelationStorage {
                                 ret: 0,
                             });
                         } else {
+                            console.log(`Relations deleted successfully ${address} ${hash}`);
                             resolve({
                                 ret: 0,
                             });

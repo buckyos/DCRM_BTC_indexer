@@ -21,6 +21,7 @@ const UserOp = {
 
     InscribeTransfer: 'inscribe_transfer',
     Transfer: 'transfer',
+    Exchange: 'exchange',
 
     SetPrice: 'set_price',
 };
@@ -37,6 +38,7 @@ class TokenIndexStorage {
             `data_dir should be string: ${data_dir}`,
         );
 
+        this.config = config;
         this.db_file_path = path.join(data_dir, TOKEN_INDEX_DB_FILE);
         this.db = null;
         this.during_transaction = false;
@@ -92,7 +94,7 @@ class TokenIndexStorage {
     }
 
     /**
-     * 
+     *
      * @returns {TokenBalanceStorage}
      */
     get_balance_storage() {
@@ -809,7 +811,10 @@ class TokenIndexStorage {
             BigNumberUtil.is_positive_number_string(service_charge),
             `service_charge should be positive number string ${service_charge}`,
         );
-        assert(text == null || typeof text === 'string', `text should be string`);
+        assert(
+            text == null || typeof text === 'string',
+            `text should be string`,
+        );
         assert(
             BigNumberUtil.is_positive_number_string(price),
             `price should be positive number string ${price}`,
@@ -1314,7 +1319,10 @@ class TokenIndexStorage {
             typeof inscription_id === 'string',
             `inscription_id should be string`,
         );
-        assert(typeof from_address === 'string', `from_address should be string`);
+        assert(
+            typeof from_address === 'string',
+            `from_address should be string`,
+        );
         assert(
             Number.isInteger(block_height) && block_height >= 0,
             `block_height should be non-negative integer`,
@@ -1329,13 +1337,24 @@ class TokenIndexStorage {
         );
 
         // first append user op
+        assert(
+            _.isString(this.config.token.account.exchange_address),
+            `exchange_address should be string`,
+        );
+        let op;
+        if (to_address === this.config.token.account.exchange_address) {
+            op = UserOp.Exchange;
+        } else {
+            op = UserOp.Transfer;
+        }
+
         const { ret: user_op_ret } = await this.add_user_op(
             from_address,
             inscription_id,
             block_height,
             timestamp,
             txid,
-            UserOp.Transfer,
+            op,
             state,
         );
         if (user_op_ret !== 0) {

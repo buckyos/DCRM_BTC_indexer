@@ -521,7 +521,7 @@ class InscribeDataOperator {
                 );
             if (record_ret !== 0) {
                 console.error(
-                    `failed to record inscribe op ${op.inscription_item.inscription_id}`,
+                    `failed to record inscribe data op ${op.inscription_item.inscription_id}`,
                 );
                 return { ret: record_ret };
             }
@@ -607,7 +607,7 @@ class InscribeDataOperator {
         }
 
         console.info(
-            `new inscribe record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.price}`,
+            `new inscribe data record ${op.inscription_item.block_height} ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.content.ph} ${op.inscription_item.content.amt} ${op.inscription_item.content.text} ${op.inscription_item.price}`,
         );
 
         // 4. update inscribe_data table if ready

@@ -60,7 +60,7 @@ class TransferOperator {
         }
 
         console.log(
-            `record transfer inscribe ${inscription_item.block_height} ${
+            `record inscribe transfer ${inscription_item.block_height} ${
                 inscription_item.inscription_id
             } ${inscription_item.address} ${JSON.stringify(
                 inscription_item.content,
