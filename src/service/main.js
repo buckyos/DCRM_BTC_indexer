@@ -40,6 +40,9 @@ class Service {
 
         const searchService = new SearchService();
         searchService.registerRouter(this.m_router);
+
+        const rankService = new RankService();
+        rankService.registerRouter(this.m_router);
     }
 
     async start() {
