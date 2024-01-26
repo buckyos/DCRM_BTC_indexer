@@ -22,6 +22,7 @@ class RankStore {
             const now = Date.now();
             if (now - this.m_resonantRankList.lastUpdateTime > UPDATE_INTERVAL) {
                 const list = await this._getResonantRankList();
+                console.debug('resonant rank list:', list);
                 if (list) {
                     this.m_resonantRankList.list = list;
                     this.m_resonantRankList.lastUpdateTime = now;
@@ -52,6 +53,7 @@ class RankStore {
                 WHERE price != '0' AND resonance_count < 15`
             );
             const list = stmt.all();
+            console.debug('resonant data list:', list);
 
             for (const item of list) {
                 if (this.m_hashSizeList[item.hash]) {
@@ -65,12 +67,16 @@ class RankStore {
                 this.m_hashSizeList[item.hash] = size;
             }
 
+            console.debug('hash size list:', this.m_hashSizeList);
+
             const pointsStmt = store.ethIndexDb.prepare(
                 `SELECT hash, MAX(point) AS max_point
                 FROM ${TABLE_NAME.POINTS}
                 GROUP BY hash;`
             );
             const pointsList = pointsStmt.all();
+
+            console.debug('point list:', pointsList);
 
             let pointsMap = {};
             for (const item of pointsList) {
