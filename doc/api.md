@@ -929,7 +929,8 @@ const InscriptionOpState = {
             timestamp,              // 打包时间
             txid,                   // 打包交易
             to_address,             // 接收地址
-            state                   // 转账状态
+            state,                  // 转账状态
+            inscription_number      // 铭文编号
         }
     }
     ```  
@@ -972,7 +973,8 @@ const InscriptionOpState = {
             timestamp,              // 打包时间
             txid,                   // 打包交易
             to_address,             // 接收地址
-            state                   // 转账状态
+            state,                  // 转账状态
+            inscription_number      // 铭文编号
         }
     }
     ```  

@@ -8,6 +8,7 @@ const { InscribeService } = require('./biz/inscribeService');
 const { MintService } = require('./biz/mintService');
 const { ChainService } = require('./biz/chainService');
 const { SearchService } = require('./biz/searchService');
+const { RankService } = require('./biz/rankService');
 const { config } = require('./config/config');
 const { store } = require('./biz/store');
 const path = require('path');
