@@ -50,10 +50,14 @@ class RankStore {
             const stmt = store.indexDB.prepare(
                 `SELECT * FROM 
                 ${TABLE_NAME.INSCRIBE_DATA} 
-                WHERE price != '0' AND resonance_count < 15`
+                WHERE price == '0' AND resonance_count < 15`
             );
             const list = stmt.all();
             console.debug('resonant data list:', list);
+
+            if (list.length == 0) {
+                return [];
+            }
 
             for (const item of list) {
                 if (this.m_hashSizeList[item.hash]) {
