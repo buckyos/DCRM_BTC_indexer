@@ -269,7 +269,7 @@ class TokenBalanceStorage {
                     `coinbase item inner_amount should be string: ${item.inner_amount}`,
                 );
 
-                const { ret } = await this.init_balance(
+                const { ret, is_first } = await this.init_balance(
                     item.address,
                     item.amount,
                     item.inner_amount,
@@ -279,6 +279,45 @@ class TokenBalanceStorage {
                         `failed to init coinbase balance for coinbase`,
                     );
                     return { ret };
+                }
+
+                // add coinbase balance record
+                if (is_first) {
+                    if (BigNumberUtil.compare(item.amount, '0') > 0) {
+                        const { ret } = await this.add_balance_record(
+                            '',
+                            item.address,
+                            item.amount,
+                            item.amount,
+                            0,
+                            0,
+                            'coinbase',
+                        );
+                        if (ret !== 0) {
+                            console.error(
+                                `failed to add coinbase balance record for ${item.address}`,
+                            );
+                            return { ret };
+                        }
+                    }
+
+                    if (BigNumberUtil.compare(item.inner_amount, '0') > 0) {
+                        const { ret } = await this.add_inner_balance_record(
+                            '',
+                            item.address,
+                            item.inner_amount,
+                            item.inner_amount,
+                            0,
+                            0,
+                            'coinbase',
+                        );
+                        if (ret !== 0) {
+                            console.error(
+                                `failed to add coinbase balance record for ${item.address}`,
+                            );
+                            return { ret };
+                        }
+                    }
                 }
 
                 console.log(
@@ -293,7 +332,7 @@ class TokenBalanceStorage {
      * @comment set the init balance for address, if address exists, do nothing
      * @param {string} address
      * @param {string} amount
-     * @returns {ret: number}
+     * @returns {ret: number, is_first: boolean}
      */
     async init_balance(address, amount, inner_amount) {
         assert(this.db != null, `db should not be null`);
@@ -313,7 +352,7 @@ class TokenBalanceStorage {
                     inner_transferable_amount
                 ) VALUES (?, ?, ?, ?, ?)`,
                 [address, amount, '0', inner_amount, '0'],
-                (err) => {
+                function (err) {
                     if (err) {
                         console.error(
                             `failed to init balance for ${address}`,
@@ -321,7 +360,15 @@ class TokenBalanceStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
-                        resolve({ ret: 0 });
+                        if (this.changes > 0) {
+                            console.log(
+                                `first init coinbase balance for ${address} ${amount} ${inner_amount}`,
+                            );
+
+                            resolve({ ret: 0, is_first: true });
+                        } else {
+                            resolve({ ret: 0, is_first: false });
+                        }
                     }
                 },
             );
@@ -1445,7 +1492,7 @@ class TokenBalanceStorage {
 
     /**
      * @comment get next sequence for address
-     * @param {string} address 
+     * @param {string} address
      * @returns {ret: number, sequence: number}
      */
     async _get_address_sequence(address) {
@@ -1479,8 +1526,8 @@ class TokenBalanceStorage {
 
     /**
      * @comment set next sequence for address
-     * @param {string} address 
-     * @param {number} sequence 
+     * @param {string} address
+     * @param {number} sequence
      * @returns {ret: number}
      */
     async _set_address_sequence(address, sequence) {
@@ -1489,10 +1536,7 @@ class TokenBalanceStorage {
             typeof address === 'string',
             `address should be string: ${address}`,
         );
-        assert(
-            _.isNumber(sequence),
-            `sequence should be number: ${sequence}`,
-        );
+        assert(_.isNumber(sequence), `sequence should be number: ${sequence}`);
 
         return new Promise((resolve) => {
             this.db.run(
@@ -1513,4 +1557,8 @@ class TokenBalanceStorage {
     }
 }
 
-module.exports = { TokenBalanceStorage, UpdatePoolBalanceOp, BalanceRecordTokenType };
+module.exports = {
+    TokenBalanceStorage,
+    UpdatePoolBalanceOp,
+    BalanceRecordTokenType,
+};
