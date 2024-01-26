@@ -23,6 +23,12 @@ const UpdatePoolBalanceOp = {
     InscribeData: 'inscribe_data',
 };
 
+// the token type, default is brc-20 token, inner is inner token
+const BalanceRecordTokenType = {
+    Default: 0,
+    Inner: 1,
+};
+
 class TokenBalanceStorage {
     constructor(owner, config) {
         assert(owner != null, `owner should not be null`);
@@ -77,6 +83,8 @@ class TokenBalanceStorage {
 
         return new Promise((resolve) => {
             this.db.serialize(() => {
+                let has_error = false;
+
                 // Create balance table
                 this.db.run(
                     `CREATE TABLE IF NOT EXISTS balance (
@@ -93,10 +101,74 @@ class TokenBalanceStorage {
                     (err) => {
                         if (err) {
                             console.error(`failed to balance table: ${err}`);
+                            has_error = true;
                             resolve({ ret: -1 });
+                            return;
                         }
 
                         console.log(`created balance table`);
+                    },
+                );
+
+                if (has_error) {
+                    return;
+                }
+
+                // create balance record table
+                this.db.exec(
+                    `CREATE TABLE IF NOT EXISTS balance_records (
+                        address_sequence INTEGER,
+                        inscription_id TEXT,
+                        address TEXT,
+                    
+                        token_type INTEGER,
+                        change_amount TEXT,
+                        balance TEXT,
+                        
+                        block_height INTEGER,
+                        timestamp INTEGER,
+                        
+                        op_type TEXT,
+                        PRIMARY KEY (address_sequence, address)
+                    );
+                      
+                    CREATE TABLE IF NOT EXISTS address_sequence (
+                        address TEXT PRIMARY KEY,
+                        sequence INTEGER NOT NULL
+                    );
+                    `,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to balance record table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                            return;
+                        }
+
+                        console.log(`created balance record table`);
+                    },
+                );
+
+                // create index for balance record table
+                if (has_error) {
+                    return;
+                }
+
+                this.db.exec(
+                    `CREATE INDEX IF NOT EXISTS balance_records_inscription_id_index ON balance_records (address);`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `failed to create index for balance record table: ${err}`,
+                            );
+                            has_error = true;
+                            resolve({ ret: -1 });
+                            return;
+                        }
+
+                        console.log(`created index for balance record table`);
                         resolve({ ret: 0 });
                     },
                 );
@@ -175,12 +247,27 @@ class TokenBalanceStorage {
         assert(this.db != null, `db should not be null`);
 
         if (this.config.token.coinbase != null) {
-            assert(_.isArray(this.config.token.coinbase), `coinbase should be array: ${this.config.token.coinbase}`);
+            assert(
+                _.isArray(this.config.token.coinbase),
+                `coinbase should be array: ${this.config.token.coinbase}`,
+            );
             for (const item of this.config.token.coinbase) {
-                assert(_.isObject(item), `coinbase item should be object: ${item}`);
-                assert(_.isString(item.address), `coinbase item address should be string: ${item.address}`);
-                assert(_.isString(item.amount), `coinbase item amount should be string: ${item.amount}`);
-                assert(_.isString(item.inner_amount), `coinbase item inner_amount should be string: ${item.inner_amount}`);
+                assert(
+                    _.isObject(item),
+                    `coinbase item should be object: ${item}`,
+                );
+                assert(
+                    _.isString(item.address),
+                    `coinbase item address should be string: ${item.address}`,
+                );
+                assert(
+                    _.isString(item.amount),
+                    `coinbase item amount should be string: ${item.amount}`,
+                );
+                assert(
+                    _.isString(item.inner_amount),
+                    `coinbase item inner_amount should be string: ${item.inner_amount}`,
+                );
 
                 const { ret } = await this.init_balance(
                     item.address,
@@ -188,11 +275,15 @@ class TokenBalanceStorage {
                     item.inner_amount,
                 );
                 if (ret !== 0) {
-                    console.error(`failed to init coinbase balance for coinbase`);
+                    console.error(
+                        `failed to init coinbase balance for coinbase`,
+                    );
                     return { ret };
                 }
 
-                console.log(`init coinbase balance for ${item.address} ${item.amount} ${item.inner_amount}`);
+                console.log(
+                    `init coinbase balance for ${item.address} ${item.amount} ${item.inner_amount}`,
+                );
             }
         }
 
@@ -331,6 +422,12 @@ class TokenBalanceStorage {
         return { ret: 0 };
     }
 
+    /**
+     * @comment reset the balance for address, if address exists, update it
+     * @param {string} address
+     * @param {object} balance
+     * @returns {ret: number}
+     */
     async set_all_balance(address, balance) {
         assert(this.db != null, `db should not be null`);
         assert(typeof address === 'string', `address should be string`);
@@ -923,7 +1020,7 @@ class TokenBalanceStorage {
                 } else {
                     resolve({
                         ret: 0,
-                        value: row ? row.amount : '0',
+                        amount: row ? row.amount : '0',
                     });
                 }
             });
@@ -1144,6 +1241,276 @@ class TokenBalanceStorage {
 
         return { ret: 0 };
     }
+
+    /**
+     * @comment add balance record for brc-20 token
+     * @param {string} inscription_id
+     * @param {string} address
+     * @param {string} change_amount
+     * @param {string} balance
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {UserOp} op_type
+     * @returns {ret: number}
+     */
+    async add_balance_record(
+        inscription_id,
+        address,
+        change_amount,
+        balance,
+        block_height,
+        timestamp,
+        op_type,
+    ) {
+        return await this._add_balance_record(
+            inscription_id,
+            address,
+            BalanceRecordTokenType.Default,
+            change_amount,
+            balance,
+            block_height,
+            timestamp,
+            op_type,
+        );
+    }
+
+    /**
+     * @comment add inner token's balance record
+     * @param {string} inscription_id
+     * @param {string} address
+     * @param {string} change_amount
+     * @param {string} balance
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {UserOp} op_type
+     * @returns {ret: number}
+     */
+    async add_inner_balance_record(
+        inscription_id,
+        address,
+        change_amount,
+        balance,
+        block_height,
+        timestamp,
+        op_type,
+    ) {
+        return await this._add_balance_record(
+            inscription_id,
+            address,
+            BalanceRecordTokenType.Inner,
+            change_amount,
+            balance,
+            block_height,
+            timestamp,
+            op_type,
+        );
+    }
+
+    /**
+     *
+     * @param {string} inscription_id
+     * @param {string} address
+     * @param {number} token_type
+     * @param {string} change_amount
+     * @param {string} balance
+     * @param {number} block_height
+     * @param {number} timestamp
+     * @param {UserOp} op_type
+     * @returns {ret: number}
+     */
+    async _add_balance_record(
+        inscription_id,
+        address,
+        token_type,
+        change_amount,
+        balance,
+        block_height,
+        timestamp,
+        op_type,
+    ) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof inscription_id === 'string',
+            `inscription_id should be string: ${inscription_id}`,
+        );
+        assert(
+            typeof address === 'string',
+            `address should be string: ${address}`,
+        );
+        assert(
+            _.isNumber(token_type),
+            `token_type should be number: ${token_type}`,
+        );
+        assert(
+            BigNumberUtil.is_number_string(change_amount),
+            `change_amount should be valid number string: ${change_amount}`,
+        );
+        assert(
+            balance == null || BigNumberUtil.is_number_string(balance),
+            `balance should be valid number string: ${balance}`,
+        );
+        assert(
+            _.isNumber(block_height),
+            `block_height should be number: ${block_height}`,
+        );
+        assert(
+            _.isNumber(timestamp),
+            `timestamp should be number: ${timestamp}`,
+        );
+        assert(
+            typeof op_type === 'string',
+            `op_type should be string: ${op_type}`,
+        );
+
+        // if balance is null, get it from db
+        if (balance == null) {
+            if (token_type === BalanceRecordTokenType.Default) {
+                const { ret, amount } = await this.get_balance(address);
+                if (ret != 0) {
+                    console.error(`failed to get balance for ${address}`);
+                    return { ret };
+                }
+
+                balance = amount;
+            } else {
+                assert(token_type === BalanceRecordTokenType.Inner);
+                const { ret, amount } = await this.get_inner_balance(address);
+                if (ret != 0) {
+                    console.error(`failed to get inner balance for ${address}`);
+                    return { ret };
+                }
+
+                balance = amount;
+            }
+
+            assert(
+                BigNumberUtil.is_positive_number_string(balance),
+                `balance should be valid number string: ${balance}`,
+            );
+        }
+
+        // get next sequence
+        const { ret: get_sequence_ret, sequence } =
+            await this._get_address_sequence(address);
+        if (get_sequence_ret != 0) {
+            console.error(`failed to get sequence for ${address}`);
+            return { ret: get_sequence_ret };
+        }
+
+        // update sequence
+        const { ret: set_sequence_ret } = await this._set_address_sequence(
+            address,
+            sequence + 1,
+        );
+        if (set_sequence_ret != 0) {
+            console.error(`failed to set sequence for ${address}`);
+            return { ret: set_sequence_ret };
+        }
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT INTO balance_records (
+                    address_sequence,
+                    inscription_id,
+                    address,
+                    token_type,
+                    change_amount,
+                    balance,
+                    block_height,
+                    timestamp,
+                    op_type
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    sequence,
+                    inscription_id,
+                    address,
+                    token_type,
+                    change_amount,
+                    balance,
+                    block_height,
+                    timestamp,
+                    op_type,
+                ],
+                (err) => {
+                    if (err) {
+                        console.error('failed to add balance record', err);
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     * @comment get next sequence for address
+     * @param {string} address 
+     * @returns {ret: number, sequence: number}
+     */
+    async _get_address_sequence(address) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof address === 'string',
+            `address should be string: ${address}`,
+        );
+
+        return new Promise((resolve) => {
+            this.db.get(
+                `SELECT sequence FROM address_sequence WHERE address = ?`,
+                [address],
+                (err, row) => {
+                    if (err) {
+                        console.error(
+                            `Could not get sequence for address ${address}, ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        if (row == null) {
+                            resolve({ ret: 0, sequence: 0 });
+                        } else {
+                            resolve({ ret: 0, sequence: row.sequence });
+                        }
+                    }
+                },
+            );
+        });
+    }
+
+    /**
+     * @comment set next sequence for address
+     * @param {string} address 
+     * @param {number} sequence 
+     * @returns {ret: number}
+     */
+    async _set_address_sequence(address, sequence) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof address === 'string',
+            `address should be string: ${address}`,
+        );
+        assert(
+            _.isNumber(sequence),
+            `sequence should be number: ${sequence}`,
+        );
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO address_sequence (address, sequence) VALUES (?, ?)`,
+                [address, sequence],
+                (err) => {
+                    if (err) {
+                        console.error(
+                            `Could not set sequence for address ${address}, ${err}`,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
 }
 
-module.exports = { TokenBalanceStorage, UpdatePoolBalanceOp };
+module.exports = { TokenBalanceStorage, UpdatePoolBalanceOp, BalanceRecordTokenType };

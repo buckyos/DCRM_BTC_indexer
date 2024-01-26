@@ -1,5 +1,5 @@
 const { BigNumberUtil } = require('../../util');
-const { TokenIndexStorage } = require('../../storage/token');
+const { TokenIndexStorage, UserOp } = require('../../storage/token');
 const assert = require('assert');
 const { InscriptionOpState, InscriptionStage } = require('./state');
 const {
@@ -334,6 +334,43 @@ class TransferOperator {
             return { ret: transfer_ret };
         }
 
+        // add balance record for the from_address
+        const { ret: add_ret } =
+            await this.balance_storage.add_balance_record(
+                inscription_item.inscription_id,
+                inscription_item.from_address,
+                BigNumberUtil.multiply(content.amt, '-1'),
+                null,
+                inscription_item.block_height,
+                inscription_item.timestamp,
+                UserOp.Transfer,
+            );
+        if (add_ret !== 0) {
+            console.error(
+                `failed to add balance record ${inscription_item.from_address} ${inscription_item.to_address} ${content.amt}`,
+            );
+            return { ret: add_ret };
+        }
+
+        // add balance record for the to_address
+        const { ret: add_ret2 } =
+            await this.balance_storage.add_balance_record(
+                inscription_item.inscription_id,
+                inscription_item.to_address,
+                content.amt,
+                null,
+                inscription_item.block_height,
+                inscription_item.timestamp,
+                UserOp.Transfer,
+            );
+
+        if (add_ret2 !== 0) {
+            console.error(
+                `failed to add balance record ${inscription_item.from_address} ${inscription_item.to_address} ${content.amt}`,
+            );
+            return { ret: add_ret2 };
+        }
+
         // FIXME: should not happen
         if (transfer_ret > 0) {
             assert(
@@ -367,6 +404,42 @@ class TransferOperator {
                     `failed to update inner balance ${inscription_item.from_address} ${content.amt}`,
                 );
                 return { ret };
+            }
+
+            // add balance record for the address with inner token
+            const { ret: add_ret } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    inscription_item.from_address,
+                    content.amt,
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Exchange,
+                );
+            if (add_ret !== 0) {
+                console.error(
+                    `failed to add inner balance record ${inscription_item.from_address} ${inscription_item.to_address} ${content.amt}`,
+                );
+                return { ret: add_ret };
+            }
+
+            // add balance record for the exchange address
+            const { ret: add_ret2 } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    inscription_item.to_address,
+                    content.amt,
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Exchange,
+                );
+            if (add_ret2 !== 0) {
+                console.error(
+                    `failed to add inner balance record ${inscription_item.from_address} ${inscription_item.to_address} ${content.amt}`,
+                );
+                return { ret: add_ret2 };
             }
         }
 

@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { OrdClient } = require('../btc/ord');
 const { SatPoint } = require('../btc/point');
-const { BigNumberUtil, Util } = require('../util');
+const { Util } = require('../util');
 
 const InscriptionOp = {
     Mint: 'mint',

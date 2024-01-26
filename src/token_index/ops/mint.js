@@ -3,6 +3,7 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
+    UserOp,
 } = require('../../storage/token');
 const constants = require('../../constants');
 const { InscriptionNewItem } = require('../../index/item');
@@ -12,7 +13,7 @@ const {
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
 } = require('../../constants');
 const { ETHIndex } = require('../../eth/index');
-const { OkLinkService } = require('../../btc/oklink');
+// const { OkLinkService } = require('../../btc/oklink');
 
 class MintOperator {
     constructor(config, storage, eth_index) {
@@ -362,6 +363,24 @@ class MintOperator {
                 return { ret };
             }
 
+            // add balance record for user address
+            const { ret: add_balance_record_ret } =
+                await this.balance_storage.add_balance_record(
+                    inscription_item.inscription_id,
+                    inscription_item.address,
+                    amt,
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Mint,
+                );
+            if (add_balance_record_ret !== 0) {
+                console.error(
+                    `failed to add balance record ${inscription_item.inscription_id}`,
+                );
+                return { ret: add_balance_record_ret };
+            }
+
             // then update inner balance for the address if the pool balance is enough
             if (inner_amt !== '0') {
                 const { ret: inner_ret } =
@@ -376,6 +395,24 @@ class MintOperator {
                     );
 
                     return { ret: inner_ret };
+                }
+
+                // add inner balance record for user address
+                const { ret: add_inner_balance_record_ret } =
+                    await this.balance_storage.add_inner_balance_record(
+                        inscription_item.inscription_id,
+                        inscription_item.address,
+                        inner_amt,
+                        null,
+                        inscription_item.block_height,
+                        inscription_item.timestamp,
+                        UserOp.Mint,
+                    );
+                if (add_inner_balance_record_ret !== 0) {
+                    console.error(
+                        `failed to add inner balance record ${inscription_item.inscription_id}`,
+                    );
+                    return { ret: add_inner_balance_record_ret };
                 }
             }
         }

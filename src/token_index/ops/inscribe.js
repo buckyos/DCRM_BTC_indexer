@@ -3,6 +3,7 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
+    UserOp,
 } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -576,6 +577,24 @@ class InscribeDataOperator {
             return { ret: update_balance_ret };
         }
 
+        // add balance record for user address
+        const { ret: add_balance_record_ret } =
+            await this.balance_storage.add_inner_balance_record(
+                op.inscription_item.inscription_id,
+                op.inscription_item.address,
+                BigNumberUtil.multiply(mint_amt, '-1'),
+                null,
+                op.inscription_item.block_height,
+                op.inscription_item.timestamp,
+                UserOp.InscribeData,
+            );
+        if (add_balance_record_ret !== 0) {
+            console.error(
+                `failed to add balance record ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${mint_amt}`,
+            );
+            return { ret: add_balance_record_ret };
+        }
+
         // 2. transfer service_charge from address to foundation address
         const { ret: transfer_ret2 } = await this.balance_storage.transfer_inner_balance(
             op.inscription_item.address,
@@ -589,6 +608,42 @@ class InscribeDataOperator {
                 `failed to transfer service charge to foundation ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${service_charge}`,
             );
             return { ret: transfer_ret2 };
+        }
+
+        // add balance record for user address
+        const { ret: add_balance_record_ret2 } =
+            await this.balance_storage.add_inner_balance_record(
+                op.inscription_item.inscription_id,
+                op.inscription_item.address,
+                BigNumberUtil.multiply(service_charge, '-1'),
+                null,
+                op.inscription_item.block_height,
+                op.inscription_item.timestamp,
+                UserOp.InscribeData,
+            );
+        if (add_balance_record_ret2 !== 0) {
+            console.error(
+                `failed to add balance record ${op.inscription_item.inscription_id}`,
+            );
+            return { ret: add_balance_record_ret2 };
+        }
+
+        // add balance record for foundation address
+        const { ret: add_balance_record_ret3 } =
+            await this.balance_storage.add_inner_balance_record(
+                op.inscription_item.inscription_id,
+                this.config.token.account.foundation_address,
+                service_charge,
+                null,
+                op.inscription_item.block_height,
+                op.inscription_item.timestamp,
+                UserOp.InscribeData,
+            );
+        if (add_balance_record_ret3 !== 0) {
+            console.error(
+                `failed to add balance record ${op.inscription_item.inscription_id}`,
+            );
+            return { ret: add_balance_record_ret3 };
         }
 
         // 3. update the pool balance

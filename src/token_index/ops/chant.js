@@ -3,6 +3,7 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
+    UserOp,
 } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
@@ -326,6 +327,24 @@ class ChantOperator {
                 return { ret };
             }
 
+            // add balance record
+            const { ret: add_balance_ret } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    inscription_item.address,
+                    user_bonus,
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Chant,
+                );
+            if (add_balance_ret !== 0) {
+                console.error(
+                    `failed to add balance record ${inscription_item.inscription_id} ${inscription_item.address} ${user_bonus}`,
+                );
+                return { ret: add_balance_ret };
+            }
+            
             console.info(
                 `chant success transfer to user ${inscription_item.inscription_id} ${inscription_item.address} ${user_bonus}`,
             );
@@ -343,6 +362,24 @@ class ChantOperator {
                     `failed to transfer owner bonus ${inscription_item.inscription_id} ${data.address} ${owner_bonus}`,
                 );
                 return { ret };
+            }
+
+            // add balance record
+            const { ret: add_balance_ret } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    data.address,
+                    owner_bonus,
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Chant,
+                );
+            if (add_balance_ret !== 0) {
+                console.error(
+                    `failed to add balance record ${inscription_item.inscription_id} ${data.address} ${owner_bonus}`,
+                );
+                return { ret: add_balance_ret };
             }
 
             console.info(

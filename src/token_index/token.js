@@ -1,6 +1,5 @@
 const assert = require('assert');
 const { TokenIndexStorage } = require('../storage/token');
-const { Util } = require('../util');
 const { ETHIndex } = require('../eth/index');
 const { HashHelper } = require('./ops/hash');
 const { InscribeDataOperator } = require('./ops/inscribe');

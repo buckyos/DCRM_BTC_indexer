@@ -7,6 +7,7 @@ class BlockGenerator {
         }
     }
 
+    // eslint-disable-next-line require-yield
     *generatorFunction() {
         throw new Error('Must override method');
     }

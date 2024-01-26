@@ -1,11 +1,9 @@
 const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
-const { TokenIndexStorage } = require('../../storage/token');
+const { TokenIndexStorage, UserOp } = require('../../storage/token');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
-const {
-    InscriptionNewItem,
-} = require('../../index/item');
+const { InscriptionNewItem } = require('../../index/item');
 const {
     UserHashRelationStorage,
     UserHashRelation,
@@ -34,7 +32,13 @@ class PendingResonanceOp {
 }
 
 class ResonanceOperator {
-    constructor(config, storage, hash_helper, relation_storage, resonance_verifier) {
+    constructor(
+        config,
+        storage,
+        hash_helper,
+        relation_storage,
+        resonance_verifier,
+    ) {
         assert(_.isObject(config), `config should be object`);
         assert(
             storage instanceof TokenIndexStorage,
@@ -48,7 +52,10 @@ class ResonanceOperator {
             relation_storage instanceof UserHashRelationStorage,
             `relation_storage should be UserHashRelationStorage`,
         );
-        assert(resonance_verifier instanceof ResonanceVerifier, `resonance_verifier should be ResonanceVerifier`);
+        assert(
+            resonance_verifier instanceof ResonanceVerifier,
+            `resonance_verifier should be ResonanceVerifier`,
+        );
 
         this.config = config;
         this.storage = storage;
@@ -166,7 +173,7 @@ class ResonanceOperator {
 
         inscription_item.hash = '';
         inscription_item.amt = '0';
-        
+
         // first check if hash and amt field is exists
         const hash = content.ph;
         if (hash == null || !_.isString(hash)) {
@@ -189,7 +196,10 @@ class ResonanceOperator {
         inscription_item.amt = amt;
 
         // at first we should verify the hash's resonance count, check if any user has no chant at 12800 consecutive blocks
-        const { ret: verify_ret } = await this.resonance_verifier.verify_hash(hash, inscription_item.block_height);
+        const { ret: verify_ret } = await this.resonance_verifier.verify_hash(
+            hash,
+            inscription_item.block_height,
+        );
         if (verify_ret !== 0) {
             console.error(`verify hash resonance failed ${hash}`);
             return { ret: verify_ret };
@@ -259,7 +269,9 @@ class ResonanceOperator {
 
         // 4. check user's balance
         const { ret: get_balance_ret, amount: balance } =
-            await this.balance_storage.get_inner_balance(inscription_item.address);
+            await this.balance_storage.get_inner_balance(
+                inscription_item.address,
+            );
         if (get_balance_ret !== 0) {
             console.error(`get_balance failed ${inscription_item.address}`);
             return { ret: get_balance_ret };
@@ -327,7 +339,7 @@ class ResonanceOperator {
     }
 
     /**
-     *
+     * @comment resonance indeed
      * @param {object} inscription_item
      * @param {object} content
      * @param {number} state
@@ -358,6 +370,42 @@ class ResonanceOperator {
                 );
                 return { ret };
             }
+
+            // add balance record for service charge with user's address
+            const { ret: add_balance_record_ret } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    inscription_item.address,
+                    BigNumberUtil.multiply(service_charge, -1),
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Resonance,
+                );
+            if (add_balance_record_ret !== 0) {
+                console.error(
+                    `add_balance_record failed ${inscription_item.inscription_id} ${inscription_item.address} ${service_charge}`,
+                );
+                return { ret: add_balance_record_ret };
+            }
+
+            // add balance record for service charge with foundation address
+            const { ret: add_balance_record_ret2 } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    this.config.token.account.foundation_address,
+                    service_charge,
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Resonance,
+                );
+            if (add_balance_record_ret2 !== 0) {
+                console.error(
+                    `add_balance_record failed ${inscription_item.inscription_id} ${this.config.token.account.foundation_address} ${service_charge}`,
+                );
+                return { ret: add_balance_record_ret2 };
+            }
         }
 
         if (
@@ -374,6 +422,42 @@ class ResonanceOperator {
                     `transfer_balance for owner bonus failed ${inscription_item.address} ${inscription_item.output_address} ${owner_bonus}`,
                 );
                 return { ret };
+            }
+
+            // add balance record for owner bonus with user's address
+            const { ret: add_balance_record_ret } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    inscription_item.address,
+                    BigNumberUtil.multiply(owner_bonus, -1),
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Resonance,
+                );
+            if (add_balance_record_ret !== 0) {
+                console.error(
+                    `add_balance_record failed ${inscription_item.inscription_id} ${inscription_item.address} ${owner_bonus}`,
+                );
+                return { ret: add_balance_record_ret };
+            }
+
+            // add balance record for owner bonus with output address
+            const { ret: add_balance_record_ret2 } =
+                await this.balance_storage.add_inner_balance_record(
+                    inscription_item.inscription_id,
+                    inscription_item.output_address,
+                    owner_bonus,
+                    null,
+                    inscription_item.block_height,
+                    inscription_item.timestamp,
+                    UserOp.Resonance,
+                );
+            if (add_balance_record_ret2 !== 0) {
+                console.error(
+                    `add_balance_record failed ${inscription_item.inscription_id} ${inscription_item.output_address} ${owner_bonus}`,
+                );
+                return { ret: add_balance_record_ret2 };
             }
         }
 
