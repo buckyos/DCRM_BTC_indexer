@@ -64,7 +64,7 @@ class RankStore {
                     continue;
                 }
 
-                const { method, size, hash } = Util.decode_mixhash(item.hash);
+                let { method, size, hash } = Util.decode_mixhash(item.hash);
                 if (size < DATA_HASH_START_SIZE) {
                     size = DATA_HASH_START_SIZE;
                 }
