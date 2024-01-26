@@ -56,6 +56,13 @@ class TokenBalanceStorage {
             return { ret: ret2 };
         }
 
+        // then init coinbase
+        const { ret: ret3 } = await this._init_coinbase();
+        if (ret3 !== 0) {
+            console.error(`failed to init balance storage coinbase`);
+            return { ret: ret3 };
+        }
+
         console.log(`init balance storage success`);
 
         return { ret: 0 };
@@ -160,6 +167,37 @@ class TokenBalanceStorage {
         return { ret: 0 };
     }
 
+    /**
+     * @comment init coinbase balance in config
+     * @returns {ret: number}
+     */
+    async _init_coinbase() {
+        assert(this.db != null, `db should not be null`);
+
+        if (this.config.token.coinbase != null) {
+            assert(_.isArray(this.config.token.coinbase), `coinbase should be array: ${this.config.token.coinbase}`);
+            for (const item of this.config.token.coinbase) {
+                assert(_.isObject(item), `coinbase item should be object: ${item}`);
+                assert(_.isString(item.address), `coinbase item address should be string: ${item.address}`);
+                assert(_.isString(item.amount), `coinbase item amount should be string: ${item.amount}`);
+                assert(_.isString(item.inner_amount), `coinbase item inner_amount should be string: ${item.inner_amount}`);
+
+                const { ret } = await this.init_balance(
+                    item.address,
+                    item.amount,
+                    item.inner_amount,
+                );
+                if (ret !== 0) {
+                    console.error(`failed to init coinbase balance for coinbase`);
+                    return { ret };
+                }
+
+                console.log(`init coinbase balance for ${item.address} ${item.amount} ${item.inner_amount}`);
+            }
+        }
+
+        return { ret: 0 };
+    }
     /**
      * @comment set the init balance for address, if address exists, do nothing
      * @param {string} address

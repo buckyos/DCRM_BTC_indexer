@@ -58,7 +58,13 @@ const INDEX_CONFIG = {
             lucky_mint_block_threshold: 4,
             inscribe_data_hash_threshold: 1,
             chant_block_threshold: 1,
-        }
+        },
+
+        coinbase: [{
+            address: 'xxx',
+            amount: 'xxxx',
+            inner_amount: 'xxxx',
+        }]
     },
 
     interface: {
