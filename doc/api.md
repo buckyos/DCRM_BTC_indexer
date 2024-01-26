@@ -1385,6 +1385,47 @@ const InscriptionOpState = {
     }
     ```
 
+#### 查询可共鸣的列表，按照预估奖励由大到小排序
+
+    可共鸣的定义：price != 0 并且 resonance_count < 15
+
+    /resonant_rank/:limit?/:offset?
+
+    GET
+
+    参数
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    返回
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,
+            list: [
+                {
+                    "hash",
+                    "inscription_id",
+                    "address",
+                    "block_height",
+                    "timestamp",
+                    "text",
+                    "price",
+                    "resonance_count",
+                    "point",
+                    "size",
+                    "rank"              // point * size
+                }
+            ]
+        }
+    }
+    ```
+
 #### 根据hash查询hash weight
 
     /hash_weight/:hash

@@ -22,7 +22,7 @@ class RankStore {
             const now = Date.now();
             if (now - this.m_resonantRankList.lastUpdateTime > UPDATE_INTERVAL) {
                 const list = await this._getResonantRankList();
-                console.debug('resonant rank list:', list);
+                //console.debug('resonant rank list:', list);
                 if (list) {
                     this.m_resonantRankList.list = list;
                     this.m_resonantRankList.lastUpdateTime = now;
@@ -36,7 +36,10 @@ class RankStore {
 
             const result = list.slice(offset, offset + limit);
 
-            return makeSuccessResponse(result);
+            return makeSuccessResponse({
+                count: list.length,
+                list: result
+            });
 
         } catch (error) {
             console.error('getResonantRank failed:', error);
@@ -50,13 +53,13 @@ class RankStore {
             const stmt = store.indexDB.prepare(
                 `SELECT * FROM 
                 ${TABLE_NAME.INSCRIBE_DATA} 
-                WHERE price == '0' AND resonance_count < 15`
+                WHERE price != '0' AND resonance_count < 15`
             );
             const list = stmt.all();
-            console.debug('resonant data list:', list);
+            //console.debug('resonant data list:', list);
 
             if (list.length == 0) {
-                return [];
+                return list;
             }
 
             for (const item of list) {
@@ -71,7 +74,7 @@ class RankStore {
                 this.m_hashSizeList[item.hash] = size;
             }
 
-            console.debug('hash size list:', this.m_hashSizeList);
+            //console.debug('hash size list:', this.m_hashSizeList);
 
             const pointsStmt = store.ethIndexDb.prepare(
                 `SELECT hash, MAX(point) AS max_point
@@ -80,14 +83,18 @@ class RankStore {
             );
             const pointsList = pointsStmt.all();
 
-            console.debug('point list:', pointsList);
+            if (pointsList.length == 0) {
+                return [];
+            }
+
+            //console.debug('point list:', pointsList);
 
             let pointsMap = {};
             for (const item of pointsList) {
                 pointsMap[item.hash] = item.max_point;
             }
 
-            // rank是通过point*size排序的，所以这里先计算出point*size
+            // calc rank = point*size
             for (const item of list) {
                 item.point = pointsMap[item.hash] || 0;
                 item.size = this.m_hashSizeList[item.hash];
