@@ -286,15 +286,6 @@ class InscribeDataOperator {
         }
         inscription_item.hash = hash;
 
-        // check amt is exists and valid
-        const amt = inscription_item.content.amt;
-        if (amt == null || !BigNumberUtil.is_positive_number_string(amt)) {
-            console.warn(
-                `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
-            );
-            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
-        }
-        inscription_item.amt = amt;
 
         // check text is valid if exists
         const text = inscription_item.content.text;
@@ -402,18 +393,11 @@ class InscribeDataOperator {
             }
         }
 
-        // 5. check if hash weight is less than amt (amt >= hash_weight * 2)
-        if (BigNumberUtil.compare(amt, max_price) < 0) {
-            console.warn(
-                `hash weight is less than amt ${inscription_item.inscription_id} ${amt} < ${max_price}`,
-            );
+        // 5. check if address balance is enough
 
-            // hash weight is less than amt, so this inscription will failed
+        // the amt cost is weight * 2
+        inscription_item.amt = max_price;
 
-            return { ret: 0, state: InscriptionOpState.INVALID_AMT };
-        }
-
-        // 6. check if address balance is enough
         const { ret: get_balance_ret, amount: balance } =
             await this.balance_storage.get_inner_balance(inscription_item.address);
         if (get_balance_ret !== 0) {
@@ -423,10 +407,11 @@ class InscribeDataOperator {
             return { ret: get_balance_ret };
         }
 
+        // 6. check if balance is enough for the cost (balance >= amt)
         assert(_.isString(balance), `invalid balance ${balance}`);
-        if (BigNumberUtil.compare(balance, amt) < 0) {
+        if (BigNumberUtil.compare(balance, inscription_item.amt) < 0) {
             console.warn(
-                `inner token balance is not enough ${inscription_item.inscription_id} ${inscription_item.address} ${balance} < ${amt}`,
+                `inner token balance is not enough ${inscription_item.inscription_id} ${inscription_item.address} ${balance} < ${inscription_item.amt}`,
             );
 
             // inner token balance is not enough, so this inscription will failed
@@ -548,7 +533,7 @@ class InscribeDataOperator {
         );
 
         // 1. transfer amt to mint pool and foundation address
-        const amt = op.inscription_item.content.amt;
+        const amt = op.inscription_item.amt;
         assert(
             BigNumberUtil.is_positive_number_string(amt),
             `invalid amt ${amt}`,
