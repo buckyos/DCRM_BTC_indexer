@@ -780,7 +780,10 @@ const InscriptionOpState = {
     {
         err: 0,
         msg: "错误信息",
-        result: totalAmount     // string
+        result: {
+            mint,               // string DMCs的mint量
+            mint_inner          // string DMC-sp的mint量
+        }
     }
     ```
     
@@ -1130,9 +1133,11 @@ const InscriptionOpState = {
         err: 0,
         msg: "错误信息",
         result: {
-            total,              // string 总量
-            service_charged,    // string 通过手续费返回mintpool的量
-            pool_balance        // string mint pool余额
+            total,                  // string 总量
+            service_charged,        // string 通过手续费返回mintpool的DMCs量
+            service_charged_inner,  // string 通过手续费返回mintpool的DMC-sp的量
+            pool_balance，          // string mint pool 里 DMCs的余额
+            pool_balance_inner      // string mint pool 里 DMC-sp的余额
         }
     }
     ```

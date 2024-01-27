@@ -182,15 +182,17 @@ class MintStore {
 
         try {
             const stmt = store.indexDB.prepare(
-                `SELECT amount
+                `SELECT amount, inner_amount
                 FROM ${TABLE_NAME.MINT_RECORDS} 
                 WHERE timestamp >= ? AND timestamp < ? AND state = ?`,
             );
             const ret = stmt.all(beginTime, endTime, InscriptionOpState.OK);
 
-            let total = '0';
+            let mint = '0';
+            let mint_inner = '0';
             for (const item of ret) {
-                total = BigNumberUtil.add(total, item.amount);
+                mint = BigNumberUtil.add(mint, item.amount || '0');
+                mint_inner = BigNumberUtil.add(mint_inner, item.inner_amount || '0');
             }
 
             logger.debug(
@@ -198,10 +200,11 @@ class MintStore {
                 beginTime,
                 endTime,
                 ', ret:',
-                total,
+                mint,
+                mint_inner
             );
 
-            return makeSuccessResponse(total);
+            return makeSuccessResponse({ mint, mint_inner });
         } catch (error) {
             logger.error('queryTotalMintByTime failed:', error);
 
@@ -222,14 +225,18 @@ class MintStore {
             const result = {
                 total: TOKEN_MINT_POOL_INIT_AMOUNT,
                 service_charged: '0',
+                service_charged_inner: '0',
                 pool_balance: '0',
+                pool_balance_inner: '0',
             };
             if (ret && ret.length > 0) {
                 for (const item of ret) {
                     if (item.address == TOKEN_MINT_POOL_VIRTUAL_ADDRESS) {
                         result.pool_balance = item.amount;
+                        result.pool_balance_inner = item.inner_amount;
                     } else if (item.address == TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS) {
                         result.service_charged = item.amount;
+                        result.service_charged_inner = item.inner_amount;
                     }
                 }
             }

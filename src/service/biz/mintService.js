@@ -118,7 +118,7 @@ class MintService {
         return await this.m_store.queryIndexerStateDetail();
     }
 
-    async _getMingProgress(ctx) {
+    async _getMintProgress(ctx) {
         return this.m_store.queryMintProgress();
     }
 
@@ -143,7 +143,7 @@ class MintService {
         });
 
         router.get("/mint_progress", async (ctx) => {
-            ctx.response.body = await this._getMingProgress(ctx);
+            ctx.response.body = await this._getMintProgress(ctx);
         });
 
         router.get("/mint_remain", async (ctx) => {
