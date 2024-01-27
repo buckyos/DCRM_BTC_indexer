@@ -48,7 +48,7 @@ const INDEX_CONFIG = {
             foundation_address:
                 'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
             exchange_address:
-                'bc1pfjhvf3h7ewq5v3r97qqjku87qtrqqcas599cj4pmts4n6fnakzhqu7vwm3',
+                'bc1psdx8r9u5y0vs7xlpegerl7wcdgd8mm9gaffqyyjxp00qhwa270psfzddwg',
         },
 
         genesis_block_height: 821884,
