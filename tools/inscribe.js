@@ -57,6 +57,7 @@ class InscribeDataHelper {
 
         this.data_loader = new InscribeDataLoader();
         this.hash_weight_url = `http://127.0.0.1:13001/hash-weight/{hash}?t={timestamp}`;
+        this.inscribe_data_url = `http://127.0.0.1:13001/inscribe-data/{hash}`;
     }
 
     convert_timestamp(timestamp) {
@@ -125,6 +126,22 @@ class InscribeDataHelper {
                 return { ret };
             }
 
+            const {ret: get_ret, data: inscribe_data} = await this.query_inscribe_data(item.data_hash);
+            if (get_ret !== 0) {
+                console.error(`failed to query inscribe data: ${item.data_hash}`);
+                return { ret: get_ret };
+            }
+
+            if (inscribe_data.address != null) {
+                item.owner = {
+                    address: inscribe_data.address,
+                    block_height: inscribe_data.block_height,
+                    inscription_id: inscribe_data.inscription_id,
+                };
+            } else {
+                item.owner = null;
+            }
+
             item.index = i++;
             item.point = data.point;
             item.weight = data.weight;
@@ -156,6 +173,20 @@ class InscribeDataHelper {
             return { ret: 0, data };
         } catch (error) {
             console.error(`failed to query hash weight: ${hash} ${timestamp} ${error}`);
+            return { ret: -1 };
+        }
+    }
+
+    async query_inscribe_data(hash) {
+        assert(_.isString(hash), `hash should be string, but ${hash}`);
+
+        const url = this.inscribe_data_url.replace('{hash}', hash);
+        try {
+            const response = await axios.get(url);
+            const { data } = response;
+            return { ret: 0, data };
+        } catch (error) {
+            console.error(`failed to query inscribe data: ${hash} ${error}`);
             return { ret: -1 };
         }
     }
