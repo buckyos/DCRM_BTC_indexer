@@ -21,6 +21,7 @@ const UpdatePoolBalanceOp = {
     BurnMint: 'burn_mint',
     Chant: 'chant',
     InscribeData: 'inscribe_data',
+    Resonance: 'resonance',
 };
 
 // the token type, default is brc-20 token, inner is inner token
@@ -709,7 +710,7 @@ class TokenBalanceStorage {
                                         resolve({ ret: -1 });
                                     } else {
                                         console.log(
-                                            `updated ${field} balance for address ${address} ${current_amount} -> ${new_amount}`,
+                                            `updated ${field} balance for address ${address} ${amount} ${current_amount} -> ${new_amount}`,
                                         );
                                         resolve({ ret: 0 });
                                     }
@@ -851,7 +852,7 @@ class TokenBalanceStorage {
      * @param {string} inner_amount
      * @returns {ret: number}
      */
-    async update_pool_balance_on_ops(op, amount, inner_amount) {
+    async update_pool_balance_on_ops(op, amount, inner_amount, service_charge = '0') {
         assert(this.db != null, `db should not be null`);
         assert(
             BigNumberUtil.is_positive_number_string(amount),
@@ -860,6 +861,10 @@ class TokenBalanceStorage {
         assert(
             BigNumberUtil.is_positive_number_string(inner_amount),
             `inner_amount should be >= 0 number string: ${inner_amount}`,
+        );
+        assert(
+            BigNumberUtil.is_positive_number_string(service_charge),
+            `service_charge should be number string: ${service_charge}`,
         );
 
         switch (op) {
@@ -981,7 +986,7 @@ class TokenBalanceStorage {
 
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
-                        amount,
+                        service_charge,
                     );
                     if (ret != 0) {
                         assert(ret < 0);
@@ -991,9 +996,10 @@ class TokenBalanceStorage {
                         return { ret };
                     }
 
+                    // refound inner_amount to mint pool
                     const { ret: update_ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        amount,
+                        inner_amount,
                     );
                     if (update_ret != 0) {
                         assert(ret < 0);
@@ -1006,6 +1012,31 @@ class TokenBalanceStorage {
 
                 break;
 
+            case UpdatePoolBalanceOp.Resonance:
+                {
+                    assert(
+                        amount === '0',
+                        `amount should be 0 on resonance: ${amount}`,
+                    );
+                    assert(
+                        inner_amount === '0',
+                        `inner_amount should be 0 on resonance: ${inner_amount}`,
+                    );
+
+                    const { ret } = await this.update_inner_balance(
+                        TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS,
+                        service_charge,
+                    );
+                    if (ret != 0) {
+                        assert(ret < 0);
+                        console.error(
+                            `Could not update resonance service charge balance ${TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS}`,
+                        );
+                        return { ret };
+                    }
+                }
+
+                break;
             default: {
                 console.error(`Unknown update_pool_balance_on_ops op ${op}`);
                 return { ret: -1 };

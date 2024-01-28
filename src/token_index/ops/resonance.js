@@ -9,6 +9,7 @@ const {
     UserHashRelation,
 } = require('../../storage/relation');
 const { ResonanceVerifier } = require('../resonance_verifier');
+const { UpdatePoolBalanceOp } = require('../../storage/balance');
 
 class PendingResonanceOp {
     constructor(inscription_item, content, hash, hash_distance, state) {
@@ -405,6 +406,21 @@ class ResonanceOperator {
                     `add_balance_record failed ${inscription_item.inscription_id} ${this.config.token.account.foundation_address} ${service_charge}`,
                 );
                 return { ret: add_balance_record_ret2 };
+            }
+
+            // update pool balance for service charge
+            const { ret: update_pool_balance_ret } =
+                await this.balance_storage.update_pool_balance_on_ops(
+                    UpdatePoolBalanceOp.Resonance,
+                    '0',
+                    '0',
+                    service_charge,
+                );
+            if (update_pool_balance_ret !== 0) {
+                console.error(
+                    `update_pool_balance failed ${inscription_item.inscription_id} ${service_charge}`,
+                );
+                return { ret: update_pool_balance_ret };
             }
         }
 

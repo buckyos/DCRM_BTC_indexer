@@ -268,7 +268,7 @@ class InscribeDataOperator {
         inscription_item.amt = '0';
 
         // first check if params is valid
-        
+
         // check hash is string and valid mixhash
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
@@ -281,11 +281,13 @@ class InscribeDataOperator {
         }
 
         if (!Util.is_valid_mixhash(hash)) {
-            console.warn(`invalid inscribe content ph ${hash}, ${inscription_item.inscription_id}`);
+            console.warn(
+                `invalid inscribe content ph ${hash}, ${inscription_item.inscription_id}`,
+            );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+        assert(Util.is_valid_hex_mixhash(hash), `invalid hex mixhash ${hash}`);
         inscription_item.hash = hash;
-
 
         // check text is valid if exists
         const text = inscription_item.content.text;
@@ -388,7 +390,6 @@ class InscribeDataOperator {
                     `price is too large ${inscription_item.inscription_id} ${price} > ${hash_weight} * 2`,
                 );
 
-                
                 inscription_item.price = max_price;
             }
         }
@@ -399,7 +400,9 @@ class InscribeDataOperator {
         inscription_item.amt = max_price;
 
         const { ret: get_balance_ret, amount: balance } =
-            await this.balance_storage.get_inner_balance(inscription_item.address);
+            await this.balance_storage.get_inner_balance(
+                inscription_item.address,
+            );
         if (get_balance_ret !== 0) {
             console.error(
                 `failed to get balance ${inscription_item.inscription_id} ${inscription_item.address}`,
@@ -500,7 +503,7 @@ class InscribeDataOperator {
                     mint_amt,
                     service_charge,
                     op.inscription_item.text,
-                    op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
+                    op.inscription_item.price, // use price field in inscription_item instead of inscription_item.content.price
                     op.inscription_item.hash_point,
                     op.inscription_item.hash_weight,
                     op.state,
@@ -532,6 +535,10 @@ class InscribeDataOperator {
             `op state should be READY or COMPETITION_FAILED: ${op.state}`,
         );
 
+        console.log(
+            `inscribe data ${op.inscription_item.inscription_id} ${op.inscription_item.address} ${op.inscription_item.hash} ${op.inscription_item.amt} ${op.inscription_item.text} ${op.inscription_item.price}`,
+        );
+
         // 1. transfer amt to mint pool and foundation address
         const amt = op.inscription_item.amt;
         assert(
@@ -549,10 +556,11 @@ class InscribeDataOperator {
         );
 
         // 2. subtract mint_amt from address
-        const { ret: update_balance_ret } = await this.balance_storage.update_inner_balance(
-            op.inscription_item.address,
-            BigNumberUtil.multiply(mint_amt, '-1'),
-        );
+        const { ret: update_balance_ret } =
+            await this.balance_storage.update_inner_balance(
+                op.inscription_item.address,
+                BigNumberUtil.multiply(mint_amt, '-1'),
+            );
         if (update_balance_ret !== 0) {
             // the balance has been checked in on_inscribe, so should not reach here
             assert(update_balance_ret < 0);
@@ -581,11 +589,12 @@ class InscribeDataOperator {
         }
 
         // 2. transfer service_charge from address to foundation address
-        const { ret: transfer_ret2 } = await this.balance_storage.transfer_inner_balance(
-            op.inscription_item.address,
-            this.config.token.account.foundation_address,
-            service_charge,
-        );
+        const { ret: transfer_ret2 } =
+            await this.balance_storage.transfer_inner_balance(
+                op.inscription_item.address,
+                this.config.token.account.foundation_address,
+                service_charge,
+            );
         if (transfer_ret2 !== 0) {
             // the balance has been checked in on_inscribe, so should not reach here
             assert(transfer_ret2 < 0);
@@ -637,6 +646,7 @@ class InscribeDataOperator {
                 UpdatePoolBalanceOp.InscribeData,
                 '0',
                 mint_amt,
+                service_charge,
             );
         if (update_pool_ret !== 0) {
             assert(update_pool_ret < 0);
@@ -659,7 +669,7 @@ class InscribeDataOperator {
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,
                 op.inscription_item.text,
-                op.inscription_item.price,  // use price field in inscription_item instead of inscription_item.content.price
+                op.inscription_item.price, // use price field in inscription_item instead of inscription_item.content.price
                 0,
             );
 
