@@ -264,7 +264,7 @@ class ETHIndex {
             }
         }
 
-        console.log(`insert eth blocks [${begin}, ${end}] success`);
+        console.debug(`insert eth blocks [${begin}, ${end}] success`);
 
         // read all point change events
         let events;

@@ -294,10 +294,13 @@ class InscriptionContentLoader {
         );
 
         // try fix some fields
-        if (_.isString(data.ph)) {
-            const { valid, mixhash } = Util.check_and_fix_mixhash(data.ph);
+        if (_.isString(content.ph)) {
+            const { valid, mixhash } = Util.check_and_fix_mixhash(content.ph);
             if (valid) {
-                data.ph = mixhash;
+                if (content.ph !== mixhash) {
+                    console.log(`fix content hash ${content.ph} => ${mixhash}`);
+                }
+                content.ph = mixhash;
             } else {
                 // FIXME should we stop here and no more process?
             }
