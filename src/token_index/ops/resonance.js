@@ -194,7 +194,6 @@ class ResonanceOperator {
         assert(Util.is_valid_hex_mixhash(hash), `invalid hex mixhash ${hash}`);
         inscription_item.hash = hash;
 
-
         // at first we should verify the hash's resonance count, check if any user has no chant at 12800 consecutive blocks
         const { ret: verify_ret } = await this.resonance_verifier.verify_hash(
             hash,
@@ -217,6 +216,9 @@ class ResonanceOperator {
             console.warn(`hash ${hash} has not been inscribed`);
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
         }
+
+        assert(_.isString(data.address), `inscribed data address should be string ${data.address}`);
+        inscription_item.output_address = data.address;
 
         // 2. check the relation if already exists
         const { ret: get_relation_ret, data: relation } =
@@ -406,10 +408,12 @@ class ResonanceOperator {
             }
         }
 
-        if (
-            BigNumberUtil.compare(owner_bonus, 0) > 0 &&
-            inscription_item.address !== inscription_item.output_address
-        ) {
+        assert(
+            inscription_item.address !== inscription_item.output_address,
+            `address should not be equal to output_address ${inscription_item.address}`,
+        );
+
+        if (BigNumberUtil.compare(owner_bonus, 0) > 0) {
             const { ret } = await this.balance_storage.transfer_inner_balance(
                 inscription_item.address,
                 inscription_item.output_address,
