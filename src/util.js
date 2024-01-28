@@ -332,6 +332,28 @@ class Util {
 
         return true;
     }
+
+    /**
+     * @comment check if the string is hex string mixhash
+     * @param {string} hash_str 
+     * @returns {boolean}
+     */
+    static is_valid_hex_mixhash(hash_str) {
+        assert(_.isString(hash_str), `mixhash should be string ${hash_str}`);
+
+        // Try to decode as hex
+        try {
+            if (hash_str.startsWith('0x') || hash_str.startsWith('0X')) {
+                hash_str = hash_str.slice(2);
+            }
+
+            return true;
+        } catch (err) {
+            console.warn(`hash not a hex string ${hash_str} ${err}`);
+            return false;
+        }
+    }
+
     /**
      *
      * @param {string} mixhash
@@ -452,20 +474,21 @@ class Util {
     /**
      *
      * @param {string} hash in hex
-     * @param {string} txid in hex
+     * @param {string} address btc address
      * @returns {boolean}
      */
-    static check_inscribe_hash_and_address(hash, txid, hash_threshold) {
+    static check_inscribe_hash_and_address(hash, address, hash_threshold) {
         assert(_.isString(hash), `hash should be string ${hash}`);
-        assert(_.isString(txid), `txid should be string ${txid}`);
+        assert(Util.is_valid_hex_mixhash(hash), `invalid hex mixhash ${hash}`);
+        assert(_.isString(address), `address should be string ${address}`);
         assert(
             hash_threshold > 0,
             `hash_threshold should be greater than 0 ${hash_threshold}`,
         );
 
         const hash_number = this.hash_number(hash);
-        const txid_number = this.hash_number(txid);
-        const ret = Math.abs(hash_number - txid_number) % hash_threshold;
+        const address_number = this.address_number(address);
+        const ret = Math.abs(hash_number - address_number) % hash_threshold;
 
         return ret === 0;
     }
