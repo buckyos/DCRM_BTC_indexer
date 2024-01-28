@@ -210,7 +210,26 @@ class IndexLocalInterface {
                 return;
             }
 
-            const timestamp = Util.get_now_as_timestamp();
+            // t=? if t query is not specified, use now
+            let t = ctx.query.t;
+            if (_.isString(t)) {
+                const timestamp = parseInt(t);
+                if (isNaN(timestamp)) {
+                    ctx.status = 400;
+                    ctx.body = `Bad request: invalid timestamp ${t}`;
+                    return;
+                }
+
+                t = timestamp;
+            }
+
+            const timestamp = t || Util.get_now_as_timestamp();
+            if (!_.isNumber(timestamp)) {
+                ctx.status = 400;
+                ctx.body = `Bad request: invalid timestamp ${timestamp}`;
+                return;
+            }
+
             console.log(
                 `will query hash weight ${mixhash} at ${timestamp} for user ${ctx.ip} request`,
             );
