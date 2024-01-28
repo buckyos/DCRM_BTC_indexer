@@ -52,7 +52,7 @@ class SetPriceOperator {
         );
         if (record_ret !== 0) {
             console.error(
-                `failed to record set price ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.content.ph} ${inscription_item.content.amt}`,
+                `failed to record set price ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.hash} ${inscription_item.content.amt}`,
             );
             return { ret: record_ret };
         }

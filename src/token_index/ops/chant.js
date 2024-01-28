@@ -94,7 +94,7 @@ class ChantOperator {
         );
         if (record_ret !== 0) {
             console.error(
-                `failed to record chant ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.content.ph}`,
+                `failed to record chant ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.hash}`,
             );
             return { ret: record_ret };
         }
