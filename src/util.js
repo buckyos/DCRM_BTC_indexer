@@ -494,6 +494,28 @@ class Util {
     }
 
     /**
+     * @comment check if the hash and block height is valid for chant
+     * @param {string} hash 
+     * @param {number} block_height 
+     * @param {number} hash_threshold 
+     * @returns {boolean}
+     */
+    static check_chant_hash_and_block_height(hash, block_height, hash_threshold) {
+        assert(_.isString(hash), `hash should be string ${hash}`);
+        assert(Util.is_valid_hex_mixhash(hash), `invalid hex mixhash ${hash}`);
+        assert(_.isNumber(block_height), `block_height should be number ${block_height}`);
+        assert(
+            hash_threshold > 0,
+            `hash_threshold should be greater than 0 ${hash_threshold}`,
+        );
+
+        const hash_number = this.hash_number(hash);
+        const ret = Math.abs(hash_number - block_height) % hash_threshold;
+
+        return ret === 0;
+    }
+
+    /**
      *
      * @param {string} hash hex
      * @param {string} address btc address

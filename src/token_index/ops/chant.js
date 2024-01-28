@@ -178,12 +178,13 @@ class ChantOperator {
             `invalid relation ${data_relation.relation}`,
         );
 
-        // 2. check hash relation
-        const hash_num = Util.hash_number(hash);
+        // 2. check hash and block height relation if matched
         if (
-            Math.abs(hash_num - inscription_item.block_height) %
-                this.chant_block_threshold !==
-            0
+            !Util.check_chant_hash_and_block_height(
+                hash,
+                inscription_item.block_height,
+                this.chant_block_threshold,
+            )
         ) {
             console.warn(
                 `invalid hash relation ${inscription_item.inscription_id} hash: ${hash} block: ${inscription_item.block_height}`,
@@ -222,7 +223,9 @@ class ChantOperator {
 
         // check if user has enough balance as stamina
         const { ret: get_balance_ret, amount } =
-            await this.balance_storage.get_inner_balance(inscription_item.address);
+            await this.balance_storage.get_inner_balance(
+                inscription_item.address,
+            );
         if (get_balance_ret !== 0) {
             console.error(
                 `failed to get balance ${inscription_item.inscription_id} ${inscription_item.address}`,
@@ -344,7 +347,7 @@ class ChantOperator {
                 );
                 return { ret: add_balance_ret };
             }
-            
+
             console.info(
                 `chant success transfer to user ${inscription_item.inscription_id} ${inscription_item.address} ${user_bonus}`,
             );
