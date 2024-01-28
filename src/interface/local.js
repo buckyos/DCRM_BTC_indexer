@@ -9,7 +9,6 @@ const { ResonanceVerifier } = require('../token_index/resonance_verifier');
 const { UTXORetriever } = require('./utxo');
 const { TokenStat } = require('./stat');
 
-
 class StateService {
     constructor(config, executor) {
         assert(_.isObject(config), `invalid config: ${config}`);
@@ -17,7 +16,6 @@ class StateService {
 
         this.config = config;
         this.executor = executor;
-
 
         this.storage = new TokenIndexStorage(config);
         this.user_hash_relation_storage =
@@ -95,7 +93,9 @@ class StateService {
                 this.current_block_height,
             );
             if (ret !== 0) {
-                console.error(`failed to verify resonance for address ${address}`);
+                console.error(
+                    `failed to verify resonance for address ${address}`,
+                );
                 return { ret };
             }
 
@@ -108,6 +108,25 @@ class StateService {
             );
         if (ret !== 0) {
             console.error(`failed to get_resonances_by_address ${address}`);
+            return { ret };
+        }
+
+        return { ret: 0, data };
+    }
+
+    async get_inscribe_data_by_hash(hash) {
+        assert(_.isString(hash), `invalid hash: ${hash}`);
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            console.error(`invalid hash: ${hash}`);
+            return { ret: -1 };
+        }
+
+        const { ret, data } = await this.storage.get_inscribe_data(mixhash);
+        if (ret !== 0) {
+            console.error(
+                `failed to get_inscribe_data_by_hash ${hash} ${mixhash}`,
+            );
             return { ret };
         }
 
@@ -278,7 +297,8 @@ class IndexLocalInterface {
                 return;
             }
 
-            const { ret, data } = await this.state_service.get_resonances_by_hash(mixhash);
+            const { ret, data } =
+                await this.state_service.get_resonances_by_hash(mixhash);
             if (ret !== 0) {
                 ctx.status = 500;
                 ctx.body = `Internal server error ${ret}`;
@@ -296,12 +316,35 @@ class IndexLocalInterface {
                 return;
             }
 
-
-            const { ret, data } = await this.state_service.get_resonances_by_address(address);
+            const { ret, data } =
+                await this.state_service.get_resonances_by_address(address);
             if (ret !== 0) {
                 ctx.status = 500;
                 ctx.body = `Internal server error ${ret}`;
                 return;
+            }
+
+            ctx.body = data;
+        });
+
+        router.get('/inscribe-data/:hash', async (ctx) => {
+            const hash = ctx.params.hash;
+            if (!_.isString(hash)) {
+                ctx.status = 400;
+                ctx.body = 'Bad request';
+                return;
+            }
+
+            let { ret, data } =
+                await this.state_service.get_inscribe_data_by_hash(hash);
+            if (ret !== 0) {
+                ctx.status = 500;
+                ctx.body = `Internal server error ${ret}`;
+                return;
+            }
+
+            if (data == null) {
+               data = {};
             }
 
             ctx.body = data;
@@ -337,9 +380,12 @@ class IndexLocalInterface {
             const type = ctx.params.type || 'all';
             const start = ctx.query.start || 0;
             const end = ctx.query.end || 0;
-    
-        
-            const { ret, status, stat } = await this.state_service.stat.stat(type, start, end);
+
+            const { ret, status, stat } = await this.state_service.stat.stat(
+                type,
+                start,
+                end,
+            );
             if (ret !== 0) {
                 ctx.status = 500;
                 ctx.body = `Internal server error ${ret}`;
@@ -367,7 +413,8 @@ class IndexLocalInterface {
                 return;
             }
 
-            const { ret, status, stat } = await this.state_service.stat.stat_balance(n);
+            const { ret, status, stat } =
+                await this.state_service.stat.stat_balance(n);
             if (ret !== 0) {
                 ctx.status = 500;
                 ctx.body = `Internal server error ${ret}`;
