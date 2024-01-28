@@ -267,7 +267,7 @@ class Util {
         try {
             return bs58.decode(hash_str);
         } catch (err) {
-            console.info(
+            console.debug(
                 `hash str not a base58 string, now try hex ${hash_str} ${err}`,
             );
         }

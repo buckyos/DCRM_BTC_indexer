@@ -2075,7 +2075,7 @@ class TokenIndexStorage {
                         resolve({ ret: -1 });
                     } else {
                         console.log(
-                            `append user op ${address} ${inscription_id} ${block_height} ${op}`,
+                            `append user op ${address} ${inscription_id} ${block_height} ${op} ${state}`,
                         );
                         resolve({ ret: 0 });
                     }

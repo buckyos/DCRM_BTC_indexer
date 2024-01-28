@@ -955,7 +955,7 @@ class TokenBalanceStorage {
 
                     const { ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_CHANT_VIRTUAL_ADDRESS,
-                        amount,
+                        inner_amount,
                     );
                     if (ret != 0) {
                         console.error(
@@ -966,7 +966,7 @@ class TokenBalanceStorage {
 
                     const { ret: update_ret } = await this.update_inner_balance(
                         TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
-                        BigNumberUtil.multiply(amount, -1),
+                        BigNumberUtil.multiply(inner_amount, -1),
                     );
                     if (update_ret != 0) {
                         console.error(

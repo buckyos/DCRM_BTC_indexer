@@ -389,7 +389,7 @@ class ETHIndex {
 
             target_block_height = block_height;
             console.info(
-                `found eth block with timestamp ${timestamp}: ${target_block_height}`,
+                `found eth block with timestamp: ${timestamp} -> ${target_block_height}`,
             );
             break;
         }
