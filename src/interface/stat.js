@@ -130,12 +130,13 @@ class TokenStat {
 
         // stat total mint amount and count
         let all_amount = new BigNumber(0);
+        let all_inner_amount = new BigNumber(0);
         let all_count = 0;
 
         // stat all mint types
         for (const [key, value] of Object.entries(MintType)) {
             // calc total mint amount for each mint type
-            const { ret, total_amount, total_count } =
+            const { ret, total_amount, total_inner_amount, total_count } =
                 await this._calc_total_mint_amount(value, start_time, end_time);
             if (ret !== 0) {
                 console.error(`failed to calc total mint amount: ${ret}`);
@@ -143,16 +144,19 @@ class TokenStat {
             }
 
             all_amount = all_amount.plus(new BigNumber(total_amount));
+            all_inner_amount = all_inner_amount.plus(new BigNumber(total_inner_amount));
             all_count += total_count;
 
             stat[key] = {
                 total_amount,
+                total_inner_amount,
                 total_count,
             };
         }
 
         stat.all = {
             total_amount: all_amount.toString(),
+            total_inner_amount: all_inner_amount.toString(),
             total_count: all_count,
         };
         
@@ -172,6 +176,7 @@ class TokenStat {
 
         // calc total mint amount by page
         let total_amount = new BigNumber(0);
+        let total_inner_amount = new BigNumber(0);
         let total_count = 0;
         let page_index = 0;
         const page_size = 100;
@@ -181,6 +186,7 @@ class TokenStat {
             const {
                 ret,
                 total_amount: page_amount,
+                total_inner_amount: page_inner_amount,
                 count,
             } = await this._calc_total_mint_amount_by_page(
                 mint_type,
@@ -197,6 +203,9 @@ class TokenStat {
             }
 
             total_amount = total_amount.plus(new BigNumber(page_amount));
+            total_inner_amount = total_inner_amount.plus(
+                new BigNumber(page_inner_amount),
+            );
 
             total_count += count;
             if (count < page_size) {
@@ -206,9 +215,18 @@ class TokenStat {
             page_index += 1;
         }
 
-        return { ret: 0, total_amount: total_amount.toString(), total_count };
+        return { ret: 0, total_amount: total_amount.toString(), total_inner_amount: total_inner_amount.toString(), total_count };
     }
 
+    /**
+     * 
+     * @param {number} mint_type 
+     * @param {number} start_time 
+     * @param {number} end_time 
+     * @param {number} page_size 
+     * @param {number} page_index 
+     * @returns {Promise<{ret: number, total_amount: string, total_inner_amount: string, count: number}>} 
+     */
     async _calc_total_mint_amount_by_page(
         mint_type,
         start_time,
@@ -220,7 +238,7 @@ class TokenStat {
 
         return new Promise((resolve) => {
             this.db.all(
-                `SELECT amount FROM mint_records
+                `SELECT amount, inner_amount FROM mint_records
                  WHERE mint_type = ? AND timestamp >= ? AND timestamp <= ? AND state = 0 
                  LIMIT ? OFFSET ?`,
                 [
@@ -238,15 +256,20 @@ class TokenStat {
                     }
 
                     let total_amount = new BigNumber(0);
+                    let total_inner_amount = new BigNumber(0);
                     for (const row of rows) {
                         total_amount = total_amount.plus(
                             new BigNumber(row.amount),
+                        );
+                        total_inner_amount = total_inner_amount.plus(
+                            new BigNumber(row.inner_amount),
                         );
                     }
 
                     resolve({
                         ret: 0,
                         total_amount: total_amount.toString(),
+                        total_inner_amount: total_inner_amount.toString(),
                         count: rows.length,
                     });
                 },
