@@ -135,7 +135,7 @@ class ChantOperator {
             );
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
-
+        assert(Util.is_valid_hex_mixhash(hash), `invalid hash format ${hash}`);
         inscription_item.hash = hash;
 
         // at first we should check if user has chant at 12800 consecutive blocks, if that, we should clear all its resonance qualifications

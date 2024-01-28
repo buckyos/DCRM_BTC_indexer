@@ -185,6 +185,14 @@ class ResonanceOperator {
             // invalid format, so we should ignore this inscription
             return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
         }
+
+        if (!Util.is_valid_mixhash(hash)) {
+            console.warn(
+                `invalid res content ph ${hash}, ${inscription_item.inscription_id}`,
+            );
+            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
+        }
+        assert(Util.is_valid_hex_mixhash(hash), `invalid hex mixhash ${hash}`);
         inscription_item.hash = hash;
 
         const amt = content.amt;
