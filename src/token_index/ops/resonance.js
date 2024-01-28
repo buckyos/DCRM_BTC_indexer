@@ -220,13 +220,13 @@ class ResonanceOperator {
 
         // 2. check the relation if already exists
         const { ret: get_relation_ret, data: relation } =
-            await this.relation_storage.get_user_hash_relation(
+            await this.relation_storage.query_relation(
                 inscription_item.address,
                 hash,
             );
         if (get_relation_ret !== 0) {
             console.error(
-                `get_user_hash_relation failed ${inscription_item.address} ${hash}`,
+                `query_relation failed ${inscription_item.address} ${hash}`,
             );
             return { ret: get_relation_ret };
         }
