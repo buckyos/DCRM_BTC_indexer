@@ -9,6 +9,7 @@ const {
     InscriptionContentLoader,
     InscriptionNewItem,
     BlockInscriptionCollector,
+    InscriptionOp,
 } = require('./item');
 const { StateStorage } = require('../storage/state');
 
@@ -291,9 +292,18 @@ class InscriptionIndex {
                     collector.inscription_transfers.length,
                 `invalid inscriptions transfer count ${inscriptions_transfer_count} !== ${collector.inscription_transfers.length}`,
             );
-            this.monitor.remove_inscriptions_on_block_complete(
-                collector.inscription_transfers,
-            );
+
+            // only remove inscriptions that is transfer op, inscribe data op should always be there!
+            const need_remove_inscriptions =
+                collector.inscription_transfers.filter((item) => {
+                    return item.op === InscriptionOp.Transfer;
+                });
+
+            if (need_remove_inscriptions.length > 0) {
+                this.monitor.remove_inscriptions_on_block_complete(
+                    need_remove_inscriptions,
+                );
+            }
         }
 
         console.info(
@@ -511,7 +521,11 @@ class InscriptionIndex {
             console.error(`failed to get inscriptions by batch`);
             return { ret: batch_get_inscriptions_ret };
         }
-        console.debug(`get inscriptions ${block_height} by batch cost ${Date.now() - begin_tick}ms`);
+        console.debug(
+            `get inscriptions ${block_height} by batch cost ${
+                Date.now() - begin_tick
+            }ms`,
+        );
 
         assert(
             inscription_ids.length === inscriptions.length,
@@ -527,7 +541,11 @@ class InscriptionIndex {
             return { ret: load_content };
         }
 
-        console.debug(`load inscriptions content ${block_height} cost ${Date.now() - begin_tick}ms`);
+        console.debug(
+            `load inscriptions content ${block_height} cost ${
+                Date.now() - begin_tick
+            }ms`,
+        );
 
         for (let i = 0; i < results.length; i++) {
             const {
@@ -549,7 +567,9 @@ class InscriptionIndex {
 
             // check inscription number, we only process inscription number >= 0
             if (inscription.inscription_number < 0) {
-                console.warn(`invalid inscription number ${inscription_id}, ${inscription.inscription_number} < 0`);
+                console.warn(
+                    `invalid inscription number ${inscription_id}, ${inscription.inscription_number} < 0`,
+                );
                 continue;
             }
 
