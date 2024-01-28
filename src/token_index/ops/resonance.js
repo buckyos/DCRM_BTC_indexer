@@ -87,12 +87,11 @@ class ResonanceOperator {
         }
 
         // add to pending list for further process
-        const hash = inscription_item.content.ph;
         this.pending_resonance_ops.push(
             new PendingResonanceOp(
                 inscription_item,
                 inscription_item.content,
-                hash,
+                inscription_item.hash,
                 hash_distance,
                 state,
             ),
@@ -195,14 +194,6 @@ class ResonanceOperator {
         assert(Util.is_valid_hex_mixhash(hash), `invalid hex mixhash ${hash}`);
         inscription_item.hash = hash;
 
-        const amt = content.amt;
-        if (!BigNumberUtil.is_positive_number_string(amt)) {
-            console.error(
-                `invalid inscription amt ${inscription_item.inscription_id} ${amt}`,
-            );
-            return { ret: 0, state: InscriptionOpState.INVALID_PARAMS };
-        }
-        inscription_item.amt = amt;
 
         // at first we should verify the hash's resonance count, check if any user has no chant at 12800 consecutive blocks
         const { ret: verify_ret } = await this.resonance_verifier.verify_hash(
@@ -263,20 +254,14 @@ class ResonanceOperator {
 
         // 2. check the price of the hash, a hash can be resonated only if the price is greater than zero
         const price = data.price;
-        if (price == null || BigNumberUtil.compare(price, 0) <= 0) {
+        if (price == null || BigNumberUtil.compare(price, '0') <= 0) {
             console.warn(`hash ${hash} price is zero or not set yet`);
             return { ret: 0, state: InscriptionOpState.INVALID_PRICE };
         }
 
-        // 3. check if the amt is enough
-        if (BigNumberUtil.compare(amt, price) < 0) {
-            console.warn(
-                `amt ${amt} is not enough for hash ${hash} price ${price} ${inscription_item.inscription_id}`,
-            );
-            return { ret: 0, state: InscriptionOpState.INVALID_AMT };
-        }
+        inscription_item.amt = price;
 
-        // 4. check user's balance
+        // 3. check user's balance, must enough for the data's price
         const { ret: get_balance_ret, amount: balance } =
             await this.balance_storage.get_inner_balance(
                 inscription_item.address,
@@ -287,25 +272,14 @@ class ResonanceOperator {
         }
 
         assert(_.isString(balance), `balance should be string ${balance}`);
-        if (BigNumberUtil.compare(balance, amt) < 0) {
+        if (BigNumberUtil.compare(balance, price) < 0) {
             console.warn(
-                `user ${inscription_item.address} balance ${balance} is not enough for amt ${amt} ${inscription_item.inscription_id}`,
+                `user ${inscription_item.address} balance is not enough for price ${balance} < ${price} ${inscription_item.inscription_id}`,
             );
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
-        // 5. check if output address is the hash's address
-        if (inscription_item.owner_address !== data.address) {
-            console.warn(
-                `target address ${inscription_item.owner_address} is not the hash ${hash} owner ${data.address}, ${inscription_item.inscription_id}`,
-            );
-            return {
-                ret: 0,
-                state: InscriptionOpState.OUT_ADDRESS_IS_NOT_OWNER,
-            };
-        }
-
-        // 6. check resonance count of the hash, max is 15
+        // 4. check resonance count of the hash, max is 15
         assert(
             _.isNumber(data.resonance_count),
             `resonance_count should be number`,
@@ -317,7 +291,7 @@ class ResonanceOperator {
             return { ret: 0, state: InscriptionOpState.OUT_OF_RESONANCE_LIMIT };
         }
 
-        // 8. the op with same hash in current block, only the min distance one can be processed
+        // 5. the op with same hash in current block, only the min distance one can be processed
         const hash_distance = Util.calc_distance_with_hash_and_address(
             hash,
             inscription_item.address,
@@ -358,7 +332,7 @@ class ResonanceOperator {
         assert(_.isNumber(state), `state should be number`);
 
         // 1. first transfer balance for bonus and service charge
-        const amt = content.amt;
+        const amt = inscription_item.amt;
         assert(
             BigNumberUtil.is_positive_number_string(amt),
             `invalid amt ${amt}`,
@@ -486,7 +460,7 @@ class ResonanceOperator {
         }
 
         // 2. then update inscription data for resonance count
-        const hash = content.ph;
+        const hash = inscription_item.hash; // use inscription_item's hash instead of content's hash for params check
         assert(_.isString(hash), `hash should be string`);
 
         const { ret: update_inscribe_data_ret } =
@@ -514,7 +488,7 @@ class ResonanceOperator {
         }
 
         console.log(
-            `resonance success ${inscription_item.inscription_id} ${inscription_item.address} -> ${inscription_item.output_address} ${inscription_item.content.ph} ${inscription_item.content.amt}`,
+            `resonance success ${inscription_item.inscription_id} ${inscription_item.address} -> ${inscription_item.output_address} ${inscription_item.hash} ${inscription_item.amt}`,
         );
 
         return { ret: 0, owner_bonus, service_charge };
