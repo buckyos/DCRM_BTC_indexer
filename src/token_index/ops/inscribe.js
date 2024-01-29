@@ -342,7 +342,7 @@ class InscribeDataOperator {
             // not match (hash - commit_txid) % hash_th != 0, so this inscription will failed
 
             console.info(
-                `data hash and last txid not match ${inscription_item.inscription_id} ${hash} ${inscription_item.last_txid}`,
+                `data hash and user address not match conditions ${inscription_item.inscription_id} ${hash}`,
             );
 
             return { ret: 0, state: InscriptionOpState.HASH_UNMATCHED };

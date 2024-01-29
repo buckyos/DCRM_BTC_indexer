@@ -523,6 +523,7 @@ class Util {
      */
     static calc_distance_with_hash_and_address(hash, address) {
         assert(_.isString(hash), `hash should be string ${hash}`);
+        assert(Util.is_valid_hex_mixhash(hash), `invalid hex mixhash ${hash}`);
         assert(_.isString(address), `address should be string ${address}`);
 
         const hash_number = this.hash_number(hash);
