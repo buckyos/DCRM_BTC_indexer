@@ -79,6 +79,15 @@
             "outFiles": ["${workspaceFolder}/**/*.js"]
         },
         {
+            "type": "node",
+            "request": "launch",
+            "name": "inscribe-helper",
+            "args": ["--address", "1E71XrM7LWBma5v4R9Rf3ekNqbgNqeAAt6", "--n", "20"],
+            "skipFiles": ["<node_internals>/**"],
+            "program": "${workspaceFolder}/tools/inscribe.js",
+            "outFiles": ["${workspaceFolder}/**/*.js"]
+        },
+        {
             "name": "Python-Lucky Mint",
             "type": "python",
             "request": "launch",
