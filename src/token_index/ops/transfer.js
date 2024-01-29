@@ -1,5 +1,6 @@
 const { BigNumberUtil } = require('../../util');
-const { TokenIndexStorage, UserOp } = require('../../storage/token');
+const { TokenIndexStorage } = require('../../storage/token');
+const { BalanceOp } = require('../../storage/balance');
 const assert = require('assert');
 const { InscriptionOpState, InscriptionStage } = require('./state');
 const {
@@ -346,7 +347,7 @@ class TransferOperator {
             null,
             inscription_item.block_height,
             inscription_item.timestamp,
-            is_exchange ? UserOp.Exchange : UserOp.Transfer,
+            is_exchange ? BalanceOp.Exchange : BalanceOp.Transfer,
         );
         if (add_ret !== 0) {
             console.error(
@@ -363,7 +364,7 @@ class TransferOperator {
             null,
             inscription_item.block_height,
             inscription_item.timestamp,
-            is_exchange ? UserOp.Exchange : UserOp.Transfer,
+            is_exchange ? BalanceOp.Exchange : BalanceOp.Transfer,
         );
 
         if (add_ret2 !== 0) {
@@ -414,7 +415,7 @@ class TransferOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Exchange,
+                    BalanceOp.Exchange,
                 );
             if (add_ret !== 0) {
                 console.error(

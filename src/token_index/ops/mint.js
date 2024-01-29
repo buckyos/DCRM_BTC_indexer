@@ -3,7 +3,6 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
-    UserOp,
 } = require('../../storage/token');
 const constants = require('../../constants');
 const { InscriptionNewItem } = require('../../index/item');
@@ -13,6 +12,8 @@ const {
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
 } = require('../../constants');
 const { ETHIndex } = require('../../eth/index');
+const { BalanceOp } = require('../../storage/balance');
+
 // const { OkLinkService } = require('../../btc/oklink');
 
 class MintOperator {
@@ -310,17 +311,21 @@ class MintOperator {
 
         // first update mint pool balance
         let update_pool_op;
+        let balance_op;
         switch (mint_type) {
             case MintType.NormalMint: {
                 update_pool_op = UpdatePoolBalanceOp.Mint;
+                balance_op = BalanceOp.Mint;
                 break;
             }
             case MintType.LuckyMint: {
                 update_pool_op = UpdatePoolBalanceOp.LuckyMint;
+                balance_op = BalanceOp.LuckyMint;
                 break;
             }
             case MintType.BurnMint: {
                 update_pool_op = UpdatePoolBalanceOp.BurnMint;
+                balance_op = BalanceOp.BurnMint;
                 break;
             }
             default: {
@@ -372,7 +377,7 @@ class MintOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Mint,
+                    balance_op,
                 );
             if (add_balance_record_ret !== 0) {
                 console.error(
@@ -406,7 +411,7 @@ class MintOperator {
                         null,
                         inscription_item.block_height,
                         inscription_item.timestamp,
-                        UserOp.Mint,
+                        balance_op,
                     );
                 if (add_inner_balance_record_ret !== 0) {
                     console.error(

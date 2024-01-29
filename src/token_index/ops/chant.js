@@ -3,8 +3,8 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
-    UserOp,
 } = require('../../storage/token');
+const { BalanceOp } = require('../../storage/balance');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState, ChantType } = require('./state');
 const { InscriptionNewItem } = require('../../index/item');
@@ -355,7 +355,7 @@ class ChantOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Chant,
+                    chant_type === ChantType.LuckyChant? BalanceOp.LuckyChant: BalanceOp.Chant,
                 );
             if (add_balance_ret !== 0) {
                 console.error(
@@ -392,7 +392,7 @@ class ChantOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Chant,
+                    chant_type === ChantType.LuckyChant? BalanceOp.LuckyChant: BalanceOp.Chant,
                 );
             if (add_balance_ret !== 0) {
                 console.error(

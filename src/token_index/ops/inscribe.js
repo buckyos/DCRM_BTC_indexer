@@ -3,8 +3,8 @@ const { Util, BigNumberUtil } = require('../../util');
 const {
     TokenIndexStorage,
     UpdatePoolBalanceOp,
-    UserOp,
 } = require('../../storage/token');
+const { BalanceOp } = require('../../storage/balance');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const {
@@ -579,7 +579,7 @@ class InscribeDataOperator {
                 null,
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,
-                UserOp.InscribeData,
+                BalanceOp.InscribeData,
             );
         if (add_balance_record_ret !== 0) {
             console.error(
@@ -613,7 +613,7 @@ class InscribeDataOperator {
                 null,
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,
-                UserOp.InscribeData,
+                BalanceOp.InscribeData,
             );
         if (add_balance_record_ret2 !== 0) {
             console.error(
@@ -631,7 +631,7 @@ class InscribeDataOperator {
                 null,
                 op.inscription_item.block_height,
                 op.inscription_item.timestamp,
-                UserOp.InscribeData,
+                BalanceOp.InscribeData,
             );
         if (add_balance_record_ret3 !== 0) {
             console.error(

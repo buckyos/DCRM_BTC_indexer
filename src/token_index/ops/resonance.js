@@ -1,6 +1,7 @@
 const assert = require('assert');
 const { Util, BigNumberUtil } = require('../../util');
-const { TokenIndexStorage, UserOp } = require('../../storage/token');
+const { TokenIndexStorage } = require('../../storage/token');
+const { BalanceOp } = require('../../storage/balance');
 const { HashHelper } = require('./hash');
 const { InscriptionOpState } = require('./state');
 const { InscriptionNewItem } = require('../../index/item');
@@ -365,7 +366,7 @@ class ResonanceOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Resonance,
+                    BalanceOp.Resonance,
                 );
             if (add_balance_record_ret !== 0) {
                 console.error(
@@ -383,7 +384,7 @@ class ResonanceOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Resonance,
+                    BalanceOp.Resonance,
                 );
             if (add_balance_record_ret2 !== 0) {
                 console.error(
@@ -435,7 +436,7 @@ class ResonanceOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Resonance,
+                    BalanceOp.Resonance,
                 );
             if (add_balance_record_ret !== 0) {
                 console.error(
@@ -453,7 +454,7 @@ class ResonanceOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    UserOp.Resonance,
+                    BalanceOp.Resonance,
                 );
             if (add_balance_record_ret2 !== 0) {
                 console.error(

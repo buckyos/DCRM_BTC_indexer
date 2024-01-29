@@ -30,6 +30,29 @@ const BalanceRecordTokenType = {
     Inner: 1,
 };
 
+
+const BalanceOp = {
+    Coinbase: 'coinbase',
+    
+    Mint: 'mint',
+    LuckyMint: 'lucky_mint',
+    BurnMint: 'burn_mint',
+
+    InscribeData: 'inscribe_data',
+
+    Chant: 'chant',
+    LuckyChant: 'lucky_chant',
+
+    Resonance: 'res',
+
+    Transfer: 'transfer',
+    Exchange: 'exchange',
+
+    is_valid_op: function (op) {
+        return Object.values(BalanceOp).includes(op);
+    }
+};
+
 class TokenBalanceStorage {
     constructor(owner, config) {
         assert(owner != null, `owner should not be null`);
@@ -310,7 +333,7 @@ class TokenBalanceStorage {
                             item.inner_amount,
                             0,
                             0,
-                            'coinbase',
+                            BalanceOp.Coinbase
                         );
                         if (ret !== 0) {
                             console.error(
@@ -1328,7 +1351,7 @@ class TokenBalanceStorage {
      * @param {string} balance
      * @param {number} block_height
      * @param {number} timestamp
-     * @param {UserOp} op_type
+     * @param {BalanceOp} op_type
      * @returns {ret: number}
      */
     async add_balance_record(
@@ -1360,7 +1383,7 @@ class TokenBalanceStorage {
      * @param {string} balance
      * @param {number} block_height
      * @param {number} timestamp
-     * @param {UserOp} op_type
+     * @param {BalanceOp} op_type
      * @returns {ret: number}
      */
     async add_inner_balance_record(
@@ -1393,7 +1416,7 @@ class TokenBalanceStorage {
      * @param {string} balance
      * @param {number} block_height
      * @param {number} timestamp
-     * @param {UserOp} op_type
+     * @param {BalanceOp} op_type
      * @returns {ret: number}
      */
     async _add_balance_record(
@@ -1436,8 +1459,7 @@ class TokenBalanceStorage {
             `timestamp should be number: ${timestamp}`,
         );
         assert(
-            typeof op_type === 'string',
-            `op_type should be string: ${op_type}`,
+            BalanceOp.is_valid_op(op_type), `op_type should be valid: ${op_type}`
         );
 
         // if balance is null, get it from db
@@ -1592,4 +1614,5 @@ module.exports = {
     TokenBalanceStorage,
     UpdatePoolBalanceOp,
     BalanceRecordTokenType,
+    BalanceOp,
 };

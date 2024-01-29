@@ -11,8 +11,6 @@ const { Util } = require('../util');
 
 // the user ops
 const UserOp = {
-    Coinbase: 'coinbase',
-    
     Mint: 'mint',
 
     InscribeData: 'inscribe_data',
