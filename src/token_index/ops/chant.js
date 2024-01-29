@@ -392,7 +392,7 @@ class ChantOperator {
                     null,
                     inscription_item.block_height,
                     inscription_item.timestamp,
-                    chant_type === ChantType.LuckyChant? BalanceOp.LuckyChant: BalanceOp.Chant,
+                    chant_type === ChantType.LuckyChant? BalanceOp.LuckyChantDivide: BalanceOp.ChantDivide,
                 );
             if (add_balance_ret !== 0) {
                 console.error(

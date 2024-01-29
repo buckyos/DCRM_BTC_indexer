@@ -43,6 +43,9 @@ const BalanceOp = {
     Chant: 'chant',
     LuckyChant: 'lucky_chant',
 
+    ChantDivide: 'chant_divide',
+    LuckyChantDivide: 'lucky_chant_divide',
+
     Resonance: 'res',
 
     Transfer: 'transfer',
