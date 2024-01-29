@@ -557,6 +557,7 @@ const InscriptionOpState = {
                     txid,
                     hash_point,
                     hash_weight,
+                    chant_type,         // number 0--NormalChant , 1--LuckyChant
                     state,
                 }
             ]
