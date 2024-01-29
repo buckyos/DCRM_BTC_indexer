@@ -13,6 +13,7 @@ const {
     TOKEN_MINT_POOL_BURN_MINT_INIT_VIRTUAL_ADDRESS,
 } = require('../constants');
 const { default: BigNumber } = require('bignumber.js');
+const { TokenIncomeStorage } = require('./income');
 
 // the ops that can update pool balance
 const UpdatePoolBalanceOp = {
@@ -30,10 +31,9 @@ const BalanceRecordTokenType = {
     Inner: 1,
 };
 
-
 const BalanceOp = {
     Coinbase: 'coinbase',
-    
+
     Mint: 'mint',
     LuckyMint: 'lucky_mint',
     BurnMint: 'burn_mint',
@@ -53,7 +53,7 @@ const BalanceOp = {
 
     is_valid_op: function (op) {
         return Object.values(BalanceOp).includes(op);
-    }
+    },
 };
 
 class TokenBalanceStorage {
@@ -64,6 +64,7 @@ class TokenBalanceStorage {
         this.owner = owner;
         this.config = config;
         this.db = null;
+        this.income = new TokenIncomeStorage(config);
     }
 
     /**
@@ -96,6 +97,13 @@ class TokenBalanceStorage {
             return { ret: ret3 };
         }
 
+        // then init income
+        const { ret: ret4 } = await this.income.init(this.db);
+        if (ret4 !== 0) {
+            console.error(`failed to init balance storage income`);
+            return { ret: ret4 };
+        }
+        
         console.log(`init balance storage success`);
 
         return { ret: 0 };
@@ -336,7 +344,7 @@ class TokenBalanceStorage {
                             item.inner_amount,
                             0,
                             0,
-                            BalanceOp.Coinbase
+                            BalanceOp.Coinbase,
                         );
                         if (ret !== 0) {
                             console.error(
@@ -878,7 +886,12 @@ class TokenBalanceStorage {
      * @param {string} inner_amount
      * @returns {ret: number}
      */
-    async update_pool_balance_on_ops(op, amount, inner_amount, service_charge = '0') {
+    async update_pool_balance_on_ops(
+        op,
+        amount,
+        inner_amount,
+        service_charge = '0',
+    ) {
         assert(this.db != null, `db should not be null`);
         assert(
             BigNumberUtil.is_positive_number_string(amount),
@@ -1462,8 +1475,23 @@ class TokenBalanceStorage {
             `timestamp should be number: ${timestamp}`,
         );
         assert(
-            BalanceOp.is_valid_op(op_type), `op_type should be valid: ${op_type}`
+            BalanceOp.is_valid_op(op_type),
+            `op_type should be valid: ${op_type}`,
         );
+
+        // update income first
+        if (BigNumberUtil.compare(change_amount, '0') > 0) {
+            const { ret: update_income_ret } = await this._update_income(
+                address,
+                token_type,
+                change_amount,
+                op_type,
+            );
+            if (update_income_ret != 0) {
+                console.error(`failed to update income for ${address}`);
+                return { ret: update_income_ret };
+            }
+        }
 
         // if balance is null, get it from db
         if (balance == null) {
@@ -1544,6 +1572,181 @@ class TokenBalanceStorage {
                 },
             );
         });
+    }
+
+    async _update_income(address, token_type, change_amount, op_type) {
+        assert(this.db != null, `db should not be null`);
+        assert(
+            typeof address === 'string',
+            `address should be string: ${address}`,
+        );
+        assert(
+            _.isNumber(token_type),
+            `token_type should be number: ${token_type}`,
+        );
+        assert(
+            BigNumberUtil.is_number_string(change_amount),
+            `change_amount should be valid number string: ${change_amount}`,
+        );
+        assert(
+            BalanceOp.is_valid_op(op_type),
+            `op_type should be valid: ${op_type}`,
+        );
+
+        let ret;
+        switch (op_type) {
+            case BalanceOp.Mint:
+                if (token_type === BalanceRecordTokenType.Default) {
+                    ret = await this.income.update_mint(
+                        address,
+                        'mint',
+                        change_amount,
+                    );
+                } else {
+                    assert(
+                        false,
+                        `invalid token_type for normal mint ${token_type}`,
+                    );
+                }
+                break;
+            case BalanceOp.LuckyMint:
+                if (token_type === BalanceRecordTokenType.Default) {
+                    ret = await this.income.update_mint(
+                        address,
+                        'lucky_mint',
+                        change_amount,
+                    );
+                } else {
+                    assert(
+                        token_type === BalanceRecordTokenType.Inner,
+                        `invalid token_type for lucky mint ${token_type}`,
+                    );
+                    ret = await this.income.update_mint(
+                        address,
+                        'lucky_mint_inner',
+                        change_amount,
+                    );
+                }
+                break;
+            case BalanceOp.BurnMint:
+                if (token_type === BalanceRecordTokenType.Default) {
+                    ret = await this.income.update_mint(
+                        address,
+                        'burn_mint',
+                        change_amount,
+                    );
+                } else {
+                    assert(
+                        token_type === BalanceRecordTokenType.Inner,
+                        `invalid token_type for burn mint ${token_type}`,
+                    );
+                    ret = await this.income.update_mint(
+                        address,
+                        'burn_mint_inner',
+                        change_amount,
+                    );
+                }
+                break;
+
+            case BalanceOp.Transfer:
+                assert(
+                    token_type === BalanceRecordTokenType.Default,
+                    `invalid token_type for transfer ${token_type}`,
+                );
+                ret = await this.income.update_transfer(address, change_amount);
+                break;
+
+            case BalanceOp.Exchange:
+                if (token_type === BalanceRecordTokenType.Default) {
+                    ret = await this.income.update_exchange(
+                        address,
+                        'exchange',
+                        change_amount,
+                    );
+                } else {
+                    assert(
+                        token_type === BalanceRecordTokenType.Inner,
+                        `invalid token_type for exchange ${token_type}`,
+                    );
+                    ret = await this.income.update_exchange(
+                        address,
+                        'exchange_inner',
+                        change_amount,
+                    );
+                }
+                break;
+
+            case BalanceOp.Resonance:
+                assert(
+                    token_type === BalanceRecordTokenType.Inner,
+                    `invalid token_type for resonance ${token_type}`,
+                );
+                ret = await this.income.update_res(address, change_amount);
+                break;
+
+            case BalanceOp.Chant:
+                assert(
+                    token_type === BalanceRecordTokenType.Inner,
+                    `invalid token_type for chant ${token_type}`,
+                );
+                ret = await this.income.update_chant(
+                    address,
+                    'chant',
+                    change_amount,
+                );
+                break;
+            case BalanceOp.LuckyChant:
+                assert(
+                    token_type === BalanceRecordTokenType.Inner,
+                    `invalid token_type for lucky chant ${token_type}`,
+                );
+                ret = await this.income.update_chant(
+                    address,
+                    'lucky_chant',
+                    change_amount,
+                );
+                break;
+
+            case BalanceOp.ChantDivide:
+                assert(
+                    token_type === BalanceRecordTokenType.Inner,
+                    `invalid token_type for chant divide ${token_type}`,
+                );
+                ret = await this.income.update_chant_divide(
+                    address,
+                    'chant',
+                    change_amount,
+                );
+                break;
+            case BalanceOp.LuckyChantDivide:
+                assert(
+                    token_type === BalanceRecordTokenType.Inner,
+                    `invalid token_type for lucky chant divide ${token_type}`,
+                );
+                ret = await this.income.update_chant_divide(
+                    address,
+                    'lucky_chant',
+                    change_amount,
+                );
+                break;
+
+            case BalanceOp.Coinbase:
+            case BalanceOp.InscribeData:
+                ret = { ret: 0 };
+                break;
+
+            default:
+                console.error(`unknown update balance op_type ${op_type}`);
+                return { ret: -1 };
+        }
+
+        const { ret: update_ret } = ret;
+        if (update_ret != 0) {
+            console.error(`failed to update income for ${address} ${op_type} ${change_amount}`);
+            return { ret: update_ret };
+        }
+
+        return { ret: 0 };
     }
 
     /**
