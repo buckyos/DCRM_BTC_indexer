@@ -210,7 +210,7 @@ class InscribeStore {
                 const pageStmt = store.inscriptionDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
                     WHERE owner = ? 
-                    ORDER BY timestamp ${order} LIMIT ? OFFSET ?`
+                    ORDER BY genesis_timestamp ${order} LIMIT ? OFFSET ?`
                 );
                 list = pageStmt.all(owner, limit, offset);
             }
@@ -246,7 +246,7 @@ class InscribeStore {
                 const pageStmt = store.inscriptionDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
                     WHERE creator = ? 
-                    ORDER BY timestamp ${order} LIMIT ? OFFSET ?`
+                    ORDER BY genesis_timestamp ${order} LIMIT ? OFFSET ?`
                 );
                 list = pageStmt.all(creator, limit, offset);
             }
@@ -309,25 +309,6 @@ class InscribeStore {
             return makeSuccessResponse(count);
         } catch (error) {
             logger.error('queryInscriptionDataCount failed:', error);
-
-            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
-        }
-    }
-
-    queryInscriptionCount() {
-        try {
-            const stmt = store.inscriptionDB.prepare(
-                `SELECT COUNT(*) AS count
-                FROM ${TABLE_NAME.INSCRIPTIONS}`
-            );
-            const ret = stmt.get();
-            const count = ret.count;
-
-            logger.debug('queryInscriptionCount: ret:', count);
-
-            return makeSuccessResponse(count);
-        } catch (error) {
-            logger.error('queryInscriptionCount failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
