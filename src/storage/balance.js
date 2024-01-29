@@ -31,6 +31,12 @@ const BalanceRecordTokenType = {
     Inner: 1,
 };
 
+// the balance change direction, in or out
+const BalanceRecordDirection = {
+    In: 0,
+    Out: 1,
+};
+
 const BalanceOp = {
     Coinbase: 'coinbase',
 
@@ -164,6 +170,7 @@ class TokenBalanceStorage {
                         timestamp INTEGER,
                         
                         op_type TEXT,
+                        direction INTEGER,
                         PRIMARY KEY (address_sequence, address)
                     );
                       
@@ -1479,6 +1486,8 @@ class TokenBalanceStorage {
             `op_type should be valid: ${op_type}`,
         );
 
+        let direction;
+
         // update income first
         if (BigNumberUtil.compare(change_amount, '0') > 0) {
             const { ret: update_income_ret } = await this._update_income(
@@ -1491,6 +1500,10 @@ class TokenBalanceStorage {
                 console.error(`failed to update income for ${address}`);
                 return { ret: update_income_ret };
             }
+
+            direction = BalanceRecordDirection.In;
+        } else {
+            direction = BalanceRecordDirection.Out;
         }
 
         // if balance is null, get it from db
@@ -1549,8 +1562,9 @@ class TokenBalanceStorage {
                     balance,
                     block_height,
                     timestamp,
-                    op_type
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    op_type,
+                    direction
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     sequence,
                     inscription_id,
@@ -1561,6 +1575,7 @@ class TokenBalanceStorage {
                     block_height,
                     timestamp,
                     op_type,
+                    direction,
                 ],
                 (err) => {
                     if (err) {
@@ -1574,6 +1589,14 @@ class TokenBalanceStorage {
         });
     }
 
+    /**
+     * @comment stat the user's income for every types
+     * @param {string} address
+     * @param {number} token_type
+     * @param {string} change_amount
+     * @param {number} op_type
+     * @returns {ret: number}
+     */
     async _update_income(address, token_type, change_amount, op_type) {
         assert(this.db != null, `db should not be null`);
         assert(
@@ -1821,4 +1844,5 @@ module.exports = {
     UpdatePoolBalanceOp,
     BalanceRecordTokenType,
     BalanceOp,
+    BalanceRecordDirection,
 };
