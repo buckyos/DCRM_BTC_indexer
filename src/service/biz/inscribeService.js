@@ -15,19 +15,31 @@ class InscribeService {
         this.m_inited = true;
     }
 
-    async _getInscriptionByHash(ctx) {
+    async _getInscriptionDataByHash(ctx) {
         const hash = ctx.params.hash;
 
-        return this.m_store.queryInscriptionByHash(hash);
+        return this.m_store.queryInscriptionDataByHash(hash);
     }
 
-    async _getInscriptionByAddress(ctx) {
+    async _getInscriptionDataById(ctx) {
+        const inscriptionId = ctx.params.inscription_id;
+
+        return this.m_store.queryInscriptionDataById(inscriptionId);
+    }
+
+    async _getInscriptionById(ctx) {
+        const inscriptionId = ctx.params.inscription_id;
+
+        return this.m_store.queryInscriptionById(inscriptionId);
+    }
+
+    async _getInscriptionDataByAddress(ctx) {
         const address = ctx.params.address;
         const offset = ctx.params.offset;
         const limit = ctx.params.limit;
         const order = ctx.params.order;
 
-        return this.m_store.queryInscriptionByAddress(
+        return this.m_store.queryInscriptionDataByAddress(
             address,
             Math.max((parseInt(limit, 10) || 0), 0),
             Math.max((parseInt(offset, 10) || 0), 0),
@@ -35,14 +47,42 @@ class InscribeService {
         );
     }
 
-    async _getInscriptionByBlock(ctx) {
+    async _getInscriptionByOwner(ctx) {
+        const owner = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const order = ctx.params.order;
+
+        return this.m_store.queryInscriptionByOwner(
+            owner,
+            Math.max((parseInt(limit, 10) || 0), 0),
+            Math.max((parseInt(offset, 10) || 0), 0),
+            order && _.isString(order) ? order.toLowerCase() : "desc"
+        );
+    }
+
+    async _getInscriptionByCreator(ctx) {
+        const creator = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const order = ctx.params.order;
+
+        return this.m_store.queryInscriptionByCreator(
+            creator,
+            Math.max((parseInt(limit, 10) || 0), 0),
+            Math.max((parseInt(offset, 10) || 0), 0),
+            order && _.isString(order) ? order.toLowerCase() : "desc"
+        );
+    }
+
+    async _getInscriptionDataByBlock(ctx) {
         const beginBlock = ctx.params.begin_block;
         const endBlock = ctx.params.end_block;
         const offset = ctx.params.offset;
         const limit = ctx.params.limit;
         const order = ctx.params.order;
 
-        return this.m_store.queryInscriptionByBlock(
+        return this.m_store.queryInscriptionDataByBlock(
             beginBlock,
             endBlock == 0 || endBlock == null ? Number.MAX_SAFE_INTEGER : endBlock,
             Math.max((parseInt(limit, 10) || 0), 0),
@@ -265,8 +305,8 @@ class InscribeService {
         );
     }
 
-    async _getInscriptionCount(ctx) {
-        return this.m_store.queryInscriptionCount();
+    async _getInscriptionDataCount(ctx) {
+        return this.m_store.queryInscriptionDataCount();
     }
 
     async _getTransferByAddress(ctx) {
@@ -454,21 +494,39 @@ class InscribeService {
     registerRouter(router) {
         this._init();
 
-        router.get("/inscription/:hash", async (ctx) => {
-            ctx.response.body = await this._getInscriptionByHash(ctx);
+        // all inscription
+        router.get("/inscription_id/:inscription_id", async (ctx) => {
+            ctx.response.body = await this._getInscriptionById(ctx);
+        });
+
+        router.get("/inscription_by_owner/:address/:limit?/:offset?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscriptionByOwner(ctx);
+        });
+
+        router.get("/inscription_by_creator/:address/:limit?/:offset?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscriptionByCreator(ctx);
+        });
+
+        // only inscription data
+        router.get("/inscription_data/:hash", async (ctx) => {
+            ctx.response.body = await this._getInscriptionDataByHash(ctx);
+        });
+
+        router.get("/inscription_data_id/:inscription_id", async (ctx) => {
+            ctx.response.body = await this._getInscriptionDataById(ctx);
         });
 
         //order - asc or desc
-        router.get("/inscription_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
-            ctx.response.body = await this._getInscriptionByAddress(ctx);
+        router.get("/inscription_data_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscriptionDataByAddress(ctx);
         });
 
-        router.get("/inscription_by_block/:begin_block/:end_block?/:limit?/:offset?/:order?", async (ctx) => {
-            ctx.response.body = await this._getInscriptionByBlock(ctx);
+        router.get("/inscription_data_by_block/:begin_block/:end_block?/:limit?/:offset?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscriptionDataByBlock(ctx);
         });
 
-        router.get("/inscription_count", async (ctx) => {
-            ctx.response.body = await this._getInscriptionCount(ctx);
+        router.get("/inscription_data_count", async (ctx) => {
+            ctx.response.body = await this._getInscriptionDataCount(ctx);
         });
 
         router.get("/inscribe_by_hash/:hash/:limit?/:offset?/:state?/:order?", async (ctx) => {

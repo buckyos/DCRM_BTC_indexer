@@ -38,9 +38,9 @@ const InscriptionOpState = {
 
 ### 接口
 
-#### 根据公共数据hash获取铭文信息：
+#### 根据公共数据hash获取铭刻数据的信息：
 
-    /inscription/:hash
+    /inscription_data/:hash
 
     GET
 
@@ -56,19 +56,41 @@ const InscriptionOpState = {
         msg: "错误信息",         // 如果err == 0，没有msg字段
         result: {               // 如果err != 0，没有result字段
             hash,               // 公共数据hash
+            inscription_id,     // 铭文id
             address,            // 铭文owner
             block_height,       // 创建区块高度
             timestamp,          // 创建时间
             text,               // 创建时写入的text
             price,              // 当前共鸣价格 string
-            resonance_count     // 当前共鸣次数
+            resonance_count,    // 当前共鸣次数
+            inscription_number  // 铭文 number
         }
     }
     ```
 
-#### 获取某地址拥有的铭文：
+#### 根据铭文数据id获取铭刻数据的信息：
 
-    /inscription_by_address/:address/:limit?/:offset?/:order?
+    /inscription_data_id/:inscription_id
+
+    GET
+
+    参数：
+
+    inscription_id: 铭文id
+
+    返回：
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",         // 如果err == 0，没有msg字段
+        result: // 同上
+    }
+    ```
+
+#### 获取某地址拥有的铭刻数据：
+
+    /inscription_data_by_address/:address/:limit?/:offset?/:order?
 
     GET
 
@@ -97,7 +119,7 @@ const InscriptionOpState = {
 
 #### 获取区块范围内的新增的铭文 [begin, end)：
 
-    /inscription_by_block/:begin_block/:end_block?/:limit?/:offset?/:order?
+    /inscription_data_by_block/:begin_block/:end_block?/:limit?/:offset?/:order?
 
     GET
 
@@ -121,14 +143,14 @@ const InscriptionOpState = {
         msg: "错误信息",
         result: {
             count,              // 总数
-            list                // 列表，item数据格式同上
+            list                // 列表，item数据格式同上,(不包含inscription_number)
         }
     }
     ```
 
-#### 获取铭文总数：
+#### 获取铭刻数据的总数：
 
-    /inscription_count
+    /inscription_data_count
 
     GET
 
@@ -141,6 +163,99 @@ const InscriptionOpState = {
         result: count
     }
     ```
+
+#### 根据铭文id获取铭文信息（包括所有铭刻）
+
+    /inscription_id/:inscription_id
+
+    GET
+
+    参数:
+
+    inscription_id: 铭文id
+
+    返回:
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            inscription_id,             // string
+            inscription_number,         // number
+            genesis_block_height,       // number
+            genesis_timestamp,          // number
+            genesis_satpoint,           // string
+            commit_txid,                // string
+            value,                      // string
+            content,                    // string
+            op,                         // string
+            creator,                    // string address
+            owner,                      // string address
+            last_block_height,          // number, last block height that this inscription transferred to new owner
+            transfer_count              // number
+        }
+    }
+    ```
+
+#### 根据当前owner获取铭文信息（包括所有铭刻）
+
+    inscription_by_owner/:address/:limit?/:offset?/:order?
+
+    GET
+
+    参数:
+
+    address: owner地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回:
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,          // number
+            list,           // item信息同上
+        }
+    }
+    ```
+
+#### 根据创建者获取铭文信息（包括所有铭刻）
+
+    inscription_by_creator/:address/:limit?/:offset?/:order?
+
+    GET
+
+    参数:
+
+    address: creator地址
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回:
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            count,          // number
+            list,           // item信息同上
+        }
+    }
+    ```
+
 
 #### 获取某数据的铭刻记录：
 

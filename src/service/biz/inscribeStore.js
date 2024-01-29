@@ -32,7 +32,7 @@ class InscribeStore {
         this.m_config = config;
     }
 
-    queryInscriptionByHash(hash) {
+    queryInscriptionDataByHash(hash) {
         if (!hash) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
@@ -48,7 +48,73 @@ class InscribeStore {
             const stmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash = ?`);
             const ret = stmt.get(hash);
 
-            logger.debug('queryInscriptionByHash:', hash, "ret:", ret);
+            logger.debug('queryInscriptionDataByHash:', hash, "ret:", ret);
+
+            if (ret) {
+                const numberStmt = store.inscriptionDB.prepare(
+                    `SELECT inscription_number FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id = ?`
+                );
+                const number = numberStmt.get(ret.inscription_id);
+
+                ret.inscription_number = number ? number.inscription_number : 0;
+
+                return makeSuccessResponse(ret);
+            }
+
+            return makeResponse(ERR_CODE.NOT_FOUND, "not found");
+
+        } catch (error) {
+            logger.error('queryInscriptionDataByHash failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryInscriptionDataById(inscriptionId) {
+        if (!inscriptionId) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        try {
+            const stmt = store.indexDB.prepare(
+                `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE inscription_id = ?`
+            );
+            const ret = stmt.get(inscriptionId);
+
+            logger.debug('queryInscriptionDataById:', inscriptionId, "ret:", ret);
+
+            if (ret) {
+                const numberStmt = store.inscriptionDB.prepare(
+                    `SELECT inscription_number FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id = ?`
+                );
+                const number = numberStmt.get(ret.inscription_id);
+
+                ret.inscription_number = number ? number.inscription_number : 0;
+
+                return makeSuccessResponse(ret);
+            }
+
+            return makeResponse(ERR_CODE.NOT_FOUND, "not found");
+
+        } catch (error) {
+            logger.error('queryInscriptionDataById failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryInscriptionById(inscriptionId) {
+        if (!inscriptionId) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        try {
+            const stmt = store.inscriptionDB.prepare(
+                `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id = ?`
+            );
+            const ret = stmt.get(inscriptionId);
+
+            logger.debug('queryInscriptionById:', inscriptionId, "ret:", ret);
 
             if (ret) {
                 return makeSuccessResponse(ret);
@@ -57,13 +123,13 @@ class InscribeStore {
             return makeResponse(ERR_CODE.NOT_FOUND, "not found");
 
         } catch (error) {
-            logger.error('queryInscriptionByHash failed:', error);
+            logger.error('queryInscriptionById failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
-    queryInscriptionByAddress(address, limit, offset, order) {
+    queryInscriptionDataByAddress(address, limit, offset, order) {
         if (!address) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
@@ -86,22 +152,118 @@ class InscribeStore {
                     ORDER BY timestamp ${order} LIMIT ? OFFSET ?`
                 );
                 list = pageStmt.all(address, limit, offset);
+
+                const inscriptionIds = list.map(obj => obj.inscription_id);
+
+                const chunkSize = 900; // avoid sqlite limit
+                const inscriptionsMap = {};
+
+                for (let i = 0; i < inscriptionIds.length; i += chunkSize) {
+                    const chunk = inscriptionIds.slice(i, i + chunkSize);
+                    const stmt = store.inscriptionDB.prepare(
+                        `SELECT inscription_id, inscription_number 
+                        FROM ${TABLE_NAME.INSCRIPTIONS} 
+                        WHERE inscription_id IN (${chunk.map(() => '?').join(', ')})`
+                    );
+                    const chunkResults = stmt.all(...chunk);
+
+                    chunkResults.forEach(ins => {
+                        inscriptionsMap[ins.inscription_id] = ins.inscription_number;
+                    });
+                }
+
+                list = list.map(item => ({
+                    ...item,
+                    inscription_number: inscriptionsMap[item.inscription_id] || 0
+                }));
             }
 
-            logger.debug('queryInscriptionByAddress:', address, offset, limit, "ret:", count, list);
+            logger.debug('queryInscriptionDataByAddress:', address, offset, limit, "ret:", count, list);
 
             return makeSuccessResponse({ count, list });
 
         } catch (error) {
-            logger.error('queryInscriptionByAddress failed:', error);
+            logger.error('queryInscriptionDataByAddress failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
 
     }
 
+    queryInscriptionByOwner(owner, limit, offset, order) {
+        if (!owner) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "asc" ? "asc" : "desc";
+        try {
+            let list = [];
+            const countStmt = store.inscriptionDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.INSCRIPTIONS} 
+                WHERE owner = ?`
+            );
+            const countResult = countStmt.get(owner);
+            const count = countResult.count;
+
+            if (count > 0) {
+                const pageStmt = store.inscriptionDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
+                    WHERE owner = ? 
+                    ORDER BY timestamp ${order} LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(owner, limit, offset);
+            }
+
+            logger.debug('queryInscriptionByOwner:', owner, offset, limit, "ret:", count, list);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryInscriptionByOwner failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryInscriptionByCreator(creator, limit, offset, order) {
+        if (!creator) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "asc" ? "asc" : "desc";
+        try {
+            let list = [];
+            const countStmt = store.inscriptionDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.INSCRIPTIONS} 
+                WHERE creator = ?`
+            );
+            const countResult = countStmt.get(creator);
+            const count = countResult.count;
+
+            if (count > 0) {
+                const pageStmt = store.inscriptionDB.prepare(
+                    `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
+                    WHERE creator = ? 
+                    ORDER BY timestamp ${order} LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(creator, limit, offset);
+            }
+
+            logger.debug('queryInscriptionByCreator:', creator, offset, limit, "ret:", count, list);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryInscriptionByCreator failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
     //[begin, end)
-    queryInscriptionByBlock(beginBlock, endBlock, limit, offset, order) {
+    queryInscriptionDataByBlock(beginBlock, endBlock, limit, offset, order) {
         if (!beginBlock) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
@@ -122,12 +284,31 @@ class InscribeStore {
                 list = pageStmt.all(beginBlock, endBlock, limit, offset);
             }
 
-            logger.debug('queryInscriptionByBlock:', beginBlock, endBlock, offset, limit, "ret:", count, list);
+            logger.debug('queryInscriptionDataByBlock:', beginBlock, endBlock, offset, limit, "ret:", count, list);
 
             return makeSuccessResponse({ count, list });
 
         } catch (error) {
-            logger.error('queryInscriptionByBlock failed:', error);
+            logger.error('queryInscriptionDataByBlock failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryInscriptionDataCount() {
+        try {
+            const stmt = store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.INSCRIBE_DATA}`
+            );
+            const ret = stmt.get();
+            const count = ret.count;
+
+            logger.debug('queryInscriptionDataCount: ret:', count);
+
+            return makeSuccessResponse(count);
+        } catch (error) {
+            logger.error('queryInscriptionDataCount failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
@@ -135,9 +316,9 @@ class InscribeStore {
 
     queryInscriptionCount() {
         try {
-            const stmt = store.indexDB.prepare(
-                `SELECT COUNT(*) AS count 
-                FROM ${TABLE_NAME.INSCRIBE_DATA}`
+            const stmt = store.inscriptionDB.prepare(
+                `SELECT COUNT(*) AS count
+                FROM ${TABLE_NAME.INSCRIPTIONS}`
             );
             const ret = stmt.get();
             const count = ret.count;
@@ -1260,16 +1441,16 @@ class InscribeStore {
     const UserOp = {
         Mint: 'mint',
         Chant: 'chant',
-
+ 
         InscribeData: 'inscribe_data',
         TransferData: 'transfer_data',
-
+ 
         InscribeResonance: 'inscribe_res',
         Resonance: 'res',
-
+ 
         InscribeTransfer: 'inscribe_transfer',
         Transfer: 'transfer',
-
+ 
         SetPrice: 'set_price',
     }; */
     _getTableByOpType(opType) {
