@@ -494,7 +494,7 @@ class Util {
     }
 
     /**
-     * @comment check if the hash and block height is valid for chant
+     * @comment check if the hash and block height is matched for chant
      * @param {string} hash 
      * @param {number} block_height 
      * @param {number} hash_threshold 

@@ -51,4 +51,9 @@ const MintType = {
     BurnMint: 2,
 };
 
-module.exports = { InscriptionOpState, InscriptionStage, MintType };
+const ChantType = {
+    NormalChant: 0,
+    LuckyChant: 1,
+};
+
+module.exports = { InscriptionOpState, InscriptionStage, MintType, ChantType };

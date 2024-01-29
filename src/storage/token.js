@@ -274,6 +274,7 @@ class TokenIndexStorage {
                         owner_bonus TEXT,
                         hash_point INTEGER,
                         hash_weight TEXT,
+                        chant_type INTEGER,
                         state INTEGER DEFAULT 0
                     )`,
                     (err) => {
@@ -1060,6 +1061,7 @@ class TokenIndexStorage {
         owner_bonus,
         hash_point,
         hash_weight,
+        chant_type,
         state,
     ) {
         assert(this.db != null, `db should not be null`);
@@ -1091,6 +1093,10 @@ class TokenIndexStorage {
         assert(
             BigNumberUtil.is_positive_number_string(hash_weight),
             `hash_weight should be non-negative number string ${hash_weight}`,
+        );
+        assert(
+            _.isNumber(chant_type),
+            `chant_type should be number ${chant_type}`,
         );
         assert(
             Number.isInteger(state) && state >= 0,
@@ -1128,9 +1134,10 @@ class TokenIndexStorage {
                     owner_bonus, 
                     hash_point,
                     hash_weight,
+                    chant_type,
                     state
                 ) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     inscription_id,
                     block_height,
@@ -1143,6 +1150,7 @@ class TokenIndexStorage {
                     owner_bonus,
                     hash_point,
                     hash_weight,
+                    chant_type,
                     state,
                 ],
                 (err) => {

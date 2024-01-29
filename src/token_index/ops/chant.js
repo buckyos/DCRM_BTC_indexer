@@ -6,7 +6,7 @@ const {
     UserOp,
 } = require('../../storage/token');
 const { HashHelper } = require('./hash');
-const { InscriptionOpState } = require('./state');
+const { InscriptionOpState, ChantType } = require('./state');
 const { InscriptionNewItem } = require('../../index/item');
 const {
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
@@ -90,6 +90,7 @@ class ChantOperator {
             inscription_item.owner_bonus,
             inscription_item.hash_point,
             inscription_item.hash_weight,
+            inscription_item.chant_type,
             state,
         );
         if (record_ret !== 0) {
@@ -115,10 +116,11 @@ class ChantOperator {
         inscription_item.hash_point = 0;
         inscription_item.hash_weight = '0';
 
+        inscription_item.chant_type = ChantType.NormalChant;
         inscription_item.user_bonus = '0';
         inscription_item.owner_bonus = '0';
 
-        // first check if hash field is exists and valid
+        // 1. first check if hash field is exists and valid
         const hash = inscription_item.content.ph;
         if (hash == null || !_.isString(hash)) {
             console.warn(
@@ -138,7 +140,17 @@ class ChantOperator {
         assert(Util.is_valid_hex_mixhash(hash), `invalid hash format ${hash}`);
         inscription_item.hash = hash;
 
-        // at first we should check if user has chant at 12800 consecutive blocks, if that, we should clear all its resonance qualifications
+        // 2. check if already has one chant op in this block
+        const user_chant_op = this.user_chant_ops.get(inscription_item.address);
+        if (user_chant_op != null) {
+            console.warn(
+                `user already has chant op in this block ${inscription_item.inscription_id} ${inscription_item.address} ${inscription_item.block_height}`,
+            );
+            return { ret: 0, state: InscriptionOpState.ALREADY_EXISTS };
+        }
+        this.user_chant_ops.set(inscription_item.address, inscription_item);
+
+        // 3. then we should check if user has chant at 12800 consecutive blocks, if that, we should clear all its resonance qualifications
         const { ret: verify_ret } = await this.resonance_verifier.verify_user(
             inscription_item.address,
             inscription_item.block_height,
@@ -150,7 +162,7 @@ class ChantOperator {
             return { ret: verify_ret };
         }
 
-        // 1. check permission
+        // 4. check permission
         // user can only chant the hash which he has or he resonates
         const { ret: query_relation_ret, data: data_relation } =
             await this.relation_storage.query_relation(
@@ -178,22 +190,28 @@ class ChantOperator {
             `invalid relation ${data_relation.relation}`,
         );
 
-        // 2. check hash and block height relation if matched
+        // 5. check hash and block height relation if matched
+        let chant_type = ChantType.NormalChant;
         if (
-            !Util.check_chant_hash_and_block_height(
+            Util.check_chant_hash_and_block_height(
                 hash,
                 inscription_item.block_height,
                 this.chant_block_threshold,
             )
         ) {
-            console.warn(
-                `invalid hash relation ${inscription_item.inscription_id} hash: ${hash} block: ${inscription_item.block_height}`,
+            chant_type = ChantType.LuckyChant;
+            console.info(
+                `chant match hash relation ${inscription_item.inscription_id} hash: ${hash} block: ${inscription_item.block_height}`,
             );
-
-            return { ret: 0, state: InscriptionOpState.HASH_UNMATCHED };
+        } else {
+            console.info(
+                `chant not match hash relation ${inscription_item.inscription_id} hash: ${hash} block: ${inscription_item.block_height}`,
+            );
         }
 
-        // 3. check weight of hash
+        inscription_item.chant_type = chant_type;
+
+        // 6. check weight of hash
         // Chant Bonus = weight and Chant Stamina = weight / 4, and user' balance should be enough: balance >= chant stamina
 
         // calc hash weight
@@ -218,7 +236,6 @@ class ChantOperator {
         inscription_item.hash_point = hash_point;
         inscription_item.hash_weight = hash_weight;
 
-        let bonus = hash_weight;
         const stamina = BigNumberUtil.divide(hash_weight, 4);
 
         // check if user has enough balance as stamina
@@ -236,22 +253,21 @@ class ChantOperator {
         assert(_.isString(amount), `invalid inner balance ${amount}`);
         if (BigNumberUtil.compare(amount, stamina) < 0) {
             console.error(
-                `not enough inner balance ${inscription_item.inscription_id} ${inscription_item.address} ${amount} < ${stamina}`,
+                `not enough inner balance for stamina: ${inscription_item.inscription_id} ${inscription_item.address} ${amount} < ${stamina}`,
             );
             return { ret: 0, state: InscriptionOpState.INSUFFICIENT_BALANCE };
         }
 
-        // 4. check if already has one chant op in this block
-        const user_chant_op = this.user_chant_ops.get(inscription_item.address);
-        if (user_chant_op != null) {
-            console.warn(
-                `user already has chant op in this block ${inscription_item.inscription_id} ${inscription_item.address}`,
-            );
-            return { ret: 0, state: InscriptionOpState.ALREADY_EXISTS };
+    
+        // 7. check if Mint pool left balance is enough
+        let bonus;
+        if (chant_type === ChantType.LuckyChant) {
+            bonus = hash_weight;
+        } else {
+            assert(chant_type === ChantType.NormalChant);
+            bonus = BigNumberUtil.multiply(hash_weight, 10);
         }
-        this.user_chant_ops.set(inscription_item.address, inscription_item);
 
-        // 5. check if Mint pool left balance
         const { ret: get_mint_pool_ret, amount: mint_pool_balance } =
             await this.balance_storage.get_inner_balance(
                 TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
@@ -302,7 +318,7 @@ class ChantOperator {
             return { ret: 0, state: InscriptionOpState.HASH_NOT_FOUND };
         }
 
-        // 6. trans bonus to user and owner
+        // 8. trans bonus to user and owner
         let user_bonus;
         let owner_bonus;
         if (data.address !== inscription_item.address) {
@@ -393,7 +409,7 @@ class ChantOperator {
         inscription_item.user_bonus = user_bonus;
         inscription_item.owner_bonus = owner_bonus;
 
-        // 7. update pool amount
+        // 9. update pool amount at last
         const { ret: update_pool_ret } =
             await this.balance_storage.update_pool_balance_on_ops(
                 UpdatePoolBalanceOp.Chant,
