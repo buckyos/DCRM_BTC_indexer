@@ -1,17 +1,11 @@
 const { SearchStore } = require('./searchStore.js');
 
 class SearchService {
-    constructor() {
-        this.m_inited = false;
-        this.m_store = null;
+    constructor(config, store) {
+        this.m_store = new SearchStore(store);
     }
 
     _init() {
-        if (this.m_inited) {
-            return;
-        }
-        this.m_store = new SearchStore();
-        this.m_inited = true;
     }
 
     async _getSearchResult(ctx) {

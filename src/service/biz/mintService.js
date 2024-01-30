@@ -1,18 +1,12 @@
 const { MintStore } = require('./mintStore');
 
 class MintService {
-    constructor(config) {
-        this.m_inited = false;
-        this.m_store = null;
+    constructor(config, store) {
+        this.m_store = new MintStore(config, store);
         this.m_config = config;
     }
 
     _init() {
-        if (this.m_inited) {
-            return;
-        }
-        this.m_store = new MintStore(this.m_config);
-        this.m_inited = true;
     }
 
     async _getMintRecordByAddress(ctx) {

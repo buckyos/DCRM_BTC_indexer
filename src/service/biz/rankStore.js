@@ -1,4 +1,4 @@
-const { store, TABLE_NAME } = require('./store');
+const { TABLE_NAME } = require('./store');
 const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { Util } = require('../../util');
 const { DATA_HASH_START_SIZE } = require('../../constants');
@@ -8,7 +8,9 @@ should theoretically reflect the latest data promptly.*/
 const UPDATE_INTERVAL = 60 * 1000;
 
 class RankStore {
-    constructor() {
+    constructor(store) {
+        this.m_store = store;
+
         this.m_hashSizeList = {};   // { hash: size }
 
         this.m_resonantRankList = {
@@ -50,7 +52,7 @@ class RankStore {
 
     async _getResonantRankList() {
         try {
-            const stmt = store.indexDB.prepare(
+            const stmt = this.m_store.indexDB.prepare(
                 `SELECT * FROM 
                 ${TABLE_NAME.INSCRIBE_DATA} 
                 WHERE price != '0' AND resonance_count < 15`
@@ -76,7 +78,7 @@ class RankStore {
 
             //console.debug('hash size list:', this.m_hashSizeList);
 
-            const pointsStmt = store.ethIndexDb.prepare(
+            const pointsStmt = this.m_store.ethIndexDb.prepare(
                 `SELECT hash, MAX(point) AS max_point
                 FROM ${TABLE_NAME.POINTS}
                 GROUP BY hash;`

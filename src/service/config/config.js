@@ -72,6 +72,4 @@ class Config {
     }
 }
 
-const config = new Config();
-
-module.exports = { config };
+module.exports = { Config };

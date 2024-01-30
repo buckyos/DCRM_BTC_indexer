@@ -127,11 +127,10 @@ class Store {
     }
 }
 
-const store = new Store();
-
 const TABLE_NAME = {
     INSCRIBE_DATA: 'inscribe_data',
     BALANCE: 'balance',
+    BALANCE_RECORDS: 'balance_records',
     STATE: 'state',
     RELATIONS: 'relations',
     INSCRIPTIONS: 'inscriptions',
@@ -149,6 +148,6 @@ const TABLE_NAME = {
 };
 
 module.exports = {
-    store,
+    Store,
     TABLE_NAME,
 };

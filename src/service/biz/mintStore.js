@@ -1,4 +1,4 @@
-const { store, TABLE_NAME } = require('./store');
+const { TABLE_NAME } = require('./store');
 const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const {
     InscriptionOpState,
@@ -25,8 +25,9 @@ function stateCondition(state) {
 }
 
 class MintStore {
-    constructor(config) {
+    constructor(config, store) {
         this.m_config = config;
+        this.m_store = store;
     }
 
     queryMintRecordByAddress(address, limit, offset, state, order) {
@@ -44,7 +45,7 @@ class MintStore {
                 FROM ${TABLE_NAME.MINT_RECORDS}
                 WHERE address = ?`;
             sql += stateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             count = countResult.count;
 
@@ -54,7 +55,7 @@ class MintStore {
                     WHERE address = ?`;
                 sql += stateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -92,7 +93,7 @@ class MintStore {
                 FROM ${TABLE_NAME.MINT_RECORDS}
                 WHERE address = ? AND mint_type = ?`;
             sql += stateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address, MintType.LuckyMint);
             count = countResult.count;
 
@@ -102,7 +103,7 @@ class MintStore {
                     WHERE address = ? AND mint_type = ?`;
                 sql += stateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, MintType.LuckyMint, limit, offset);
             }
 
@@ -120,7 +121,7 @@ class MintStore {
         }
 
         try {
-            const stmt = store.indexDB.prepare(
+            const stmt = this.m_store.indexDB.prepare(
                 `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} WHERE txid = ?`,
             );
             const ret = stmt.get(txid);
@@ -141,7 +142,7 @@ class MintStore {
         let list = [];
 
         try {
-            const countStmt = store.indexDB.prepare(
+            const countStmt = this.m_store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.MINT_RECORDS} 
                 WHERE mint_type = ? AND state = ?`,
@@ -150,7 +151,7 @@ class MintStore {
             count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(
+                const pageStmt = this.m_store.indexDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.MINT_RECORDS} 
                     WHERE mint_type = ? AND state = ?
                     ORDER BY timestamp ${order} 
@@ -181,7 +182,7 @@ class MintStore {
         }
 
         try {
-            const stmt = store.indexDB.prepare(
+            const stmt = this.m_store.indexDB.prepare(
                 `SELECT amount, inner_amount
                 FROM ${TABLE_NAME.MINT_RECORDS} 
                 WHERE timestamp >= ? AND timestamp < ? AND state = ?`,
@@ -214,7 +215,7 @@ class MintStore {
 
     queryMintProgress() {
         try {
-            const stmt = store.indexDB.prepare(
+            const stmt = this.m_store.indexDB.prepare(
                 `SELECT * FROM ${TABLE_NAME.BALANCE} 
                 WHERE address = ? or address = ?`
             );
@@ -256,7 +257,7 @@ class MintStore {
         }
 
         try {
-            const stmt = store.indexDB.prepare(
+            const stmt = this.m_store.indexDB.prepare(
                 `SELECT amount, transferable_amount, inner_amount, inner_transferable_amount
                 FROM ${TABLE_NAME.BALANCE} 
                 WHERE address = ?`,
@@ -285,13 +286,13 @@ class MintStore {
 
     queryIndexerState() {
         try {
-            const ethStmt = store.syncStateDB.prepare(
+            const ethStmt = this.m_store.syncStateDB.prepare(
                 `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`,
             );
             const ethRet = ethStmt.get('eth_latest_block_height');
             const ethHeight = ethRet.value;
 
-            const btcStmt = store.indexStateDB.prepare(
+            const btcStmt = this.m_store.indexStateDB.prepare(
                 `SELECT value FROM ${TABLE_NAME.STATE} WHERE name = ?`,
             );
             const btcRet = btcStmt.get('token_latest_block_height');
@@ -320,7 +321,7 @@ class MintStore {
                 chanted_bonus: '0', // chanted by others
                 resonance_bonus: '0', // resonance by others
             };
-            let stmt = store.indexDB.prepare(
+            let stmt = this.m_store.indexDB.prepare(
                 `SELECT amount
                 FROM ${TABLE_NAME.MINT_RECORDS} 
                 WHERE address = ? AND timestamp >= ? AND timestamp < ?`,
@@ -332,7 +333,7 @@ class MintStore {
             }
             result.mint = total;
 
-            stmt = store.indexDB.prepare(
+            stmt = this.m_store.indexDB.prepare(
                 `SELECT i.hash, r.owner_bonus
                 FROM ${TABLE_NAME.INSCRIBE_DATA} i
                 JOIN ${TABLE_NAME.RESONANCE_RECORDS} r ON i.hash = r.hash
@@ -345,7 +346,7 @@ class MintStore {
             }
             result.resonance_bonus = total;
 
-            stmt = store.indexDB.prepare(
+            stmt = this.m_store.indexDB.prepare(
                 `SELECT i.hash, c.owner_bonus
                 FROM ${TABLE_NAME.INSCRIBE_DATA} i
                 JOIN  ${TABLE_NAME.CHANT_RECORDS} c ON i.hash = c.hash
@@ -358,7 +359,7 @@ class MintStore {
             }
             result.chanted_bonus = total;
 
-            stmt = store.indexDB.prepare(
+            stmt = this.m_store.indexDB.prepare(
                 `SELECT user_bonus
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE address = ? AND timestamp >= ? AND timestamp < ? AND state = ?`,

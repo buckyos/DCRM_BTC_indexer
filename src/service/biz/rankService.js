@@ -2,17 +2,11 @@ const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { RankStore } = require('./rankStore');
 
 class RankService {
-    constructor() {
-        this.m_inited = false;
-        this.m_store = null;
+    constructor(config, store) {
+        this.m_store = new RankStore(store);
     }
 
     _init() {
-        if (this.m_inited) {
-            return;
-        }
-        this.m_store = new RankStore();
-        this.m_inited = true;
     }
 
     async _getResonantRank(ctx) {

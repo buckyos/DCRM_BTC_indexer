@@ -1,4 +1,4 @@
-const { store, TABLE_NAME } = require('./store');
+const { TABLE_NAME } = require('./store');
 const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
 const { Util } = require('../../util');
@@ -28,8 +28,9 @@ function StageCondition(stage) {
 }
 
 class InscribeStore {
-    constructor(config) {
+    constructor(config, store) {
         this.m_config = config;
+        this.m_store = store;
     }
 
     queryInscriptionDataByHash(hash) {
@@ -45,13 +46,13 @@ class InscribeStore {
         hash = mixhash;
 
         try {
-            const stmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash = ?`);
+            const stmt = this.m_store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash = ?`);
             const ret = stmt.get(hash);
 
             logger.debug('queryInscriptionDataByHash:', hash, "ret:", ret);
 
             if (ret) {
-                const numberStmt = store.inscriptionDB.prepare(
+                const numberStmt = this.m_store.inscriptionDB.prepare(
                     `SELECT inscription_number FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id = ?`
                 );
                 const number = numberStmt.get(ret.inscription_id);
@@ -76,7 +77,7 @@ class InscribeStore {
         }
 
         try {
-            const stmt = store.indexDB.prepare(
+            const stmt = this.m_store.indexDB.prepare(
                 `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE inscription_id = ?`
             );
             const ret = stmt.get(inscriptionId);
@@ -84,7 +85,7 @@ class InscribeStore {
             logger.debug('queryInscriptionDataById:', inscriptionId, "ret:", ret);
 
             if (ret) {
-                const numberStmt = store.inscriptionDB.prepare(
+                const numberStmt = this.m_store.inscriptionDB.prepare(
                     `SELECT inscription_number FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id = ?`
                 );
                 const number = numberStmt.get(ret.inscription_id);
@@ -109,7 +110,7 @@ class InscribeStore {
         }
 
         try {
-            const stmt = store.inscriptionDB.prepare(
+            const stmt = this.m_store.inscriptionDB.prepare(
                 `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id = ?`
             );
             const ret = stmt.get(inscriptionId);
@@ -137,7 +138,7 @@ class InscribeStore {
         order = order == "asc" ? "asc" : "desc";
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(
+            const countStmt = this.m_store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.INSCRIBE_DATA} 
                 WHERE address = ?`
@@ -146,7 +147,7 @@ class InscribeStore {
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(
+                const pageStmt = this.m_store.indexDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} 
                     WHERE address = ? 
                     ORDER BY timestamp ${order} LIMIT ? OFFSET ?`
@@ -160,7 +161,7 @@ class InscribeStore {
 
                 for (let i = 0; i < inscriptionIds.length; i += chunkSize) {
                     const chunk = inscriptionIds.slice(i, i + chunkSize);
-                    const stmt = store.inscriptionDB.prepare(
+                    const stmt = this.m_store.inscriptionDB.prepare(
                         `SELECT inscription_id, inscription_number 
                         FROM ${TABLE_NAME.INSCRIPTIONS} 
                         WHERE inscription_id IN (${chunk.map(() => '?').join(', ')})`
@@ -198,7 +199,7 @@ class InscribeStore {
         order = order == "asc" ? "asc" : "desc";
         try {
             let list = [];
-            const countStmt = store.inscriptionDB.prepare(
+            const countStmt = this.m_store.inscriptionDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.INSCRIPTIONS} 
                 WHERE owner = ?`
@@ -207,7 +208,7 @@ class InscribeStore {
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.inscriptionDB.prepare(
+                const pageStmt = this.m_store.inscriptionDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
                     WHERE owner = ? 
                     ORDER BY genesis_timestamp ${order} LIMIT ? OFFSET ?`
@@ -234,7 +235,7 @@ class InscribeStore {
         order = order == "asc" ? "asc" : "desc";
         try {
             let list = [];
-            const countStmt = store.inscriptionDB.prepare(
+            const countStmt = this.m_store.inscriptionDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.INSCRIPTIONS} 
                 WHERE creator = ?`
@@ -243,7 +244,7 @@ class InscribeStore {
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.inscriptionDB.prepare(
+                const pageStmt = this.m_store.inscriptionDB.prepare(
                     `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
                     WHERE creator = ? 
                     ORDER BY genesis_timestamp ${order} LIMIT ? OFFSET ?`
@@ -271,7 +272,7 @@ class InscribeStore {
         order = order == "asc" ? "asc" : "desc";
         try {
             let list = [];
-            const countStmt = store.indexDB.prepare(
+            const countStmt = this.m_store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.INSCRIBE_DATA} 
                 WHERE block_height >= ? AND block_height < ?`
@@ -280,7 +281,7 @@ class InscribeStore {
             const count = countResult.count;
 
             if (count > 0) {
-                const pageStmt = store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE block_height >= ? AND block_height < ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
+                const pageStmt = this.m_store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE block_height >= ? AND block_height < ? ORDER BY timestamp ${order} LIMIT ? OFFSET ?`);
                 list = pageStmt.all(beginBlock, endBlock, limit, offset);
             }
 
@@ -297,7 +298,7 @@ class InscribeStore {
 
     queryInscriptionDataCount() {
         try {
-            const stmt = store.indexDB.prepare(
+            const stmt = this.m_store.indexDB.prepare(
                 `SELECT COUNT(*) AS count 
                 FROM ${TABLE_NAME.INSCRIBE_DATA}`
             );
@@ -337,7 +338,7 @@ class InscribeStore {
 
             sql += StateCondition(state);
 
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
@@ -346,7 +347,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, limit, offset);
             }
 
@@ -373,7 +374,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
                 WHERE address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
@@ -382,7 +383,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -416,7 +417,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS}
                 WHERE hash = ? AND address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash, address);
             const count = countResult.count;
 
@@ -427,7 +428,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, address, limit, offset);
             }
 
@@ -451,7 +452,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
                 WHERE txid = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
 
             logger.debug('queryInscribeByTx:', txid, "ret:", ret);
@@ -485,7 +486,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE hash = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
             if (count > 0) {
@@ -493,7 +494,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, limit, offset);
             }
 
@@ -521,7 +522,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
@@ -530,7 +531,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -566,7 +567,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE hash = ? AND address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash, address);
             const count = countResult.count;
 
@@ -575,7 +576,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, address, limit, offset);
             }
 
@@ -601,7 +602,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.RESONANCE_RECORDS}
                 WHERE txid = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
 
             logger.debug('queryResonanceByTx:', txid, "ret:", ret);
@@ -636,7 +637,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE hash = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
@@ -645,7 +646,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, limit, offset);
             }
 
@@ -674,7 +675,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
@@ -683,7 +684,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -718,7 +719,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE hash = ? AND address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash, address);
             const count = countResult.count;
 
@@ -727,7 +728,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, address, limit, offset);
             }
 
@@ -754,7 +755,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.CHANT_RECORDS}
                 WHERE txid = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
 
             logger.debug('queryChantByTx:', txid, "ret:", ret);
@@ -789,7 +790,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.SET_PRICE_RECORDS}
                 WHERE hash = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
@@ -798,7 +799,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, limit, offset);
             }
 
@@ -827,7 +828,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.SET_PRICE_RECORDS}
                 WHERE address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
@@ -836,7 +837,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -862,7 +863,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.SET_PRICE_RECORDS}
                 WHERE txid = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
 
             logger.debug('querySetPriceByTx:', txid, "ret:", ret);
@@ -892,7 +893,7 @@ class InscribeStore {
             sql += StateCondition(state);
             sql += StageCondition(stage);
             logger.debug('queryTransferByAddress count:', sql);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address, address);
             const count = countResult.count;
 
@@ -906,7 +907,7 @@ class InscribeStore {
 
                 logger.debug('queryTransferByAddress list:', sql);
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, address, limit, offset);
 
                 const inscriptionIds = list.map(obj => obj.inscription_id);
@@ -916,7 +917,7 @@ class InscribeStore {
 
                 for (let i = 0; i < inscriptionIds.length; i += chunkSize) {
                     const chunk = inscriptionIds.slice(i, i + chunkSize);
-                    const stmt = store.inscriptionDB.prepare(
+                    const stmt = this.m_store.inscriptionDB.prepare(
                         `SELECT inscription_id, inscription_number 
                         FROM ${TABLE_NAME.INSCRIPTIONS} 
                         WHERE inscription_id IN (${chunk.map(() => '?').join(', ')})`
@@ -961,7 +962,7 @@ class InscribeStore {
             sql += StateCondition(state);
             sql += StageCondition(stage);
             logger.debug('queryTransferByFromAddress count:', sql);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
@@ -975,7 +976,7 @@ class InscribeStore {
 
                 logger.debug('queryTransferByFromAddress list:', sql);
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
 
                 const inscriptionIds = list.map(obj => obj.inscription_id);
@@ -985,7 +986,7 @@ class InscribeStore {
 
                 for (let i = 0; i < inscriptionIds.length; i += chunkSize) {
                     const chunk = inscriptionIds.slice(i, i + chunkSize);
-                    const stmt = store.inscriptionDB.prepare(
+                    const stmt = this.m_store.inscriptionDB.prepare(
                         `SELECT inscription_id, inscription_number 
                         FROM ${TABLE_NAME.INSCRIPTIONS} 
                         WHERE inscription_id IN (${chunk.map(() => '?').join(', ')})`
@@ -1026,7 +1027,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.TRANSFER_RECORDS}
                 WHERE txid = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
 
             logger.debug('queryTransferByTx:', txid, "ret:", ret);
@@ -1061,7 +1062,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS}
                 WHERE hash = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(hash);
             const count = countResult.count;
 
@@ -1070,7 +1071,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, limit, offset);
             }
 
@@ -1099,7 +1100,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS}
                 WHERE from_address = ? OR to_address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address, address);
             const count = countResult.count;
 
@@ -1110,7 +1111,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, address, limit, offset);
             }
 
@@ -1136,7 +1137,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS}
                 WHERE txid = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
 
             logger.debug('queryInscribeDataTransferByTx:', txid, "ret:", ret);
@@ -1164,7 +1165,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.USER_OPS}
                 WHERE address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(address);
             const count = countResult.count;
 
@@ -1173,7 +1174,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
             }
 
@@ -1202,7 +1203,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.USER_OPS}
                 WHERE inscription_id = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(inscription);
             const count = countResult.count;
 
@@ -1211,7 +1212,7 @@ class InscribeStore {
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
 
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(inscription, limit, offset);
             }
 
@@ -1240,7 +1241,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.USER_OPS}
                 WHERE inscription_id = ? AND address = ?`;
             sql += StateCondition(state);
-            const countStmt = store.indexDB.prepare(sql);
+            const countStmt = this.m_store.indexDB.prepare(sql);
             const countResult = countStmt.get(inscription, address);
             const count = countResult.count;
 
@@ -1248,7 +1249,7 @@ class InscribeStore {
                 sql = `SELECT * FROM ${TABLE_NAME.USER_OPS} WHERE inscription_id = ? AND address = ?`;
                 sql += StateCondition(state);
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
-                const pageStmt = store.indexDB.prepare(sql);
+                const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(inscription, address, limit, offset);
             }
 
@@ -1274,7 +1275,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.USER_OPS}
                 WHERE txid = ?`;
 
-            const stmt = store.indexDB.prepare(sql);
+            const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
 
             logger.debug('queryOpsByTx:', txid, "ret:", ret);
@@ -1298,7 +1299,7 @@ class InscribeStore {
             let sql =
                 `SELECT * FROM ${TABLE_NAME.RELATIONS} 
                     WHERE address = ? AND relation = ?`;
-            const pageStmt = store.indexDB.prepare(sql);
+            const pageStmt = this.m_store.indexDB.prepare(sql);
             list = pageStmt.all(address, UserHashRelation.Resonance);
 
             return makeSuccessResponse(list);
@@ -1327,7 +1328,7 @@ class InscribeStore {
             let sql =
                 `SELECT * FROM ${TABLE_NAME.RELATIONS} 
                     WHERE hash = ? AND relation = ?`;
-            const pageStmt = store.indexDB.prepare(sql);
+            const pageStmt = this.m_store.indexDB.prepare(sql);
             list = pageStmt.all(hash, UserHashRelation.Resonance);
 
             return makeSuccessResponse(list);
@@ -1392,7 +1393,7 @@ class InscribeStore {
                 FROM ${TABLE_NAME.INSCRIPTIONS}
                 WHERE inscription_id = ?`;
 
-            const stmt = store.inscriptionDB.prepare(sql);
+            const stmt = this.m_store.inscriptionDB.prepare(sql);
             const ret = stmt.get(inscriptionId);
 
             if (!ret) {
@@ -1406,7 +1407,7 @@ class InscribeStore {
             }
 
             sql = `SELECT * FROM ${tableName} WHERE inscription_id = ? LIMIT 1`;
-            const opStmt = store.indexDB.prepare(sql);
+            const opStmt = this.m_store.indexDB.prepare(sql);
             ret.detail = opStmt.get(inscriptionId);
 
             return makeSuccessResponse(ret);
