@@ -659,7 +659,7 @@ class InscribeService {
             ctx.response.body = await this._getInscriptionOpById(ctx);
         });
 
-        router.get("/data_ops/:hash:/:limit?/:offset?/:state?/:order?", async (ctx) => {
+        router.get("/data_ops/:hash/:limit?/:offset?/:state?/:order?", async (ctx) => {
             ctx.response.body = await this._getDataOpByHash(ctx);
         });
 
