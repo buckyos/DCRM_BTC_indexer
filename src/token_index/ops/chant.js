@@ -265,7 +265,7 @@ class ChantOperator {
             bonus = hash_weight;
         } else {
             assert(chant_type === ChantType.NormalChant);
-            bonus = BigNumberUtil.multiply(hash_weight, 10);
+            bonus = BigNumberUtil.divide(hash_weight, 10);
         }
 
         const { ret: get_mint_pool_ret, amount: mint_pool_balance } =
