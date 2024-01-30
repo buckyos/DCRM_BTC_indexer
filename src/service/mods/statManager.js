@@ -56,11 +56,13 @@ class StatManager {
         const currentHeight = await this.getLastSyncBlockHeight();
 
         let stat = null;
+        let lastUpdateBlock = 0;
         if (this.m_totalIncome[address]) {
             if (this.m_totalIncome[address].lastUpdateBlock >= currentHeight) {
                 return this.m_totalIncome[address].stat;
             }
             stat = this.m_totalIncome[address].stat;
+            lastUpdateBlock = this.m_totalIncome[address].lastUpdateBlock;
         }
 
         const sql =
@@ -76,7 +78,7 @@ class StatManager {
             const list = stmt.all(
                 address,
                 BalanceRecordDirection.In,
-                this.m_totalIncome[address].lastUpdateBlock || 0,
+                lastUpdateBlock,
                 currentHeight
             );
 
