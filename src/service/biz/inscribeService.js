@@ -2,7 +2,7 @@ const { InscribeStore } = require('./inscribeStore.js');
 
 class InscribeService {
     constructor(config, store) {
-        this.m_store = new InscribeStore(this.m_config, this.m_store);
+        this.m_store = new InscribeStore(config, store);
         this.m_config = config;
     }
 
@@ -485,6 +485,14 @@ class InscribeService {
         );
     }
 
+    async _getDataOpByHash(ctx) {
+        const hash = ctx.params.hash;
+
+        return this.m_store.queryDataOpByHash(
+            hash
+        );
+    }
+
     registerRouter(router) {
         this._init();
 
@@ -641,6 +649,10 @@ class InscribeService {
 
         router.get("/inscription_op/:inscription_id", async (ctx) => {
             ctx.response.body = await this._getInscriptionOpById(ctx);
+        });
+
+        router.get("/data_ops/:hash", async (ctx) => {
+            ctx.response.body = await this._getDataOpByHash(ctx);
         });
 
         return 0;

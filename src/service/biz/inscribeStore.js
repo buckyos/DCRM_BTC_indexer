@@ -1419,6 +1419,50 @@ class InscribeStore {
         }
     }
 
+    queryDataOpByHash(hash) {
+        if (!hash) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        hash = mixhash;
+
+        try {
+            let sql =
+                `SELECT *
+                FROM ${TABLE_NAME.INSCRIPTIONS}
+                WHERE hash = ?`;
+
+            const stmt = this.m_store.inscriptionDB.prepare(sql);
+            const ret = stmt.get(hash);
+
+            if (!ret) {
+                return makeResponse(ERR_CODE.NOT_FOUND);
+            }
+
+            const opType = ret.op;
+            const tableName = this._getTableByOpType(opType);
+            if (!tableName) {
+                return makeResponse(ERR_CODE.NOT_FOUND);
+            }
+
+            sql = `SELECT * FROM ${tableName} WHERE hash = ? LIMIT 1`;
+            const opStmt = this.m_store.indexDB.prepare(sql);
+            ret.detail = opStmt.get(hash);
+
+            return makeSuccessResponse(ret);
+
+        } catch (error) {
+            logger.error('queryDataOpByHash failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
     /*
     const UserOp = {
         Mint: 'mint',

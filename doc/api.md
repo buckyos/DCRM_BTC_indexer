@@ -983,33 +983,6 @@ const InscriptionOpState = {
     }
     ```
 
-#### 获取某地址在时间段内的收益：
-
-    /income/:address/:begin_time/:end_time?
-
-    GET
-
-    参数
-
-    begin_time: 起始时间（UTC）
-
-    end_time: 结束时间，默认到当前时间
-
-    返回：
-
-    ```json
-    {
-        err: 0,
-        msg: "错误信息",
-        result: {
-            mint,               // mint部分 string
-            chant_bonus,        // 吟唱奖励 string
-            chanted_bonus,      // 被他人吟唱的奖励 string
-            resonance_bonus     // 数据被共鸣的奖励 string
-        }
-    }
-    ```
-
 #### 根据地址获取转账记录
 
     /transfer_by_address/:address/:limit?/:offset?/:state?/:order?/:stage?
@@ -1673,6 +1646,108 @@ const InscriptionOpState = {
             "strippedsize": 769718,
             "size": 1683706,
             "weight": 3992860
+        }
+    }
+    ```
+
+#### 获取某地址在过去24小时内的收益：
+
+    /income_last_24/:address
+
+    GET
+
+    参数
+
+    address: 地址
+
+    返回：
+
+    所有的金额类型均为string
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            "income": {
+                "coinbase",
+                "mint",
+                "lucky_mint",
+                "burn_mint",
+                "inscribe_data",
+                "chant",
+                "lucky_chant",
+                "chant_divide",
+                "lucky_chant_divide",
+                "res",
+                "transfer",
+                "exchange"
+            },
+            "inner_income": {
+                "coinbase",
+                "mint",
+                "lucky_mint",
+                "burn_mint",
+                "inscribe_data",
+                "chant",
+                "lucky_chant",
+                "chant_divide",
+                "lucky_chant_divide",
+                "res",
+                "transfer",
+                "exchange"
+            }
+        }
+    }
+    ```
+
+#### 获取某地址所有的收益：
+
+    /income/:address
+
+    GET
+
+    参数
+
+    address: 地址
+
+    返回：
+
+    所有的金额类型均为string
+
+    ```json
+    {
+        err: 0,
+        msg: "错误信息",
+        result: {
+            "income": {
+                "coinbase",
+                "mint",
+                "lucky_mint",
+                "burn_mint",
+                "inscribe_data",
+                "chant",
+                "lucky_chant",
+                "chant_divide",
+                "lucky_chant_divide",
+                "res",
+                "transfer",
+                "exchange"
+            },
+            "inner_income": {
+                "coinbase",
+                "mint",
+                "lucky_mint",
+                "burn_mint",
+                "inscribe_data",
+                "chant",
+                "lucky_chant",
+                "chant_divide",
+                "lucky_chant_divide",
+                "res",
+                "transfer",
+                "exchange"
+            }
         }
     }
     ```
