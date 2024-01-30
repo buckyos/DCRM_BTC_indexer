@@ -838,6 +838,26 @@ class TokenIndexStorage {
             return { ret: user_op_ret };
         }
 
+        // then append data op
+        const total_amount = BigNumberUtil.add(mint_amount, service_charge);
+        const { ret: data_op_ret } = await this.ops_storage.add_data_op(
+            hash,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            address,
+            BigNumberUtil.multiply(total_amount, '-1'),
+            UserOp.InscribeData,
+            state,
+        );
+        if (data_op_ret !== 0) {
+            console.error(
+                `failed to add data op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: data_op_ret };
+        }
+
         return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO inscribe_records 
@@ -978,6 +998,25 @@ class TokenIndexStorage {
             return { ret: user_op_ret };
         }
 
+        // then append data op
+        const { ret: data_op_ret } = await this.ops_storage.add_data_op(
+            hash,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            from_address,
+            '0',
+            UserOp.TransferData,
+            state,
+        );
+        if (data_op_ret !== 0) {
+            console.error(
+                `failed to add data op ${inscription_id} ${from_address} ${block_height}`,
+            );
+            return { ret: data_op_ret };
+        }
+
         return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO inscribe_data_transfer_records 
@@ -1104,6 +1143,26 @@ class TokenIndexStorage {
                 `failed to add user chant op ${inscription_id} ${address} ${block_height}`,
             );
             return { ret: user_op_ret };
+        }
+
+        // then append data op
+        const total_bonus = BigNumberUtil.add(user_bonus, owner_bonus);
+        const { ret: data_op_ret } = await this.ops_storage.add_data_op(
+            hash,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            address,
+            total_bonus,
+            InscriptionOp.Chant,
+            state,
+        );
+        if (data_op_ret !== 0) {
+            console.error(
+                `failed to add data op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: data_op_ret };
         }
 
         return new Promise((resolve) => {
@@ -1504,6 +1563,25 @@ class TokenIndexStorage {
             return { ret: user_op_ret };
         }
 
+        // then append data op
+        const { ret: data_op_ret } = await this.ops_storage.add_data_op(
+            hash,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            address,
+            price,
+            UserOp.SetPrice,
+            state,
+        );
+        if (data_op_ret !== 0) {
+            console.error(
+                `failed to add data op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: data_op_ret };
+        }
+
         return new Promise((resolve) => {
             this.db.run(
                 `INSERT OR REPLACE INTO set_price_records (
@@ -1617,6 +1695,26 @@ class TokenIndexStorage {
                 `failed to add user res op ${inscription_id} ${address} ${block_height}`,
             );
             return { ret: user_op_ret };
+        }
+
+        // then append data op
+        const total_amount = BigNumberUtil.add(owner_bonus, service_charge);
+        const { ret: data_op_ret } = await this.ops_storage.add_data_op(
+            hash,
+            inscription_id,
+            block_height,
+            timestamp,
+            txid,
+            address,
+            BigNumberUtil.multiply(total_amount, '-1'),
+            UserOp.Resonance,
+            state,
+        );
+        if (data_op_ret !== 0) {
+            console.error(
+                `failed to add data op ${inscription_id} ${address} ${block_height}`,
+            );
+            return { ret: data_op_ret };
         }
 
         return new Promise((resolve) => {
