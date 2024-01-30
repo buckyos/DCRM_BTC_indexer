@@ -53,7 +53,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",         // 如果err == 0，没有msg字段
+        msg: 错误信息,         // 如果err == 0，没有msg字段
         result: {               // 如果err != 0，没有result字段
             hash,               // 公共数据hash
             inscription_id,     // 铭文id
@@ -83,7 +83,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",         // 如果err == 0，没有msg字段
+        msg: 错误信息,         // 如果err == 0，没有msg字段
         result: // 同上
     }
     ```
@@ -109,7 +109,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list                // 列表，item数据格式同上
@@ -140,7 +140,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list                // 列表，item数据格式同上,(不包含inscription_number)
@@ -159,7 +159,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: count
     }
     ```
@@ -179,7 +179,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             inscription_id,             // string
             inscription_number,         // number
@@ -219,7 +219,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,          // number
             list,           // item信息同上
@@ -248,7 +248,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,          // number
             list,           // item信息同上
@@ -280,7 +280,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list: [
@@ -328,7 +328,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list:               // item说明同上
@@ -361,7 +361,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list:               // item说明同上
@@ -384,7 +384,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: info        // 说明同上item
     }
     ```
@@ -413,7 +413,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list: [
@@ -457,7 +457,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list                // 列表，item数据格式同上
@@ -490,7 +490,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list                // 列表，item数据格式同上
@@ -513,7 +513,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: info        // 说明同上item
     }
     ```
@@ -541,7 +541,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list: [
@@ -588,7 +588,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list                // 列表，item数据格式同上
@@ -621,7 +621,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list: [
@@ -659,7 +659,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: info        // 说明同上item
     }
     ```
@@ -687,7 +687,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list: [
@@ -732,7 +732,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list:               // item说明同上
@@ -755,7 +755,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: info        // 说明同上item
     }
     ```
@@ -783,7 +783,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list: [
@@ -827,7 +827,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list: [
@@ -852,7 +852,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: // 同上item
     }
     ```
@@ -876,7 +876,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,              // 总数
             list                // 列表，item数据格式同上，再加上 txid
@@ -895,7 +895,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             mint,               // string DMCs的mint量
             mint_inner          // string DMC-sp的mint量
@@ -918,7 +918,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             amount: '0',
             transferable_amount: '0',
@@ -939,7 +939,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             eth_height,         // 已处理的eth的高度 int
             btc_height          // 已处理的btc的高度 int
@@ -958,7 +958,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: height
     }
     ```
@@ -978,7 +978,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: tx info
     }
     ```
@@ -1008,7 +1008,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             inscription_id,         // 铭文id
             stage,                  // 阶段
@@ -1052,7 +1052,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             inscription_id,         // 铭文id
             stage,                  // 阶段
@@ -1086,7 +1086,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: 同上
     }
     ```  
@@ -1114,7 +1114,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             inscription_id,         // 铭文id
             hash,                   // 数据hash
@@ -1153,7 +1153,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: 同上
     }
     ```  
@@ -1173,7 +1173,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: 同上
     }
     ```  
@@ -1193,7 +1193,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             type,               // string
             ...                 // 其他数据参考上面对应数据
@@ -1220,7 +1220,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             total,                  // string 总量
             service_charged,        // string 通过手续费返回mintpool的DMCs量
@@ -1264,7 +1264,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             address,        // 用户地址
             inscription_id, // 相关铭文id
@@ -1300,7 +1300,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             // 同上
         }
@@ -1332,7 +1332,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             // 同上
         }
@@ -1354,7 +1354,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             // 同上
         }
@@ -1376,7 +1376,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: [{
             address,            // 查询地址
             hash,               // 数据hash
@@ -1403,7 +1403,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: // 同上
     }
     ```
@@ -1423,7 +1423,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: // 同上
     }
     ```
@@ -1443,7 +1443,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: // 同上
     }
     ```
@@ -1470,7 +1470,7 @@ const InscriptionOpState = {
         commit_txid,
         value,
         content,
-        op: // string 可能的返回值有："mint", "transfer", "inscribe", "chant", "setPrice", "resonance"
+        op: // string 可能的返回值有：mint, transfer, inscribe, chant, setPrice, resonance
         creator,
         owner,
         last_block_height,
@@ -1498,22 +1498,22 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             count,
             list: [
                 {
-                    "hash",
-                    "inscription_id",
-                    "address",
-                    "block_height",
-                    "timestamp",
-                    "text",
-                    "price",
-                    "resonance_count",
-                    "point",
-                    "size",
-                    "rank"              // point * size
+                    hash,
+                    inscription_id,
+                    address,
+                    block_height,
+                    timestamp,
+                    text,
+                    price,
+                    resonance_count,
+                    point,
+                    size,
+                    rank              // point * size
                 }
             ]
         }
@@ -1535,7 +1535,7 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
             mixhash,
             timestamp,
@@ -1556,21 +1556,21 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
-            version: "0.5.0",
-            network: "testnet",
+            version: 0.5.0,
+            network: testnet,
             genesis_block_height: 2570577,
             sync: {
                 btc: 2572108,
                 ord: 2572108,
                 local: 2572108,
-                percent: "100.00%"
+                percent: 100.00%
             },
             index: {
                 sync: 2572108,
                 local: 2572108,
-                percent: "100.00%"
+                percent: 100.00%
             },
             eth: {
                 eth: 39218,
@@ -1596,18 +1596,18 @@ const InscriptionOpState = {
 
     ```json
     {
-        "txid": "f7aaa9d45e36571f0c2dd19da2276a2267c25e449b35f3f0148eecd8cac9e7bc",
-        "vout": 1,
-        "offset": 1714,
-        "output": {
-            "value": 0.00002382,
-            "n": 1,
-            "scriptPubKey": {
-                "asm": "1 70a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82",
-                "desc": "rawtr(70a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82)#trp438vu",
-                "hex": "512070a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82",
-                "address": "tb1pwz5tzu2pn2ewq5t46erhtxaxacg6d8m54289pe0gf60a7e58n7pq6wpxfr",
-                "type": "witness_v1_taproot"
+        txid: f7aaa9d45e36571f0c2dd19da2276a2267c25e449b35f3f0148eecd8cac9e7bc,
+        vout: 1,
+        offset: 1714,
+        output: {
+            value: 0.00002382,
+            n: 1,
+            scriptPubKey: {
+                asm: 1 70a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82,
+                desc: rawtr(70a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82)#trp438vu,
+                hex: 512070a8b171419ab2e05175d647759ba6ee11a69f74aa8e50e5e84e9fdf66879f82,
+                address: tb1pwz5tzu2pn2ewq5t46erhtxaxacg6d8m54289pe0gf60a7e58n7pq6wpxfr,
+                type: witness_v1_taproot
             }
         }
     }
@@ -1625,27 +1625,27 @@ const InscriptionOpState = {
 
     ```json
     {
-        "err": 0,
-        "msg": null,
-        "result": {
-            "hash": "00000000000000000001df1fe4f1e469840955004d19e870c2c83ceb1afd2468",
-            "confirmations": 2,
-            "height": 826117,
-            "version": 767868928,
-            "versionHex": "2dc4c000",
-            "merkleroot": "a15e4c439a5c6d8cd7277d41d828703316c6c6efbfe39bb167e43cd34b540e56",
-            "time": 1705489549,
-            "mediantime": 1705484665,
-            "nonce": 2161775123,
-            "bits": "1703d869",
-            "difficulty": "73197634206448.34",
-            "chainwork": "000000000000000000000000000000000000000065e92849750a37cc38e354b6",
-            "nTx": 3862,
-            "previousblockhash": "000000000000000000029949b74e99f843a409bdfc1b464b76e50b7830475fda",
-            "nextblockhash": "000000000000000000004690f6b881e1caef2fffd5ecf6ec7d94b1d0d0b24ae0",
-            "strippedsize": 769718,
-            "size": 1683706,
-            "weight": 3992860
+        err: 0,
+        msg: null,
+        result: {
+            hash: 00000000000000000001df1fe4f1e469840955004d19e870c2c83ceb1afd2468,
+            confirmations: 2,
+            height: 826117,
+            version: 767868928,
+            versionHex: 2dc4c000,
+            merkleroot: a15e4c439a5c6d8cd7277d41d828703316c6c6efbfe39bb167e43cd34b540e56,
+            time: 1705489549,
+            mediantime: 1705484665,
+            nonce: 2161775123,
+            bits: 1703d869,
+            difficulty: 73197634206448.34,
+            chainwork: 000000000000000000000000000000000000000065e92849750a37cc38e354b6,
+            nTx: 3862,
+            previousblockhash: 000000000000000000029949b74e99f843a409bdfc1b464b76e50b7830475fda,
+            nextblockhash: 000000000000000000004690f6b881e1caef2fffd5ecf6ec7d94b1d0d0b24ae0,
+            strippedsize: 769718,
+            size: 1683706,
+            weight: 3992860
         }
     }
     ```
@@ -1667,35 +1667,33 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
-            "income": {
-                "coinbase",
-                "mint",
-                "lucky_mint",
-                "burn_mint",
-                "inscribe_data",
-                "chant",
-                "lucky_chant",
-                "chant_divide",
-                "lucky_chant_divide",
-                "res",
-                "transfer",
-                "exchange"
+            income: {
+                mint,                     // mint 收益
+                lucky_mint,               // lucky mint 收益
+                burn_mint,                // burn mint 收益
+                inscribe_data,            // 铭刻数据收益
+                chant,                    // 吟唱收益
+                lucky_chant,              // 幸运吟唱收益
+                chant_divide,             // 吟唱分成
+                lucky_chant_divide,       // 幸运吟唱分成
+                res,                      // 数据被共鸣收益
+                transfer,                 // 转账收入
+                exchange                  // 兑换token收入
             },
-            "inner_income": {
-                "coinbase",
-                "mint",
-                "lucky_mint",
-                "burn_mint",
-                "inscribe_data",
-                "chant",
-                "lucky_chant",
-                "chant_divide",
-                "lucky_chant_divide",
-                "res",
-                "transfer",
-                "exchange"
+            inner_income: {
+                mint,
+                lucky_mint,
+                burn_mint,
+                inscribe_data,
+                chant,
+                lucky_chant,
+                chant_divide,
+                lucky_chant_divide,
+                res,
+                transfer,
+                exchange
             }
         }
     }
@@ -1718,36 +1716,75 @@ const InscriptionOpState = {
     ```json
     {
         err: 0,
-        msg: "错误信息",
+        msg: 错误信息,
         result: {
-            "income": {
-                "coinbase",
-                "mint",
-                "lucky_mint",
-                "burn_mint",
-                "inscribe_data",
-                "chant",
-                "lucky_chant",
-                "chant_divide",
-                "lucky_chant_divide",
-                "res",
-                "transfer",
-                "exchange"
+            income: {
+                mint,
+                lucky_mint,
+                burn_mint,
+                inscribe_data,
+                chant,
+                lucky_chant,
+                chant_divide,
+                lucky_chant_divide,
+                res,
+                transfer,
+                exchange
             },
-            "inner_income": {
-                "coinbase",
-                "mint",
-                "lucky_mint",
-                "burn_mint",
-                "inscribe_data",
-                "chant",
-                "lucky_chant",
-                "chant_divide",
-                "lucky_chant_divide",
-                "res",
-                "transfer",
-                "exchange"
+            inner_income: {
+                mint,
+                lucky_mint,
+                burn_mint,
+                inscribe_data,
+                chant,
+                lucky_chant,
+                chant_divide,
+                lucky_chant_divide,
+                res,
+                transfer,
+                exchange
             }
         }
     }
     ```
+
+#### 获取数据的操作记录
+
+    /data_ops/:hash:/:limit?/:offset?/:state?/:order?
+
+    GET
+
+    参数
+
+    hash: 数据hash
+
+    limit: 返回的列表的长度限制，默认为0
+
+    offset: 返回的起始位置，默认为0
+
+    state: string类型，需要查询的记录状态 'success' or 'failed' or 'all'，默认 'all'
+
+    order：desc - 按时间降序（默认）； asc - 按时间升序
+
+    返回:
+
+    ```json
+    {
+        err: 0,
+        msg: 错误信息,
+        result:[
+            {
+                hash,                   // string
+                inscription_id,         // string
+                block_height,           // number
+                timestamp,              // number
+                txid,
+
+                address,
+                inner_amount,   /* relative change inner token amount, and is set to price on setPrice op */
+
+                op,                     // string. 'inscribe_data' or 'transfer_data' or 'chant' or 'set_price' or 'res'
+                state,
+            }
+        ]
+    }```
