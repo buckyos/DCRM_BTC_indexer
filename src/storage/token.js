@@ -8,6 +8,7 @@ const { InscriptionOp } = require('../index/item');
 const { UserHashRelationStorage } = require('./relation');
 const { TokenBalanceStorage, UpdatePoolBalanceOp } = require('./balance');
 const { Util } = require('../util');
+const { TokenOpsStorage } = require('./ops');
 
 // the user ops
 const UserOp = {
@@ -44,6 +45,7 @@ class TokenIndexStorage {
         this.during_transaction = false;
         this.user_hash_relation_storage = new UserHashRelationStorage();
         this.balance_storage = new TokenBalanceStorage(this, config);
+        this.ops_storage = new TokenOpsStorage(config);
     }
 
     /**
@@ -74,12 +76,20 @@ class TokenIndexStorage {
             return { ret: ret3 };
         }
 
-        const { ret: ret4 } = await this.user_hash_relation_storage.init(
+        // then init ops storage
+        const { ret: ret4 } = await this.ops_storage.init(this.db);
+        if (ret4 !== 0) {
+            console.error(`failed to init token ops storage`);
+            return { ret: ret4 };
+        }
+
+        // then init user hash relation storage
+        const { ret: ret5 } = await this.user_hash_relation_storage.init(
             this.db,
         );
         if (ret4 !== 0) {
             console.error(`failed to init user hash relation storage`);
-            return { ret: ret4 };
+            return { ret: ret5 };
         }
 
         console.log(`init token storage success`);
@@ -518,29 +528,7 @@ class TokenIndexStorage {
                     return;
                 }
 
-                // Create user_ops table
-                this.db.run(
-                    `CREATE TABLE IF NOT EXISTS user_ops (
-                        address TEXT,
-                        inscription_id TEXT,
-                        block_height INTEGER,
-                        timestamp INTEGER,
-                        txid TEXT,
-                        op TEXT,
-                        state INTEGER,
-                        PRIMARY KEY (address, inscription_id, txid)
-                    );`,
-                    (err) => {
-                        if (err) {
-                            console.error(`failed to user_ops table: ${err}`);
-                            has_error = true;
-                            resolve({ ret: -1 });
-                        }
-
-                        console.log(`created user_ops table`);
-                        resolve({ ret: 0 });
-                    },
-                );
+                resolve({ ret: 0 });
             });
         });
     }
@@ -665,7 +653,7 @@ class TokenIndexStorage {
         );
 
         // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             address,
             inscription_id,
             block_height,
@@ -834,7 +822,7 @@ class TokenIndexStorage {
         );
 
         // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             address,
             inscription_id,
             block_height,
@@ -974,7 +962,7 @@ class TokenIndexStorage {
         );
 
         // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             from_address,
             inscription_id,
             block_height,
@@ -1102,7 +1090,7 @@ class TokenIndexStorage {
         );
 
         // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             address,
             inscription_id,
             block_height,
@@ -1235,7 +1223,7 @@ class TokenIndexStorage {
         );
 
         // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             address,
             inscription_id,
             block_height,
@@ -1356,7 +1344,7 @@ class TokenIndexStorage {
             op = UserOp.Transfer;
         }
 
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             from_address,
             inscription_id,
             block_height,
@@ -1500,7 +1488,7 @@ class TokenIndexStorage {
         );
 
         // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             address,
             inscription_id,
             block_height,
@@ -1615,7 +1603,7 @@ class TokenIndexStorage {
         assert(_.isNumber(state), `state should be number ${state}`);
 
         // first append user op
-        const { ret: user_op_ret } = await this.add_user_op(
+        const { ret: user_op_ret } = await this.ops_storage.add_user_op(
             address,
             inscription_id,
             block_height,
@@ -2014,111 +2002,6 @@ class TokenIndexStorage {
                     resolve({ ret: 0, data: row });
                 }
             });
-        });
-    }
-
-    /**
-     *
-     * @param {string} address
-     * @param {string} inscription_id
-     * @param {number} block_height
-     * @param {number} timestamp
-     * @param {string} txid
-     * @param {string} op
-     * @param {number} state
-     * @returns {ret: number}
-     */
-    async add_user_op(
-        address,
-        inscription_id,
-        block_height,
-        timestamp,
-        txid,
-        op,
-        state,
-    ) {
-        assert(this.db != null, `db should not be null`);
-        assert(typeof address === 'string', `address should be string`);
-        assert(
-            typeof inscription_id === 'string',
-            `inscription_id should be string`,
-        );
-        assert(
-            Number.isInteger(block_height) && block_height >= 0,
-            `block_height should be non-negative integer`,
-        );
-        assert(Number.isInteger(timestamp), `timestamp should be integer`);
-        assert(typeof txid === 'string', `txid should be string`);
-        assert(typeof op === 'string', `op should be string`);
-        assert(
-            Number.isInteger(state) && state >= 0,
-            `state should be non-negative integer`,
-        );
-
-        const sql = `
-            INSERT OR REPLACE INTO user_ops (address, inscription_id, block_height, timestamp, txid, op, state)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        return new Promise((resolve) => {
-            this.db.run(
-                sql,
-                [
-                    address,
-                    inscription_id,
-                    block_height,
-                    timestamp,
-                    txid,
-                    op,
-                    state,
-                ],
-                function (err) {
-                    if (err) {
-                        console.error(
-                            `Could not append user op ${address} ${inscription_id} ${block_height} ${op} ${state}`,
-                            err,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        console.log(
-                            `append user op ${address} ${inscription_id} ${block_height} ${op} ${state}`,
-                        );
-                        resolve({ ret: 0 });
-                    }
-                },
-            );
-        });
-    }
-
-    /**
-     *
-     * @param {string} address
-     * @returns {ret: number, txid: string | null}
-     */
-    async query_user_last_mint_and_inscribe_data_ops_txid(address) {
-        assert(this.db != null, `db should not be null`);
-        assert(typeof address === 'string', `address should be string`);
-
-        const sql = `
-            SELECT txid FROM user_ops WHERE address = ? AND (op = ? OR op = ?) ORDER BY block_height DESC LIMIT 1
-        `;
-
-        return new Promise((resolve) => {
-            this.db.get(
-                sql,
-                [address, UserOp.Mint, UserOp.InscribeData],
-                (err, row) => {
-                    if (err) {
-                        console.error(
-                            `Could not query user last mint and inscribe data ops ${address}`,
-                            err,
-                        );
-                        resolve({ ret: -1 });
-                    } else {
-                        resolve({ ret: 0, txid: row ? row.txid : null });
-                    }
-                },
-            );
         });
     }
 }
