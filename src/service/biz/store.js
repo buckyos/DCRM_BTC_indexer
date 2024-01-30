@@ -144,6 +144,7 @@ const TABLE_NAME = {
     INSCRIBE_DATA_TRANSFER_RECORDS: 'inscribe_data_transfer_records',
 
     USER_OPS: 'user_ops',
+    DATA_OPS: 'data_ops',
     POINTS: 'points'
 };
 

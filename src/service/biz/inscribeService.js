@@ -487,9 +487,17 @@ class InscribeService {
 
     async _getDataOpByHash(ctx) {
         const hash = ctx.params.hash;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const state = ctx.params.state;
+        const order = ctx.params.order;
 
         return this.m_store.queryDataOpByHash(
-            hash
+            hash,
+            Math.max((parseInt(limit, 10) || 0), 0),
+            Math.max((parseInt(offset, 10) || 0), 0),
+            state && _.isString(state) ? state.toLowerCase() : "all",
+            order && _.isString(order) ? order.toLowerCase() : "desc"
         );
     }
 
@@ -651,7 +659,7 @@ class InscribeService {
             ctx.response.body = await this._getInscriptionOpById(ctx);
         });
 
-        router.get("/data_ops/:hash", async (ctx) => {
+        router.get("/data_ops/:hash:/:limit?/:offset?/:state?/:order?", async (ctx) => {
             ctx.response.body = await this._getDataOpByHash(ctx);
         });
 

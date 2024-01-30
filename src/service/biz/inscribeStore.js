@@ -1419,7 +1419,7 @@ class InscribeStore {
         }
     }
 
-    queryDataOpByHash(hash) {
+    queryDataOpByHash(hash, limit, offset, state, order) {
         if (!hash) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
@@ -1431,30 +1431,27 @@ class InscribeStore {
 
         hash = mixhash;
 
+        order = order == "asc" ? "asc" : "desc";
+
         try {
-            let sql =
-                `SELECT *
-                FROM ${TABLE_NAME.INSCRIPTIONS}
-                WHERE hash = ?`;
+            let sql = `SELECT COUNT(*) AS count FROM ${TABLE_NAME.DATA_OPS} WHERE hash = ?`;
+            sql += StateCondition(state);
+            const countStmt = this.m_store.indexDB.prepare(sql);
+            const countResult = countStmt.get(hash);
 
-            const stmt = this.m_store.inscriptionDB.prepare(sql);
-            const ret = stmt.get(hash);
-
-            if (!ret) {
-                return makeResponse(ERR_CODE.NOT_FOUND);
+            const count = countResult.count;
+            let list = [];
+            if (count > 0) {
+                sql = `SELECT * FROM ${TABLE_NAME.DATA_OPS} WHERE hash = ?`;
+                sql += StateCondition(state);
+                sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
+                const pageStmt = this.m_store.indexDB.prepare(sql);
+                list = pageStmt.all(hash, limit, offset);
             }
 
-            const opType = ret.op;
-            const tableName = this._getTableByOpType(opType);
-            if (!tableName) {
-                return makeResponse(ERR_CODE.NOT_FOUND);
-            }
+            logger.debug('queryDataOpByHash:', hash, offset, limit, "ret:", count);
 
-            sql = `SELECT * FROM ${tableName} WHERE hash = ? LIMIT 1`;
-            const opStmt = this.m_store.indexDB.prepare(sql);
-            ret.detail = opStmt.get(hash);
-
-            return makeSuccessResponse(ret);
+            return makeSuccessResponse({ count, list });
 
         } catch (error) {
             logger.error('queryDataOpByHash failed:', error);
