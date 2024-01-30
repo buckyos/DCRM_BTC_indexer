@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { BTCClient } = require('../../btc/btc');
 const { TABLE_NAME } = require('../biz/store');
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { DATA_HASH_START_SIZE } = require('../../constants');
 const {
     BalanceRecordDirection,
