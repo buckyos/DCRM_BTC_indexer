@@ -76,7 +76,7 @@ class StatManager {
             const list = stmt.all(
                 address,
                 BalanceRecordDirection.In,
-                this.m_totalIncome[address].lastUpdateBlock,
+                this.m_totalIncome[address].lastUpdateBlock || 0,
                 currentHeight
             );
 
