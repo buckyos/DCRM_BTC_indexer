@@ -8,6 +8,7 @@ const { TokenIndexStorage } = require('../storage/token');
 const { ResonanceVerifier } = require('../token_index/resonance_verifier');
 const { UTXORetriever } = require('./utxo');
 const { TokenStat } = require('./stat');
+const { IncomeStat } = require('./income');
 
 class StateService {
     constructor(config, executor) {
@@ -24,6 +25,8 @@ class StateService {
 
         this.utxo_retriever = new UTXORetriever(config);
         this.stat = new TokenStat(config);
+
+        this.income_stat = new IncomeStat(config, executor);
 
         this.block_state = {};
         this.current_block_height = 0;
@@ -43,6 +46,13 @@ class StateService {
             return { ret: stat_ret };
         }
 
+        // init income stat
+        const { ret: income_stat_ret } = await this.income_stat.init();
+        if (income_stat_ret !== 0) {
+            console.error(`failed to init income stat`);
+            return { ret: income_stat_ret };
+        }
+
         return { ret: 0 };
     }
 
@@ -50,7 +60,9 @@ class StateService {
         const block_height = this.executor.get_current_block_height();
         if (block_height !== this.current_block_height) {
             this.current_block_height = block_height;
-            this.block_state = {};
+            this.block_state = {
+                income: {},
+            };
         }
     }
 
@@ -131,6 +143,31 @@ class StateService {
         }
 
         return { ret: 0, data };
+    }
+
+    /**
+     * @comment get user income stat for last 24 hours
+     * @param {string} address
+     * @returns {ret: number, stat: {income: {op_type: string, change_amount: string}, inner_income: {op_type: string, change_amount: string}}}
+     */
+    async get_user_income_stat(address) {
+        assert(_.isString(address), `address should be string: ${address}`);
+
+        this._refresh_block_state();
+
+        if (this.block_state.income[address] == null) {
+            const { ret, stat } = await this.income_stat.get_user_income_stat(
+                address,
+            );
+            if (ret !== 0) {
+                console.error(`failed to get user income stat for ${address}`);
+                return { ret };
+            }
+
+            this.block_state.income[address] = stat;
+        }
+        
+        return { ret: 0, stat: this.block_state.income[address] };
     }
 }
 
@@ -427,6 +464,28 @@ class IndexLocalInterface {
             } else {
                 ctx.status = status;
             }
+        });
+
+        // user income stat
+        router.get('/stat/income/:address', async (ctx) => {
+            const address = ctx.params.address;
+            if (!_.isString(address)) {
+                ctx.status = 400;
+                ctx.body = 'Bad request';
+                return;
+            }
+
+            const { ret, stat } =
+                await this.state_service.get_user_income_stat(address);
+            if (ret !== 0) {
+                ctx.status = 500;
+                ctx.body = `Internal server error ${ret}`;
+                return;
+            }
+
+            
+            ctx.status = 200;
+            ctx.body = JSON.stringify(stat, null, 2);
         });
     }
 }

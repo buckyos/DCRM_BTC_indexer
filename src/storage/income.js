@@ -121,7 +121,7 @@ class TokenIncomeStorage {
      */
     async update_exchange(address, exchange_type, value) {
         assert(_.isString(exchange_type), `exchange_type should be valid string`);
-        
+
         const field = `${exchange_type}_income`;
         return await this._update_field(address, field, value);
     }

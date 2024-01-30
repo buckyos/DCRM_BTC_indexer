@@ -109,7 +109,7 @@ class TokenBalanceStorage {
             console.error(`failed to init balance storage income`);
             return { ret: ret4 };
         }
-        
+
         console.log(`init balance storage success`);
 
         return { ret: 0 };
@@ -1765,7 +1765,9 @@ class TokenBalanceStorage {
 
         const { ret: update_ret } = ret;
         if (update_ret != 0) {
-            console.error(`failed to update income for ${address} ${op_type} ${change_amount}`);
+            console.error(
+                `failed to update income for ${address} ${op_type} ${change_amount}`,
+            );
             return { ret: update_ret };
         }
 
