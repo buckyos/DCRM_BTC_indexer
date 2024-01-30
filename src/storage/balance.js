@@ -751,7 +751,7 @@ class TokenBalanceStorage {
                                         resolve({ ret: -1 });
                                     } else {
                                         console.log(
-                                            `updated ${field} balance for address ${address} ${amount} ${current_amount} -> ${new_amount}`,
+                                            `updated ${field} balance for address ${address} ${amount}, ${current_amount} -> ${new_amount}`,
                                         );
                                         resolve({ ret: 0 });
                                     }

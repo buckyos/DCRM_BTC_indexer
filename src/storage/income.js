@@ -235,7 +235,7 @@ class TokenIncomeStorage {
                                     return;
                                 }
 
-                                console.log(`updated income: ${address} ${field} ${value} -> ${new_value}`);
+                                console.log(`updated income: ${address} ${field} ${current_value} -> ${new_value}`);
                                 resolve({ ret: 0 });
                             },
                         );
