@@ -1197,17 +1197,9 @@ class InscribeStore {
 
                     for (const balanceItem of balanceList) {
                         if (balanceItem.token_type == BalanceRecordTokenType.Default) {
-                            if (balanceItem.direction == BalanceRecordDirection.In) {
-                                amount = BigNumberUtil.add(amount, balanceItem.change_amount)
-                            } else {
-                                amount = BigNumberUtil.subtract(amount, balanceItem.change_amount);
-                            }
+                            amount = BigNumberUtil.add(amount, balanceItem.change_amount);
                         } else {
-                            if (balanceItem.direction == BalanceRecordDirection.In) {
-                                inner_amount = BigNumberUtil.add(inner_amount, balanceItem.change_amount)
-                            } else {
-                                inner_amount = BigNumberUtil.subtract(inner_amount, balanceItem.change_amount);
-                            }
+                            inner_amount = BigNumberUtil.add(inner_amount, balanceItem.change_amount);
                         }
                     }
 
