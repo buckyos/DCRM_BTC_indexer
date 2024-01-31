@@ -279,7 +279,8 @@ class IndexLocalInterface {
                 t = timestamp;
             }
 
-            const timestamp = t || Util.get_now_as_timestamp();
+            // use the last block timestamp if t is not specified
+            const timestamp = t || (Util.get_now_as_timestamp() - 12);
             if (!_.isNumber(timestamp)) {
                 ctx.status = 400;
                 ctx.body = `Bad request: invalid timestamp ${timestamp}`;

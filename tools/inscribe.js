@@ -116,7 +116,7 @@ class InscribeDataHelper {
             offset += length;
         }
 
-        const timestamp = Math.floor(Date.now() / 1000) - 12;
+        const timestamp = Util.get_now_as_timestamp() - 12;
 
         let i = 0;
         for (const item of valid_list) {
