@@ -1176,6 +1176,28 @@ class InscribeStore {
 
                 const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(address, limit, offset);
+
+                for (const item of list) {
+                    const balanceSql =
+                        `SELECT * FROM ${TABLE_NAME.BALANCE_RECORDS}
+                        WHERE address = ?
+                        AND inscription_id = ?
+                        AND block_height = ?
+                        AND op_type = ? limit 1`
+                        ;
+
+                    const balanceStmt = this.m_store.indexDB.prepare(balanceSql);
+                    const balanceRet = balanceStmt.get(
+                        item.address,
+                        item.inscription_id,
+                        item.block_height,
+                        item.op
+                    );
+
+                    if (balanceRet) {
+                        item.balance_record = balanceRet;
+                    }
+                }
             }
 
             logger.debug('queryOpsByAddress:', address, offset, limit, "ret:", count);
