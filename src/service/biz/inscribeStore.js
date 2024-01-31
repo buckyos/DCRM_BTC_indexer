@@ -1,10 +1,11 @@
 const { TABLE_NAME } = require('./store');
 const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
-const { Util } = require('../../util');
+const { Util, BigNumberUtil } = require('../../util');
 const { UserHashRelation } = require('../../storage/relation')
 const { UserOp } = require('../../storage/token');
 const { InscriptionOp } = require('../../index/item');
+const { BalanceRecordTokenType, BalanceRecordDirection } = require('../../storage/balance');
 
 const SUCCESS = "success";
 const FAILED = "failed";
@@ -1182,18 +1183,36 @@ class InscribeStore {
                         `SELECT * FROM ${TABLE_NAME.BALANCE_RECORDS}
                         WHERE address = ?
                         AND inscription_id = ?
-                        AND block_height = ? limit 1`;
+                        AND block_height = ?`;
 
                     const balanceStmt = this.m_store.indexDB.prepare(balanceSql);
-                    const balanceRet = balanceStmt.get(
+                    const balanceList = balanceStmt.all(
                         item.address,
                         item.inscription_id,
                         item.block_height
                     );
 
-                    if (balanceRet) {
-                        item.balance_record = balanceRet;
+                    let amount = '0';
+                    let inner_amount = '0';
+
+                    for (const balanceItem of balanceList) {
+                        if (balanceItem.token_type == BalanceRecordTokenType.Default) {
+                            if (balanceItem.direction == BalanceRecordDirection.In) {
+                                amount = BigNumberUtil.add(amount, balanceItem.change_amount)
+                            } else {
+                                amount = BigNumberUtil.subtract(amount, balanceItem.change_amount);
+                            }
+                        } else {
+                            if (balanceItem.direction == BalanceRecordDirection.In) {
+                                inner_amount = BigNumberUtil.add(inner_amount, balanceItem.change_amount)
+                            } else {
+                                inner_amount = BigNumberUtil.subtract(inner_amount, balanceItem.change_amount);
+                            }
+                        }
                     }
+
+                    item.amount_change = amount;
+                    item.inner_amount = inner_amount;
                 }
             }
 
