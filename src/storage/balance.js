@@ -1320,10 +1320,10 @@ class TokenBalanceStorage {
      * @returns {ret: number}
      */
     async _transfer_balance(from_address, to_address, field, amount) {
-        assert(
-            from_address != to_address,
-            `from_address should not be equal to to_address ${from_address}`,
-        );
+        //assert(
+        //    from_address != to_address,
+        //    `from_address should not be equal to to_address ${from_address}`,
+        //);
 
         assert(this.db != null, `db should not be null`);
         assert(
