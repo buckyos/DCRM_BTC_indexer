@@ -1182,16 +1182,13 @@ class InscribeStore {
                         `SELECT * FROM ${TABLE_NAME.BALANCE_RECORDS}
                         WHERE address = ?
                         AND inscription_id = ?
-                        AND block_height = ?
-                        AND op_type = ? limit 1`
-                        ;
+                        AND block_height = ? limit 1`;
 
                     const balanceStmt = this.m_store.indexDB.prepare(balanceSql);
                     const balanceRet = balanceStmt.get(
                         item.address,
                         item.inscription_id,
-                        item.block_height,
-                        item.op
+                        item.block_height
                     );
 
                     if (balanceRet) {
