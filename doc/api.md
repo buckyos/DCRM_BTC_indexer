@@ -1239,7 +1239,7 @@ const InscriptionOpState = {
 
     参数
 
-    address: 地址，无论是发起地址还是接受地址，都会返回
+    address: 地址
 
     limit: 返回的列表的长度限制，默认为0
 
@@ -1273,6 +1273,8 @@ const InscriptionOpState = {
             txid,           // 操作txid
             op,             // string 操作类型 取值见op描述
             state,          // 见state描述
+            amount_change,  // string  DMCs的变化
+            inner_amount_change // string DMC sp的变化
         }
     }
     ```    

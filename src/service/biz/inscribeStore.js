@@ -1204,7 +1204,7 @@ class InscribeStore {
                     }
 
                     item.amount_change = amount;
-                    item.inner_amount = inner_amount;
+                    item.inner_amount_change = inner_amount;
                 }
             }
 
