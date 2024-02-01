@@ -1450,6 +1450,28 @@ const InscriptionOpState = {
     }
     ```
 
+#### 根据hash和address查询共鸣关系（未严格验证共鸣资格）
+
+    /res_relation_by_hash_address/:hash/:address
+
+    GET
+
+    参数
+
+    hash: 数据hash
+
+    address: 地址
+
+    返回
+
+    ```json
+    {
+        err: 0,         // 如果有共鸣关系，返回0，否则，返回NOT_FOUND
+        msg: 错误信息,      
+        result:         // 如果有共鸣关系，具体数据，否则，返回null
+    }
+    ```
+
 #### 根据InscriptionId查询inscribe操作详情
 
     /inscription_op/:inscription_id
