@@ -445,23 +445,33 @@ class InscribeService {
         );
     }
 
-    async _getRelationByAddress(ctx) {
+    async _getResRelationByAddress(ctx) {
         const address = ctx.params.address;
 
-        return this.m_store.queryRelationByAddress(
+        return this.m_store.queryResRelationByAddress(
             address
         );
     }
 
-    async _getRelationByHash(ctx) {
+    async _getResRelationByHash(ctx) {
         const hash = ctx.params.hash;
 
-        return this.m_store.queryRelationByHash(
+        return this.m_store.queryResRelationByHash(
             hash
         );
     }
 
-    async _getVerifyRelationByAddress(ctx) {
+    async _getResRelationByHashAddress(ctx) {
+        const hash = ctx.params.hash;
+        const address = ctx.params.address;
+
+        return this.m_store.queryResRelationByHashAddress(
+            hash,
+            address
+        );
+    }
+
+    async _getVerifyResRelationByAddress(ctx) {
         const address = ctx.params.address;
 
         return this.m_store.queryVerifyRelationByAddress(
@@ -469,10 +479,10 @@ class InscribeService {
         );
     }
 
-    async _getVerifyRelationByHash(ctx) {
+    async _getVerifyResRelationByHash(ctx) {
         const hash = ctx.params.hash;
 
-        return this.m_store.queryVerifyRelationByHash(
+        return this.m_store.queryVerifyResRelationByHash(
             hash
         );
     }
@@ -640,19 +650,23 @@ class InscribeService {
         });
 
         router.get("/res_relation_by_address/:address", async (ctx) => {
-            ctx.response.body = await this._getRelationByAddress(ctx);
+            ctx.response.body = await this._getResRelationByAddress(ctx);
         });
 
         router.get("/res_relation_by_hash/:hash", async (ctx) => {
-            ctx.response.body = await this._getRelationByHash(ctx);
+            ctx.response.body = await this._getResRelationByHash(ctx);
         });
 
         router.get("/res_relation_by_address/verify/:address", async (ctx) => {
-            ctx.response.body = await this._getVerifyRelationByAddress(ctx);
+            ctx.response.body = await this._getVerifyResRelationByAddress(ctx);
         });
 
         router.get("/res_relation_by_hash/verify/:hash", async (ctx) => {
-            ctx.response.body = await this._getVerifyRelationByAddress(ctx);
+            ctx.response.body = await this._getVerifyResRelationByHash(ctx);
+        });
+
+        router.get("/res_relation_by_hash_address/:hash/:address", async (ctx) => {
+            ctx.response.body = await this._getResRelationByHashAddress(ctx);
         });
 
         router.get("/inscription_op/:inscription_id", async (ctx) => {

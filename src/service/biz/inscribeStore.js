@@ -1319,7 +1319,7 @@ class InscribeStore {
         }
     }
 
-    queryRelationByAddress(address) {
+    queryResRelationByAddress(address) {
         if (!address) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
@@ -1335,13 +1335,13 @@ class InscribeStore {
             return makeSuccessResponse(list);
 
         } catch (error) {
-            logger.error('queryRelationByAddress failed:', error);
+            logger.error('queryResRelationByAddress failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
-    queryRelationByHash(hash) {
+    queryResRelationByHash(hash) {
         if (!hash) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
@@ -1364,13 +1364,45 @@ class InscribeStore {
             return makeSuccessResponse(list);
 
         } catch (error) {
-            logger.error('queryRelationByHash failed:', error);
+            logger.error('queryResRelationByHash failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
-    async queryVerifyRelationByAddress(address) {
+    queryResRelationByHashAddress(hash, address) {
+        if (!hash || !address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        hash = mixhash;
+
+        try {
+            let sql =
+                `SELECT * FROM ${TABLE_NAME.RELATIONS} 
+                    WHERE hash = ? AND address = ? AND relation = ? limit 1`;
+            const pageStmt = this.m_store.indexDB.prepare(sql);
+            const ret = pageStmt.get(hash, address, UserHashRelation.Resonance);
+
+            if (ret) {
+                return makeSuccessResponse(ret);
+            }
+
+            return makeResponse(ERR_CODE.NOT_FOUND);
+
+        } catch (error) {
+            logger.error('queryResRelationByHashAddress failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    async queryVerifyResRelationByAddress(address) {
         try {
             const url = `http://localhost:${this.m_config.localInterface.port}/resonance/address/${address}`;
             const response = await fetch(url);
@@ -1385,13 +1417,13 @@ class InscribeStore {
             return makeSuccessResponse(json);
 
         } catch (error) {
-            logger.error('queryVerifyRelationByAddress failed:', error);
+            logger.error('queryVerifyResRelationByAddress failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
     }
 
-    async queryVerifyRelationByHash(hash) {
+    async queryVerifyResRelationByHash(hash) {
         try {
             const url = `http://localhost:${this.m_config.localInterface.port}/resonance/hash/${hash}`;
             const response = await fetch(url);
@@ -1406,7 +1438,7 @@ class InscribeStore {
             return makeSuccessResponse(json);
 
         } catch (error) {
-            logger.error('queryVerifyRelationByAddress failed:', error);
+            logger.error('queryVerifyResRelationByHash failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
