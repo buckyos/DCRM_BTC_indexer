@@ -474,7 +474,7 @@ class InscribeService {
     async _getVerifyResRelationByAddress(ctx) {
         const address = ctx.params.address;
 
-        return this.m_store.queryVerifyRelationByAddress(
+        return this.m_store.queryVerifyResRelationByAddress(
             address
         );
     }
