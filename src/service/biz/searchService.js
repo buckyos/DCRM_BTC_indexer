@@ -11,7 +11,7 @@ class SearchService {
     async _getSearchResult(ctx) {
         const str = ctx.params.str;
 
-        return this.m_store.queryByTxid(str);
+        return this.m_store.search(str);
     }
 
     registerRouter(router) {

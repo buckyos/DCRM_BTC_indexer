@@ -1,110 +1,162 @@
 const { TABLE_NAME } = require('./store');
 const { ERR_CODE, makeResponse, makeSuccessResponse } = require('./util');
 const { InscriptionOpState, InscriptionStage } = require('../../token_index/ops/state');
+const { BalanceRecordTokenType, BalanceRecordDirection } = require('../../storage/balance');
+const { Util, BigNumberUtil } = require('../../util');
 
 class SearchStore {
     constructor(store) {
         this.m_store = store;
     }
 
-    queryByTxid(txid) {
-        if (!txid) {
-            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
-        }
-
+    searchByTxid(txid) {
         try {
-            let stmt = this.m_store.indexDB.prepare(
-                `SELECT * 
-                FROM ${TABLE_NAME.MINT_RECORDS} 
-                WHERE txid = ?`
-            );
+            let sql = `SELECT * FROM ${TABLE_NAME.USER_OPS} WHERE txid = ? limit 1`;
+            let stmt = this.m_store.indexDB.prepare(sql);
             let ret = stmt.get(txid);
 
-            logger.debug('queryByTxid:', txid, " find mint records, ret:", ret);
-            if (ret) {
-                ret.type = "mint";
-                return makeSuccessResponse(ret);
+            if (!ret) {
+                return null;
             }
 
-            stmt = this.m_store.indexDB.prepare(
-                `SELECT * 
-                FROM ${TABLE_NAME.INSCRIBE_RECORDS} 
-                WHERE txid = ?`
-            );
-            ret = stmt.get(txid);
-            logger.debug('queryByTxid:', txid, " find inscribe records, ret:", ret);
-            if (ret) {
-                ret.type = "inscribe";
-                return makeSuccessResponse(ret);
+            sql = `SELECT * FROM ${TABLE_NAME.BALANCE_RECORDS}
+                WHERE address = ? AND inscription_id = ? AND block_height = ?`;
+            stmt = this.m_store.indexDB.prepare(sql);
+            const balanceRecords = stmt.all(
+                ret.address,
+                ret.inscription_id,
+                ret.block_height);
+
+            let amount = '0';
+            let inner_amount = '0';
+
+            for (const balanceItem of balanceRecords) {
+                if (balanceItem.token_type == BalanceRecordTokenType.Default) {
+                    amount = BigNumberUtil.add(amount, balanceItem.change_amount);
+                } else {
+                    inner_amount = BigNumberUtil.add(inner_amount, balanceItem.change_amount);
+                }
             }
 
-            stmt = this.m_store.indexDB.prepare(
-                `SELECT * 
-                FROM ${TABLE_NAME.RESONANCE_RECORDS} 
-                WHERE txid = ?`
-            );
-            ret = stmt.get(txid);
-            logger.debug('queryByTxid:', txid, " find resonance records, ret:", ret);
-            if (ret) {
-                ret.type = "resonance";
-                return makeSuccessResponse(ret);
+            ret.amount_change = amount;
+            ret.inner_amount_change = inner_amount;
+
+            sql = `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id = ? limit 1`;
+            stmt = this.m_store.inscriptionDB.prepare(sql);
+            const inscription = stmt.get(ret.inscription_id);
+
+            if (inscription) {
+                ret.inscription_number = inscription.inscription_number;
+                ret.content = inscription.content;
             }
 
-            stmt = this.m_store.indexDB.prepare(
-                `SELECT * 
-                FROM ${TABLE_NAME.CHANT_RECORDS} 
-                WHERE txid = ?`
-            );
-            ret = stmt.get(txid);
-            logger.debug('queryByTxid:', txid, " find chant records, ret:", ret);
-            if (ret) {
-                ret.type = "chant";
-                return makeSuccessResponse(ret);
-            }
-
-            stmt = this.m_store.indexDB.prepare(
-                `SELECT * 
-                FROM ${TABLE_NAME.TRANSFER_RECORDS} 
-                WHERE txid = ?`
-            );
-            ret = stmt.get(txid);
-            logger.debug('queryByTxid:', txid, " find transfer records, ret:", ret);
-            if (ret) {
-                ret.type = "transfer";
-                return makeSuccessResponse(ret);
-            }
-
-            stmt = this.m_store.indexDB.prepare(
-                `SELECT * 
-                FROM ${TABLE_NAME.SET_PRICE_RECORDS} 
-                WHERE txid = ?`
-            );
-            ret = stmt.get(txid);
-            logger.debug('queryByTxid:', txid, " find set price records, ret:", ret);
-            if (ret) {
-                ret.type = "set_price";
-                return makeSuccessResponse(ret);
-            }
-
-            stmt = this.m_store.indexDB.prepare(
-                `SELECT * 
-                FROM ${TABLE_NAME.INSCRIBE_DATA_TRANSFER_RECORDS} 
-                WHERE txid = ?`
-            );
-            ret = stmt.get(txid);
-            logger.debug('queryByTxid:', txid, " find idata transfer records, ret:", ret);
-            if (ret) {
-                ret.type = "data_transfer";
-                return makeSuccessResponse(ret);
-            }
-
-            return makeResponse(ERR_CODE.NOT_FOUND, "not found");
+            return ret;
 
         } catch (error) {
-            logger.error('queryByTxid failed:', error);
+            logger.error('searchByTxid failed:', error);
 
-            return makeResponse(ERR_CODE.DB_ERROR, error);
+            return null;
         }
+    }
+
+    searchByInscriptionIdOrNumber(str) {
+        try {
+            let sql =
+                `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
+                WHERE inscription_id = ? or inscription_number = ? limit 1`;
+            let stmt = this.m_store.inscriptionDB.prepare(sql);
+            let ret = stmt.get(str, str);
+
+            if (ret) {
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} 
+                    WHERE inscription_id = ?`;
+
+                stmt = this.m_store.indexDB.prepare(sql);
+                const data = stmt.get(ret.inscription_id);
+                if (data) {
+                    ret.hash = data.hash;
+                    ret.price = data.price;
+                    ret.text = data.text;
+                }
+            }
+
+            return ret;
+
+        } catch (error) {
+            logger.error('searchByInscriptionIdOrNumber failed:', error);
+
+            return null;
+        }
+    }
+
+    searchByHash(hash) {
+        const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+        if (!valid) {
+            return null;
+        }
+
+        hash = mixhash;
+
+        try {
+            let sql =
+                `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} 
+                WHERE hash = ? limit 1`;
+
+            let stmt = this.m_store.indexDB.prepare(sql);
+            let ret = stmt.get(hash);
+
+            if (ret) {
+                sql =
+                    `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
+                    WHERE inscription_id = ?`;
+
+                stmt = this.m_store.inscriptionDB.prepare(sql);
+                const inscription = stmt.get(ret.inscription_id);
+                if (inscription) {
+                    ret.inscription_number = inscription.inscription_number;
+                }
+            }
+
+            return ret;
+
+        } catch (error) {
+            logger.error('searchByHash failed:', error);
+
+            return null;
+        }
+    }
+
+    search(str) {
+        if (!str || str == "") {
+            return makeResponse(ERR_CODE.INVALID_PARAMS);
+        }
+
+        let ret = this.searchByTxid(str);
+        if (ret) {
+            return makeSuccessResponse({
+                type: 'tx',
+                data: ret
+            });
+        }
+
+        ret = this.searchByInscriptionIdOrNumber(str);
+        if (ret) {
+            return makeSuccessResponse({
+                type: 'inscription',
+                data: ret
+            });
+        }
+
+        ret = this.searchByHash(str);
+        if (ret) {
+            return makeSuccessResponse({
+                type: 'hash',
+                data: ret
+            });
+        }
+
+        return makeResponse(ERR_CODE.NOT_FOUND);
     }
 }
 
