@@ -9,7 +9,7 @@ class SearchStore {
         this.m_store = store;
     }
 
-    searchByTxid(txid) {
+    _searchByTxid(txid) {
         try {
             let sql = `SELECT * FROM ${TABLE_NAME.USER_OPS} WHERE txid = ? limit 1`;
             let stmt = this.m_store.indexDB.prepare(sql);
@@ -59,7 +59,7 @@ class SearchStore {
         }
     }
 
-    searchByInscriptionIdOrNumber(str) {
+    _searchByInscriptionIdOrNumber(str) {
         try {
             let sql =
                 `SELECT * FROM ${TABLE_NAME.INSCRIPTIONS} 
@@ -90,7 +90,7 @@ class SearchStore {
         }
     }
 
-    searchByHash(hash) {
+    _searchByHash(hash) {
         const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
         if (!valid) {
             return null;
@@ -134,7 +134,7 @@ class SearchStore {
             return makeResponse(ERR_CODE.INVALID_PARAMS);
         }
 
-        let ret = this.searchByTxid(str);
+        let ret = this._searchByTxid(str);
         if (ret) {
             return makeSuccessResponse({
                 type: 'tx',
@@ -142,7 +142,7 @@ class SearchStore {
             });
         }
 
-        ret = this.searchByInscriptionIdOrNumber(str);
+        ret = this._searchByInscriptionIdOrNumber(str);
         if (ret) {
             return makeSuccessResponse({
                 type: 'inscription',
@@ -150,12 +150,54 @@ class SearchStore {
             });
         }
 
-        ret = this.searchByHash(str);
+        ret = this._searchByHash(str);
         if (ret) {
             return makeSuccessResponse({
                 type: 'hash',
                 data: ret
             });
+        }
+
+        return makeResponse(ERR_CODE.NOT_FOUND);
+    }
+
+    searchByInscriptionNumber(str) {
+        if (!str || str == "") {
+            return makeResponse(ERR_CODE.INVALID_PARAMS);
+        }
+
+        const ret = this._searchByInscriptionIdOrNumber(str);
+
+        if (ret) {
+            return makeSuccessResponse(ret);
+        }
+
+        return makeResponse(ERR_CODE.NOT_FOUND);
+    }
+
+    searchByInscriptionId(id) {
+        if (!id || id == "") {
+            return makeResponse(ERR_CODE.INVALID_PARAMS);
+        }
+
+        const ret = this._searchByInscriptionIdOrNumber(id);
+
+        if (ret) {
+            return makeSuccessResponse(ret);
+        }
+
+        return makeResponse(ERR_CODE.NOT_FOUND);
+    }
+
+    searchByInscriptionHash(hash) {
+        if (!hash || hash == "") {
+            return makeResponse(ERR_CODE.INVALID_PARAMS);
+        }
+
+        const ret = this._searchByHash(hash);
+
+        if (ret) {
+            return makeSuccessResponse(ret);
         }
 
         return makeResponse(ERR_CODE.NOT_FOUND);

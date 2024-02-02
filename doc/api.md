@@ -181,19 +181,101 @@ const InscriptionOpState = {
         err: 0,
         msg: 错误信息,
         result: {
-            inscription_id,             // string
-            inscription_number,         // number
-            genesis_block_height,       // number
-            genesis_timestamp,          // number
-            genesis_satpoint,           // string
-            commit_txid,                // string
-            value,                      // string
-            content,                    // string
-            op,                         // string
-            creator,                    // string address
-            owner,                      // string address
-            last_block_height,          // number, last block height that this inscription transferred to new owner
-            transfer_count              // number
+            "inscription_id",
+            "inscription_number",
+            "genesis_block_height",
+            "genesis_timestamp",
+            "genesis_satpoint",
+            "commit_txid",
+            "value",
+            "content",
+            "op",
+            "creator",
+            "owner",
+            "last_block_height",
+            "transfer_count",
+            // 以下3个数据只有当铭刻为公共数据铭刻时才会有
+            "hash",
+            "price",
+            "text",
+            "resonance_count",      // 非严格的共鸣数量，有些可能已经失效
+        }
+    }
+    ```
+
+#### 根据铭文number获取铭文信息
+
+    /inscription_number/:number
+
+    GET
+
+    参数:
+
+    number: 铭文number
+
+    返回:
+
+    ```json
+    {
+        err: 0,
+        msg: 错误信息,
+        result: {
+            "inscription_id",
+            "inscription_number",
+            "genesis_block_height",
+            "genesis_timestamp",
+            "genesis_satpoint",
+            "commit_txid",
+            "value",
+            "content",
+            "op",
+            "creator",
+            "owner",
+            "last_block_height",
+            "transfer_count",
+            // 以下3个数据只有当铭刻为公共数据铭刻时才会有
+            "hash",
+            "price",
+            "text",
+            "resonance_count",      // 非严格的共鸣数量，有些可能已经失效
+        }
+    }
+    ```
+
+#### 根据hash获取铭文信息
+
+    /inscription_hash/:hash
+
+    GET
+
+    参数:
+
+    hash: 公共数据hash
+
+    返回:
+
+    ```json
+    {
+        err: 0,
+        msg: 错误信息,
+        result: {
+            "inscription_id",
+            "inscription_number",
+            "genesis_block_height",
+            "genesis_timestamp",
+            "genesis_satpoint",
+            "commit_txid",
+            "value",
+            "content",
+            "op",
+            "creator",
+            "owner",
+            "last_block_height",
+            "transfer_count",
+            "hash",
+            "price",
+            "text",
+            "resonance_count",      // 非严格的共鸣数量，有些可能已经失效
         }
     }
     ```

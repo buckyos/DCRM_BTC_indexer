@@ -515,9 +515,9 @@ class InscribeService {
         this._init();
 
         // all inscription
-        router.get("/inscription_id/:inscription_id", async (ctx) => {
-            ctx.response.body = await this._getInscriptionById(ctx);
-        });
+        // router.get("/inscription_id/:inscription_id", async (ctx) => {
+        //     ctx.response.body = await this._getInscriptionById(ctx);
+        // });
 
         router.get("/inscription_by_owner/:address/:limit?/:offset?/:order?", async (ctx) => {
             ctx.response.body = await this._getInscriptionByOwner(ctx);
