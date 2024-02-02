@@ -575,22 +575,6 @@ class InscribeService {
             ctx.response.body = await this._getInscribeDataTransferByTx(ctx);
         });
 
-        router.get("/ops_by_address/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
-            ctx.response.body = await this._getOpsByAddress(ctx);
-        });
-
-        router.get("/ops_by_inscription/:inscription_id/:limit?/:offset?/:state?/:order?", async (ctx) => {
-            ctx.response.body = await this._getOpsByInscription(ctx);
-        });
-
-        router.get("/ops_by_inscription_address/:inscription_id/:address/:limit?/:offset?/:state?/:order?", async (ctx) => {
-            ctx.response.body = await this._getOpsByInscriptionAndAddress(ctx);
-        });
-
-        router.get("/ops_by_tx/:txid", async (ctx) => {
-            ctx.response.body = await this._getOpsByTx(ctx);
-        });
-
         router.get("/res_relation_by_address/:address", async (ctx) => {
             ctx.response.body = await this._getResRelationByAddress(ctx);
         });
