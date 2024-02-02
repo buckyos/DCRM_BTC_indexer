@@ -7,6 +7,27 @@ const { UserOp } = require('../../storage/token');
 const { InscriptionOp } = require('../../index/item');
 const { BalanceRecordTokenType, BalanceRecordDirection } = require('../../storage/balance');
 
+const SUCCESS = "success";
+const FAILED = "failed";
+
+function StateCondition(state) {
+    if (state == SUCCESS) {
+        return ` AND state = ${InscriptionOpState.OK}`;
+    } else if (state == FAILED) {
+        return ` AND state != ${InscriptionOpState.OK}`;
+    }
+    return '';
+}
+
+function StageCondition(stage) {
+    if (stage == InscriptionStage.Inscribe) {
+        return ` AND stage = '${InscriptionStage.Inscribe}'`;
+    } else if (stage == InscriptionStage.Transfer) {
+        return ` AND stage = '${InscriptionStage.Transfer}'`;
+    }
+    return '';
+}
+
 class OpsStore {
     constructor(config, store) {
         this.m_config = config;
