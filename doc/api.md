@@ -1226,7 +1226,7 @@ const InscriptionOpState = {
 
     ```json
     {
-        "type": "inscription",      
+        "type": "inscription" or "hash"    // 当str为inscriptionId或者inscriptionNumber 为 inscription，否则为hash
         "data": {
             "inscription_id",
             "inscription_number",
