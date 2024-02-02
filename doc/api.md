@@ -1398,6 +1398,7 @@ const InscriptionOpState = {
             state,          // 见state描述
             amount_change,  // string  DMCs的变化
             inner_amount_change // string DMC sp的变化
+            hash,           // 相关操作的数据hash（hex）
         }
     }
     ```    
