@@ -75,9 +75,9 @@ class SearchStore {
                 stmt = this.m_store.indexDB.prepare(sql);
                 const data = stmt.get(ret.inscription_id);
                 if (data) {
-                    ret.hash = data.hash;
-                    ret.price = data.price;
-                    ret.text = data.text;
+                    for (const key in data) {
+                        ret[key] = data[key];
+                    }
                 }
             }
 
@@ -114,7 +114,9 @@ class SearchStore {
                 stmt = this.m_store.inscriptionDB.prepare(sql);
                 const inscription = stmt.get(ret.inscription_id);
                 if (inscription) {
-                    ret.inscription_number = inscription.inscription_number;
+                    for (const key in inscription) {
+                        ret[key] = inscription[key];
+                    }
                 }
             }
 

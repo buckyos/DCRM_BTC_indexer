@@ -1178,15 +1178,15 @@ const InscriptionOpState = {
     }
     ```  
 
-#### 根据txid搜索：
+#### 搜索：
 
-    /search/:txid
+    /search/:str
 
     GET
 
     参数
 
-    txid: 交易id
+    str: 待搜索字符串
 
     返回：
 
@@ -1195,19 +1195,60 @@ const InscriptionOpState = {
         err: 0,
         msg: 错误信息,
         result: {
-            type,               // string
-            ...                 // 其他数据参考上面对应数据
+            type,               // string "tx" or "hash" or "inscription"
+            data,                 // 其他数据参考上面对应数据，见下方描述
         }
     }
     ```  
-    type的取值为下列其中一个，代表对应类型的交易:  
-    mint            - mint  
-    resonance       - 共鸣  
-    chant           - 吟唱  
-    transfer        - 转移  
-    inscribe        - 铭刻  
-    set_price       - 设置共鸣价格  
-    data_transfer   - 转移数据所有权
+    
+    str 为 txid，result为：
+
+    ```json
+    {
+        "type": "tx", 
+        "data": {
+            "address", 
+            "inscription_id", 
+            "block_height", 
+            "timestamp", 
+            "txid", 
+            "op", 
+            "state",                    // int
+            "amount_change",            // string DMCs的变化，可能是，整数表示收入，负数表示支出
+            "inner_amount_change",      // string DMC-sp的变化
+            "inscription_number",       // int
+            "content",
+        }
+    }
+    ```
+
+    str 为 inscriptionId或者inscriptionNumber，或者是公共数据hash时，result为：
+
+    ```json
+    {
+        "type": "inscription",      
+        "data": {
+            "inscription_id",
+            "inscription_number",
+            "genesis_block_height",
+            "genesis_timestamp",
+            "genesis_satpoint",
+            "commit_txid",
+            "value",
+            "content",
+            "op",
+            "creator",
+            "owner",
+            "last_block_height",
+            "transfer_count",
+            // 以下3个数据只有当铭刻为公共数据铭刻时才会有
+            "hash",
+            "price",
+            "text",
+            "resonance_count",      // 非严格的共鸣数量，有些可能已经失效
+        }
+    }
+    ```
 
 #### 查询mint进度
 
