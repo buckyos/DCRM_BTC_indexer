@@ -10,6 +10,7 @@ const { ChainService } = require('./biz/chainService');
 const { SearchService } = require('./biz/searchService');
 const { RankService } = require('./biz/rankService');
 const { IncomeService } = require('./biz/incomeService');
+const { OpsService } = require('./biz/opsService');
 const { StatManager } = require('./mods/statManager');
 const { Config } = require('./config/config');
 const { Store } = require('./biz/store');
@@ -51,6 +52,9 @@ class Service {
 
         const incomeService = new IncomeService(this.m_config, this.m_store, this.m_statManager);
         incomeService.registerRouter(this.m_router);
+
+        const opsService = new OpsService(this.m_config, this.m_store);
+        opsService.registerRouter(this.m_router);
     }
 
     async start() {
