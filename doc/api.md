@@ -1398,7 +1398,16 @@ const InscriptionOpState = {
             state,          // 见state描述
             amount_change,  // string  DMCs的变化
             inner_amount_change // string DMC sp的变化
-            hash,           // 相关操作的数据hash（hex）
+
+            // 如果操作涉及到公共数据，才会有hash
+            hash,           //string 相关操作的数据hash（hex）
+
+            //只有当op是mint时才会有如下两个字段
+            lucky,      //string 幸运铭刻时的cookie
+            mint_type,  //string "Mint" or "Lucky Mint" or "Burn Mint"
+            
+            //只有当op是chant时才会有该字段
+            chant_type, //string "Chant" or "Lucky Chant"
         }
     }
     ```    
@@ -1933,6 +1942,11 @@ const InscriptionOpState = {
 
                 op,                     // string. 'inscribe_data' or 'transfer_data' or 'chant' or 'set_price' or 'res'
                 state,
+                //只有当op是mint时才会有如下两个字段
+                lucky,      //string 幸运铭刻时的cookie
+                mint_type,  //string "Mint" or "Lucky Mint" or "Burn Mint"
+                //只有当op是chant时才会有该字段
+                chant_type, //string "Chant" or "Lucky Chant"
             }
         ]
     }```

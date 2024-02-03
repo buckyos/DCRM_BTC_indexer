@@ -318,7 +318,7 @@ class OpsStore {
                 list = pageStmt.all(hash, limit, offset);
 
                 for (const item of list) {
-                    this._fillOpsLuckyInfo(ops);
+                    this._fillOpsLuckyInfo(item);
                 }
             }
 
