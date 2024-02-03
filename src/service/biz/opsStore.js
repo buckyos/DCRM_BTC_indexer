@@ -6,6 +6,7 @@ const { UserHashRelation } = require('../../storage/relation')
 const { UserOp } = require('../../storage/token');
 const { InscriptionOp } = require('../../index/item');
 const { BalanceRecordTokenType, BalanceRecordDirection } = require('../../storage/balance');
+const { MintType, ChantType } = require('../../token_index/ops/state');
 
 const SUCCESS = "success";
 const FAILED = "failed";
@@ -32,6 +33,55 @@ class OpsStore {
     constructor(config, store) {
         this.m_config = config;
         this.m_store = store;
+    }
+
+    _getMintTypeText(mintType) {
+        switch (mintType) {
+            case MintType.LuckyMint:
+                return "Lucky Mint";
+            case MintType.BurnMint:
+                return "Burn Mint";
+            default:
+                return "Mint";
+        }
+    }
+
+    _getChantTypeText(chantType) {
+        switch (chantType) {
+            case ChantType.LuckyChant:
+                return "Lucky Chant";
+            default:
+                return "Chant";
+        }
+    }
+
+    _fillOpsLuckyInfo(ops) {
+        if (!ops || !ops.txid || !ops.op) {
+            return ops;
+        }
+
+        if (ops.op == UserOp.Mint) {
+            const recordSql =
+                `SELECT * FROM ${TABLE_NAME.MINT_RECORDS}
+                WHERE txid = ? limit 1`;
+            const recordStmt = this.m_store.indexDB.prepare(recordSql);
+            const recordResult = recordStmt.get(ops.txid);
+            if (recordResult) {
+                ops.lucky = recordResult.lucky;
+                ops.mint_type = this._getMintTypeText(recordResult.mint_type);
+            }
+        } else if (ops.op == UserOp.Chant) {
+            const recordSql =
+                `SELECT * FROM ${TABLE_NAME.CHANT_RECORDS}
+                WHERE txid = ? limit 1`;
+            const recordStmt = this.m_store.indexDB.prepare(recordSql);
+            const recordResult = recordStmt.get(ops.txid);
+            if (recordResult) {
+                ops.chant_type = this._getChantTypeText(recordResult.chant_type);
+            }
+        }
+
+        return ops;
     }
 
     _fillUserOpsDetailInfo(ops) {
@@ -72,14 +122,14 @@ class OpsStore {
 
         const hashSql =
             `SELECT hash FROM ${TABLE_NAME.DATA_OPS}
-                        WHERE inscription_id = ? AND block_height = ? limit 1`;
+                        WHERE inscription_id = ? limit 1`;
         const hashStmt = this.m_store.indexDB.prepare(hashSql);
-        const hashResult = hashStmt.get(ops.inscription_id, ops.block_height);
+        const hashResult = hashStmt.get(ops.inscription_id);
         if (hashResult) {
             ops.hash = hashResult.hash;
         }
 
-        // TODO lucky?
+        this._fillOpsLuckyInfo(ops);
 
         return ops;
     }
@@ -266,6 +316,10 @@ class OpsStore {
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
                 const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(hash, limit, offset);
+
+                for (const item of list) {
+                    this._fillOpsLuckyInfo(ops);
+                }
             }
 
             logger.debug('queryDataOpByHash:', hash, offset, limit, "ret:", count);
