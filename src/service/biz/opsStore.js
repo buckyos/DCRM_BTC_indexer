@@ -34,6 +34,56 @@ class OpsStore {
         this.m_store = store;
     }
 
+    _fillUserOpsDetailInfo(ops) {
+        if (!ops) {
+            return ops;
+        }
+
+        if (!ops.inscription_id || !ops.block_height || !ops.address) {
+            return ops;
+        }
+
+        const balanceSql =
+            `SELECT * FROM ${TABLE_NAME.BALANCE_RECORDS}
+                        WHERE address = ?
+                        AND inscription_id = ?
+                        AND block_height = ?`;
+
+        const balanceStmt = this.m_store.indexDB.prepare(balanceSql);
+        const balanceList = balanceStmt.all(
+            ops.address,
+            ops.inscription_id,
+            ops.block_height
+        );
+
+        let amount = '0';
+        let inner_amount = '0';
+
+        for (const balanceItem of balanceList) {
+            if (balanceItem.token_type == BalanceRecordTokenType.Default) {
+                amount = BigNumberUtil.add(amount, balanceItem.change_amount);
+            } else {
+                inner_amount = BigNumberUtil.add(inner_amount, balanceItem.change_amount);
+            }
+        }
+
+        ops.amount_change = amount;
+        ops.inner_amount_change = inner_amount;
+
+        const hashSql =
+            `SELECT hash FROM ${TABLE_NAME.DATA_OPS}
+                        WHERE inscription_id = ? AND block_height = ? limit 1`;
+        const hashStmt = this.m_store.indexDB.prepare(hashSql);
+        const hashResult = hashStmt.get(ops.inscription_id, ops.block_height);
+        if (hashResult) {
+            ops.hash = hashResult.hash;
+        }
+
+        // TODO lucky?
+
+        return ops;
+    }
+
     queryOpsByAddress(address, limit, offset, state, order) {
         if (!address) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
@@ -61,43 +111,7 @@ class OpsStore {
                 list = pageStmt.all(address, limit, offset);
 
                 for (const item of list) {
-                    const balanceSql =
-                        `SELECT * FROM ${TABLE_NAME.BALANCE_RECORDS}
-                        WHERE address = ?
-                        AND inscription_id = ?
-                        AND block_height = ?`;
-
-                    const balanceStmt = this.m_store.indexDB.prepare(balanceSql);
-                    const balanceList = balanceStmt.all(
-                        item.address,
-                        item.inscription_id,
-                        item.block_height
-                    );
-
-                    let amount = '0';
-                    let inner_amount = '0';
-
-                    for (const balanceItem of balanceList) {
-                        if (balanceItem.token_type == BalanceRecordTokenType.Default) {
-                            amount = BigNumberUtil.add(amount, balanceItem.change_amount);
-                        } else {
-                            inner_amount = BigNumberUtil.add(inner_amount, balanceItem.change_amount);
-                        }
-                    }
-
-                    item.amount_change = amount;
-                    item.inner_amount_change = inner_amount;
-
-                    const hashSql =
-                        `SELECT hash FROM ${TABLE_NAME.DATA_OPS}
-                        WHERE inscription_id = ? AND block_height = ? limit 1`;
-                    const hashStmt = this.m_store.indexDB.prepare(hashSql);
-                    const hashResult = hashStmt.get(item.inscription_id, item.block_height);
-                    if (hashResult) {
-                        item.hash = hashResult.hash;
-                    }
-
-                    // TODO lucky?
+                    this._fillUserOpsDetailInfo(item);
                 }
             }
 
@@ -137,6 +151,10 @@ class OpsStore {
 
                 const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(inscription, limit, offset);
+
+                for (const item of list) {
+                    this._fillUserOpsDetailInfo(item);
+                }
             }
 
             logger.debug('queryOpsByInscription:', inscription, offset, limit, "ret:", count);
@@ -174,6 +192,10 @@ class OpsStore {
                 sql += ` ORDER BY timestamp ${order} LIMIT ? OFFSET ?`;
                 const pageStmt = this.m_store.indexDB.prepare(sql);
                 list = pageStmt.all(inscription, address, limit, offset);
+
+                for (const item of list) {
+                    this._fillUserOpsDetailInfo(item);
+                }
             }
 
             logger.debug('queryOpsByInscriptionAndAddress:', inscription, address, offset, limit, "ret:", count);
@@ -200,6 +222,10 @@ class OpsStore {
 
             const stmt = this.m_store.indexDB.prepare(sql);
             const ret = stmt.get(txid);
+
+            if (ret) {
+                this._fillUserOpsDetailInfo(ret);
+            }
 
             logger.debug('queryOpsByTx:', txid, "ret:", ret);
 
