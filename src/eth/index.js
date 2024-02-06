@@ -4,6 +4,7 @@ const { ETHIndexStorage } = require('../storage/eth');
 const { Util } = require('../util');
 const { StateStorage } = require('../storage/state');
 const BigNumber = require('bignumber.js');
+const { ETH_NETWORK_POINT_MULTIPLIER } = require('../constants');
 
 class ETHIndex {
     constructor(config) {
@@ -340,12 +341,33 @@ class ETHIndex {
     }
 
     /**
+     * query exp for hash at timestamp historically
+     * @param {number} timestamp
+     * @param {string} hash
+     * @returns {ret: number, exp: number, point: number}
+     */
+    async query_hash_exp(timestamp, hash) {
+        const { ret, point } = 
+        await this._query_hash_point(timestamp, hash);
+        if (ret !== 0) {
+            console.error(`failed to query hash point ${hash}`);
+            return { ret };
+        }
+
+        // calculate exp with point
+        let exp = point * ETH_NETWORK_POINT_MULTIPLIER;
+        exp += 1; // add 1 to avoid 0 exp
+
+        return { ret: 0, exp, point };
+    }
+
+    /**
      * query point for hash at timestamp historically
      * @param {number} timestamp
      * @param {string} hash
      * @returns {ret: number, point: number}
      */
-    async query_hash_point(timestamp, hash) {
+    async _query_hash_point(timestamp, hash) {
         // find target block height for timestamp
         // if now found, we should wait for the block and retry
         let target_block_height;
@@ -377,7 +399,7 @@ class ETHIndex {
                     console.warn(
                         `timestamp ${timestamp} is less than first block timestamp ${this.first_block_timestamp}`,
                     );
-                    return { ret: 0, point: 1 };
+                    return { ret: 0, point: 0 };
                 }
 
                 console.warn(
@@ -405,9 +427,9 @@ class ETHIndex {
 
         if (point == 0) {
             console.warn(
-                `no point found for hash ${hash}, now use default value 1`,
+                `no point found for hash ${hash}`,
             );
-            return { ret: 0, point: 1 };
+            return { ret: 0, point: 0 };
         }
 
         console.log(`query point ${hash} success ${point}`);
