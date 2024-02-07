@@ -93,7 +93,7 @@ async function run(config, mode) {
     assert(_.isString(mode), `mode should be string, but ${mode}`);
 
     // init log
-    new LogHelper(config);
+    new LogHelper(config, mode);
 
     if (global.bug_monitor) {
         const error_fn = console.error;

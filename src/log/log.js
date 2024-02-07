@@ -3,11 +3,24 @@ const { Util } = require('../util.js');
 const assert = require('assert');
 
 class LogHelper {
-    constructor(config) {
+    constructor(config, mode = 'both') {
+        assert(_.isObject(config), `config should be an object: ${config}`);
+        assert(_.isString(mode), `mode should be string: ${mode}`);
+
         const log_dir = Util.get_log_dir(config);
 
+        let name = 'dcrm_btc_index';
+        if (mode == 'sync') {
+            name = 'dcrm_btc_sync';
+        } else if (mode == 'index') {
+            name = 'dcrm_btc_index';
+        } else {
+            assert(mode == 'both', `invalid mode: ${mode}`);
+            name = 'dcrm_btc_both';
+        }
+
         blog.enable_file_log({
-            name: 'dcrm_btc_index',
+            name,
             dir: log_dir,
             file_max_size: 20 * 1024 * 1024,
             file_max_count: 100,
