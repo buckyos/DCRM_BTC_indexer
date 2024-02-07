@@ -88,7 +88,7 @@ class InscribeStore {
 
         try {
             const sqlInscriptions = `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN (${mixhashs.map(h => `'${h}'`).join(',')})`;
-            const stmt = this.m_store.indexDB.prepare();
+            const stmt = this.m_store.indexDB.prepare(sqlInscriptions);
             const ret = stmt.all();
 
             logger.debug('queryInscriptionDataByHash:', hashs, "ret:", ret, "sql:", sqlInscriptions);
