@@ -58,7 +58,6 @@ class ResetManager {
     }
 
     _reset_sync(now) {
-        return;
         const {
             SYNC_STATE_DB_FILE,
             ETH_INDEX_DB_FILE,

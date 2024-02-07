@@ -6,6 +6,7 @@
         "bignumber",
         "bitcoind",
         "blockheight",
+        "bodyparser",
         "dcrm",
         "dmcs",
         "filemaxcount",
