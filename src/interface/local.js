@@ -291,7 +291,7 @@ class IndexLocalInterface {
                 `will query hash weight ${mixhash} at ${timestamp} for user ${ctx.ip} request`,
             );
 
-            const { ret, weight, point } =
+            const { ret, chain, exp, weight, point } =
                 await this.hash_helper.query_hash_weight(timestamp, mixhash);
             if (ret !== 0) {
                 ctx.status = 500;
@@ -303,6 +303,9 @@ class IndexLocalInterface {
                 mixhash,
                 timestamp,
                 weight,
+
+                chain,
+                exp,
                 point,
             };
 

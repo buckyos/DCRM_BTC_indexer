@@ -3,6 +3,8 @@ const INDEX_VERSION = '0.5.0';
 // network point multiplier factor
 const ETH_NETWORK_POINT_MULTIPLIER = 8;
 
+// point chain name
+const POINT_CHAIN_ETH = 'eth';
 
 // sqlite db file name
 const SYNC_STATE_DB_FILE = 'sync_state.db';
@@ -56,6 +58,7 @@ const DATA_HASH_START_SIZE = 1024 * 1024 * 128;
 
 module.exports = {
     INDEX_VERSION,
+    POINT_CHAIN_ETH,
 
     ETH_NETWORK_POINT_MULTIPLIER,
 

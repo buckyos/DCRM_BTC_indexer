@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { ETHIndex } = require('../../eth/index');
-const { Util } = require('../../util');
+const { POINT_CHAIN_ETH } = require('../../constants');
 
 class HashHelper {
     constructor(eth_index) {
@@ -94,7 +94,14 @@ class HashHelper {
             `calc hash weight ${hash} point: ${point} weight: ${weight}`,
         );
 
-        return { ret: 0, weight: weight.toString(), point };
+        return { 
+            ret: 0, 
+            weight: weight.toString(), 
+            
+            chain: POINT_CHAIN_ETH, 
+            exp,
+            point
+         };
     }
 }
 
