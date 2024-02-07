@@ -407,8 +407,10 @@ class MintStore {
     async queryHashWeightBatch(hashList) {
         // send a local http request to get hash weight
         try {
-            assert(Array.isArray(hashList) && hashList.length > 0, 'hashList must be a non-empty array');
-            
+            if (!Array.isArray(hashList) || hashList.length == 0) {
+                return makeResponse(ERR_CODE.INVALID_PARAM, `hashList must be a non-empty array of string`);
+            }
+
             const url = `http://localhost:${this.m_config.localInterface.port}/hash-weight`;
             const response = await fetch(url, {
                 method: 'POST',
