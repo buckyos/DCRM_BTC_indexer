@@ -72,6 +72,50 @@ class InscribeStore {
         }
     }
 
+    queryInscriptionDataByHashBatch(hashs) {
+        if (!hashs) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        const mixhashs = []
+        for (hash of hashs) {
+            const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+            if (!valid) {
+                return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+            }
+            mixhashs.push(mixhash)
+        }
+
+        try {
+            const stmt = this.m_store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN ?`);
+            const ret = stmt.get(mixhashs);
+
+            logger.debug('queryInscriptionDataByHash:', hash, "ret:", ret);
+
+            if (ret) {
+                const numberStmt = this.m_store.inscriptionDB.prepare(
+                    `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN ?`
+                );
+                const inscriptionNumbers = numberStmt.get(ret.map(ins => ins.inscription_id));
+                logger.debug('queryInscriptionDataByHash:', inscriptionNumbers);
+                const numberMap = new Map();
+                if (inscriptionNumbers) {
+                    inscriptionNumbers.forEach(ins => numberMap.set(ins.inscription_id, ins.inscription_number))
+                }
+                ret.forEach(ins => ins.inscription_number = numberMap.get(ins.inscription_id) || 0);
+
+                return makeSuccessResponse(ret);
+            }
+
+            return makeResponse(ERR_CODE.NOT_FOUND, "not found");
+
+        } catch (error) {
+            logger.error('queryInscriptionDataByHash failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
     queryInscriptionDataById(inscriptionId) {
         if (!inscriptionId) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
@@ -292,6 +336,69 @@ class InscribeStore {
 
         } catch (error) {
             logger.error('queryInscriptionDataByBlock failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    queryInscriptionDataChantableByAddress(address, limit, offset, order) {
+        if (!address) {
+            return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+        }
+
+        order = order == "asc" ? "asc" : "desc";
+        try {
+            let list = [];
+            const countStmt = this.m_store.indexDB.prepare(
+                `SELECT COUNT(*) AS count 
+                FROM ${TABLE_NAME.INSCRIBE_DATA} as data 
+                LEFT JOIN ${TABLE_NAME.RELATIONS} as rel ON data.hash = rel.hash 
+                WHERE (data.address = ? OR (rel.address = ? AND rel.relation = 1))`
+            );
+            const countResult = countStmt.get(address, address);
+            const count = countResult.count;
+
+            if (count > 0) {
+                const pageStmt = this.m_store.indexDB.prepare(
+                    `SELECT data.*, MAX(data.timestamp, rel.timestamp) AS timestamp 
+                    FROM ${TABLE_NAME.INSCRIBE_DATA} as data 
+                    LEFT JOIN ${TABLE_NAME.RELATIONS} as rel ON data.hash = rel.hash 
+                    WHERE (data.address = ? OR (rel.address = ? AND rel.relation = 1)) 
+                    ORDER BY timestamp ${order} LIMIT ? OFFSET ?`
+                );
+                list = pageStmt.all(address, address, limit, offset);
+
+                const inscriptionIds = list.map(obj => obj.inscription_id);
+
+                const chunkSize = 900; // avoid sqlite limit
+                const inscriptionsMap = {};
+
+                for (let i = 0; i < inscriptionIds.length; i += chunkSize) {
+                    const chunk = inscriptionIds.slice(i, i + chunkSize);
+                    const stmt = this.m_store.inscriptionDB.prepare(
+                        `SELECT inscription_id, inscription_number 
+                        FROM ${TABLE_NAME.INSCRIPTIONS} 
+                        WHERE inscription_id IN (${chunk.map(() => '?').join(', ')})`
+                    );
+                    const chunkResults = stmt.all(...chunk);
+
+                    chunkResults.forEach(ins => {
+                        inscriptionsMap[ins.inscription_id] = ins.inscription_number;
+                    });
+                }
+
+                list = list.map(item => ({
+                    ...item,
+                    inscription_number: inscriptionsMap[item.inscription_id] || 0
+                }));
+            }
+
+            logger.debug('queryInscriptionDataByAddress:', address, offset, limit, "ret:", count, list);
+
+            return makeSuccessResponse({ count, list });
+
+        } catch (error) {
+            logger.error('queryInscriptionDataByAddress failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }

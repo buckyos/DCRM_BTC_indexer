@@ -15,6 +15,12 @@ class InscribeService {
         return this.m_store.queryInscriptionDataByHash(hash);
     }
 
+    async _getInscriptionDataByHashBatch(ctx) {
+        const hashes = ctx.request.body.values;
+
+        return this.m_store.queryInscriptionDataByHashBatch(hashs);
+    }
+
     async _getInscriptionDataById(ctx) {
         const inscriptionId = ctx.params.inscription_id;
 
@@ -79,6 +85,20 @@ class InscribeService {
         return this.m_store.queryInscriptionDataByBlock(
             beginBlock,
             endBlock == 0 || endBlock == null ? Number.MAX_SAFE_INTEGER : endBlock,
+            Math.max((parseInt(limit, 10) || 0), 0),
+            Math.max((parseInt(offset, 10) || 0), 0),
+            order && _.isString(order) ? order.toLowerCase() : "desc"
+        );
+    }
+
+    async _getInscriptionDataChantableByAddress(ctx) {
+        const address = ctx.params.address;
+        const offset = ctx.params.offset;
+        const limit = ctx.params.limit;
+        const order = ctx.params.order;
+
+        return this.m_store.queryInscriptionDataChantableByAddress(
+            address,
             Math.max((parseInt(limit, 10) || 0), 0),
             Math.max((parseInt(offset, 10) || 0), 0),
             order && _.isString(order) ? order.toLowerCase() : "desc"
@@ -474,6 +494,11 @@ class InscribeService {
             ctx.response.body = await this._getInscriptionDataByHash(ctx);
         });
 
+        // batch
+        router.post("/inscription_data", async (ctx) => {
+            ctx.response.body = await this._getInscriptionDataByHashBatch(ctx);
+        });
+
         router.get("/inscription_data_id/:inscription_id", async (ctx) => {
             ctx.response.body = await this._getInscriptionDataById(ctx);
         });
@@ -489,6 +514,10 @@ class InscribeService {
 
         router.get("/inscription_data_count", async (ctx) => {
             ctx.response.body = await this._getInscriptionDataCount(ctx);
+        });
+
+        router.get("/inscription_data_chantable_by_address/:address/:limit?/:offset?/:order?", async (ctx) => {
+            ctx.response.body = await this._getInscriptionDataChantableByAddress(ctx);
         });
 
         router.get("/inscribe_by_hash/:hash/:limit?/:offset?/:state?/:order?", async (ctx) => {
