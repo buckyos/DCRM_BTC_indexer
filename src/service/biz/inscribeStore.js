@@ -88,15 +88,15 @@ class InscribeStore {
 
         try {
             const stmt = this.m_store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN (${mixhashs.join(',')})`);
-            const ret = stmt.get();
+            const ret = stmt.all();
 
             logger.debug('queryInscriptionDataByHash:', hash, "ret:", ret);
 
             if (ret) {
                 const numberStmt = this.m_store.inscriptionDB.prepare(
-                    `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN (${mixhashs.join(',')})`
+                    `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN (${ret.map(ins => ins.inscription_id).join(',')})`
                 );
-                const inscriptionNumbers = numberStmt.get();
+                const inscriptionNumbers = numberStmt.all();
                 logger.debug('queryInscriptionDataByHash:', inscriptionNumbers);
                 const numberMap = new Map();
                 if (inscriptionNumbers) {
