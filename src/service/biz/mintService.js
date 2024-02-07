@@ -108,6 +108,12 @@ class MintService {
         return await this.m_store.queryHashWeight(hash);
     }
 
+    async _getHashWeightBatch(ctx) {
+        const hashes = ctx.request.body.values;
+
+        return await this.m_store.queryHashWeightBatch(hashes);
+    }
+
     async _getIndexerStateDetail(ctx) {
         return await this.m_store.queryIndexerStateDetail();
     }
@@ -166,6 +172,10 @@ class MintService {
 
         router.get("/hash_weight/:hash", async (ctx) => {
             ctx.response.body = await this._getHashWeight(ctx);
+        });
+
+        router.post("/hash_weight", async (ctx) => {
+            ctx.response.body = await this._getHashWeightBatch(ctx);
         });
 
         router.get("/indexer/state_detail", async (ctx) => {

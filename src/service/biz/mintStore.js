@@ -11,6 +11,7 @@ const {
     TOKEN_MINT_POOL_VIRTUAL_ADDRESS,
     TOKEN_MINT_POOL_SERVICE_CHARGED_VIRTUAL_ADDRESS
 } = require('../../constants');
+const assert = require('assert');
 
 const SUCCESS = "success";
 const FAILED = "failed";
@@ -398,6 +399,36 @@ class MintStore {
 
         } catch (error) {
             logger.error('queryHashWeight failed:', error);
+
+            return makeResponse(ERR_CODE.UNKNOWN_ERROR);
+        }
+    }
+
+    async queryHashWeightBatch(hashList) {
+        // send a local http request to get hash weight
+        try {
+            assert(Array.isArray(hashList) && hashList.length > 0, 'hashList must be a non-empty array');
+            
+            const url = `http://localhost:${this.m_config.localInterface.port}/hash-weight`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ values: hashList }),
+            });
+
+            if (response.status != 200) {
+                return makeResponse(ERR_CODE.UNKNOWN_ERROR, response.statusText);
+            }
+
+            const json = await response.json();
+            // console.log(json);
+
+            return makeSuccessResponse(json);
+
+        } catch (error) {
+            logger.error('queryHashWeightBatch failed:', error);
 
             return makeResponse(ERR_CODE.UNKNOWN_ERROR);
         }
