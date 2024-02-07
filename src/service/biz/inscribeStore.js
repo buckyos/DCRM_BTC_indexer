@@ -78,7 +78,7 @@ class InscribeStore {
         }
 
         const mixhashs = []
-        for (hash of hashs) {
+        for (const hash of hashs) {
             const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
             if (!valid) {
                 return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
@@ -87,16 +87,16 @@ class InscribeStore {
         }
 
         try {
-            const stmt = this.m_store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN ?`);
-            const ret = stmt.get(mixhashs);
+            const stmt = this.m_store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN ${mixhashs.join(',')}`);
+            const ret = stmt.get();
 
             logger.debug('queryInscriptionDataByHash:', hash, "ret:", ret);
 
             if (ret) {
                 const numberStmt = this.m_store.inscriptionDB.prepare(
-                    `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN ?`
+                    `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN ${mixhashs.join(',')}`
                 );
-                const inscriptionNumbers = numberStmt.get(ret.map(ins => ins.inscription_id));
+                const inscriptionNumbers = numberStmt.get();
                 logger.debug('queryInscriptionDataByHash:', inscriptionNumbers);
                 const numberMap = new Map();
                 if (inscriptionNumbers) {

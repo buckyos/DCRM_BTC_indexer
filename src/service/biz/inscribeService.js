@@ -16,7 +16,7 @@ class InscribeService {
     }
 
     async _getInscriptionDataByHashBatch(ctx) {
-        const hashes = ctx.request.body.values;
+        const hashs = ctx.request.body.values;
 
         return this.m_store.queryInscriptionDataByHashBatch(hashs);
     }
