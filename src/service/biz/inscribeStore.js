@@ -87,17 +87,17 @@ class InscribeStore {
         }
 
         try {
-            const stmt = this.m_store.indexDB.prepare(`SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN (${mixhashs.map(h => `'${h}'`).join(',')})`);
+            const sqlInscriptions = `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN (${mixhashs.map(h => `'${h}'`).join(',')})`;
+            const stmt = this.m_store.indexDB.prepare();
             const ret = stmt.all();
 
-            logger.debug('queryInscriptionDataByHash:', hash, "ret:", ret);
+            logger.debug('queryInscriptionDataByHash:', hashs, "ret:", ret, "sql:", sqlInscriptions);
 
             if (ret) {
-                const numberStmt = this.m_store.inscriptionDB.prepare(
-                    `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN (${ret.map(ins => `'${ins.inscription_id}'`).join(',')})`
-                );
+                const sqlNumber = `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN (${ret.map(ins => `'${ins.inscription_id}'`).join(',')})`;
+                const numberStmt = this.m_store.inscriptionDB.prepare(sqlNumber);
                 const inscriptionNumbers = numberStmt.all();
-                logger.debug('queryInscriptionDataByHash:', inscriptionNumbers);
+                logger.debug('queryInscriptionDataByHash:', inscriptionNumbers, 'sql:', sqlNumber);
                 const numberMap = new Map();
                 if (inscriptionNumbers) {
                     inscriptionNumbers.forEach(ins => numberMap.set(ins.inscription_id, ins.inscription_number))
