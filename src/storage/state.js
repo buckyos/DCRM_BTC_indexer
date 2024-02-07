@@ -237,6 +237,32 @@ class StateStorage {
             );
         });
     }
+
+    /**
+     * @comment reset btc latest block height to 0
+     * @returns {ret: number}
+     *
+     */
+    async reset_eth_latest_block_height() {
+        assert(this.db != null, `db should not be null`);
+
+        return new Promise((resolve) => {
+            this.db.run(
+                `INSERT OR REPLACE INTO state (name, value) VALUES ('eth_latest_block_height', 0)`,
+                (err) => {
+                    if (err) {
+                        console.error(
+                            'failed to reset eth latest block height',
+                            err,
+                        );
+                        resolve({ ret: -1 });
+                    } else {
+                        resolve({ ret: 0 });
+                    }
+                },
+            );
+        });
+    }
 }
 
 module.exports = { StateStorage };

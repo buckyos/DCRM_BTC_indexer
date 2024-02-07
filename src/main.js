@@ -12,7 +12,7 @@ const { Util } = require('./util');
 const { IndexLocalInterface } = require('./interface/local');
 const { BugMonitor } = require('./debug/monitor');
 const { INDEX_VERSION } = require('./constants');
-const { ResetManager } = require('./reset');
+const { ResetManager, ChainType } = require('./reset');
 
 global._ = require('underscore');
 
@@ -43,6 +43,14 @@ async function main() {
             type: 'boolean',
             describe: 'Reset state and all data, base on mode',
         })
+        .option('eth', {
+            type: 'boolean',
+            describe: 'Only reset ethereum network state',
+        })
+        .option('btc', {    
+            type: 'boolean',
+            describe: 'Only reset bitcoin network state',
+        })
         .help().argv;
 
     const config_name = argv.config;
@@ -59,16 +67,26 @@ async function main() {
     global.bug_monitor = monitor;
 
     if (argv['reset']) {
-        reset(config.config, argv.mode);
+
+        let chain_type = ChainType.Both;
+        if (argv['eth'] && !argv['btc']) {
+            chain_type = ChainType.ETH;
+        } else if (!argv['eth'] && argv['btc']) {
+            chain_type = ChainType.BTC;
+        } else if (argv['eth'] && argv['btc']) {
+            throw new Error(`invalid reset option: eth and btc`);
+        }
+
+        await reset(config.config, argv.mode, chain_type);
         return { ret: 0 };
     }
 
     return await run_with_lock(config.config, argv.mode);
 }
 
-function reset(config, mode) {
+async function reset(config, mode, chain_type) {
     const reset_manager = new ResetManager(config);
-    reset_manager.reset(mode);
+    await reset_manager.reset(mode, chain_type);
 }
 
 async function run(config, mode) {

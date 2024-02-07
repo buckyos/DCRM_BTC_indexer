@@ -3,19 +3,40 @@ const moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 const { Util } = require('./util');
+const { ETHIndex } = require('./eth/index');
 
+const ChainType = {
+    BTC: 'btc',
+    ETH: 'eth',
+    Both: 'both',
+};
 class ResetManager {
     constructor(config) {
         assert(_.isObject(config), `config should be an object: ${config}`);
         this.config = config;
     }
 
-    reset(mode) {
+    async reset(mode, chain_type = ChainType.Both) {
         assert(_.isString(mode), `mode should be string, but ${mode}`);
+        assert(
+            chain_type === ChainType.BTC ||
+                chain_type === ChainType.ETH ||
+                chain_type === ChainType.Both,
+            `invalid chain type: ${chain_type}`,
+        );
+
+        console.log(`will reset mode: ${mode}, chain type: ${chain_type}`);
 
         const now = Date.now();
         if (mode === 'sync' || mode === 'both') {
-            this._reset_sync(now);
+            if (chain_type === ChainType.Both) {
+                this._reset_sync(now);
+            } else if (chain_type === ChainType.ETH) {
+                await this._reset_sync_eth_only(now);
+            } else if (chain_type === ChainType.BTC) {
+                console.warn('reset btc only not supported yet');
+                // do nothing
+            }
         }
 
         if (mode === 'index' || mode === 'both') {
@@ -37,6 +58,7 @@ class ResetManager {
     }
 
     _reset_sync(now) {
+        return;
         const {
             SYNC_STATE_DB_FILE,
             ETH_INDEX_DB_FILE,
@@ -98,6 +120,54 @@ class ResetManager {
         }
     }
 
+    async _reset_sync_eth_only(now) {
+        const {
+            SYNC_STATE_DB_FILE,
+            ETH_INDEX_DB_FILE,
+        } = require('./constants');
+
+        const { ret: get_dir_ret, dir } = Util.get_data_dir(this.config);
+        if (get_dir_ret !== 0) {
+            throw new Error(`failed to get data dir`);
+        }
+
+        const tmp_dir = this._get_del_dir(dir, now);
+
+        const sync_state_db_file = path.join(dir, SYNC_STATE_DB_FILE);
+        if (fs.existsSync(sync_state_db_file)) {
+            const eth_index = new ETHIndex(this.config);
+
+            // first init the eth index db
+            const { ret: init_ret } = await eth_index.init();
+            if (init_ret !== 0) {
+                throw new Error(`failed to init eth index`);
+            }
+
+            const { ret, height } = await eth_index.get_latest_block_number();
+            if (ret !== 0) {
+                throw new Error(`failed to get latest block number`);
+            }
+
+            // reset the sync state db
+            console.warn(`will reset sync state: ${height} -> 0`);
+            const { ret: reset_ret } =
+                await eth_index.state_storage.reset_eth_latest_block_height();
+            if (reset_ret !== 0) {
+                throw new Error(`failed to reset eth latest block height`);
+            }
+        }
+
+        const eth_index_db_file = path.join(dir, ETH_INDEX_DB_FILE);
+        if (fs.existsSync(eth_index_db_file)) {
+            const target_file = path.join(tmp_dir, ETH_INDEX_DB_FILE);
+            console.warn(
+                `remove eth index db: ${eth_index_db_file} -> ${target_file}`,
+            );
+            fs.renameSync(eth_index_db_file, target_file);
+            // fs.unlinkSync(eth_index_db_file);
+        }
+    }
+
     _reset_index(now) {
         const {
             INDEX_STATE_DB_FILE,
@@ -135,4 +205,5 @@ class ResetManager {
 
 module.exports = {
     ResetManager,
+    ChainType,
 };
