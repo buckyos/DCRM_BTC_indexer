@@ -1,6 +1,7 @@
 const assert = require('assert');
 const Koa = require('koa');
 const Router = require('koa-router');
+const bodyParser = require('koa-bodyparser');
 const { Util } = require('../util.js');
 const { HashHelper } = require('../token_index/ops/hash.js');
 const { ETHIndex } = require('../eth/index');
@@ -216,6 +217,8 @@ class IndexLocalInterface {
     _start_http_server() {
         // start local interface
         const app = new Koa();
+        app.use(bodyParser());
+
         const router = new Router();
 
         this._register_router(router);
@@ -308,6 +311,68 @@ class IndexLocalInterface {
                 exp,
                 point,
             };
+
+            ctx.body = result;
+        });
+
+        // for batch query
+        router.post('/hash-weight', async (ctx) => {
+            const body = ctx.request.body;
+            if (!_.isObject(body)) {
+                ctx.status = 400;
+                ctx.body = 'Bad request';
+                return;
+            }
+
+            const list = body.values;
+            if (!_.isArray(list)) {
+                ctx.status = 400;
+                ctx.body = 'Bad request';
+                return;
+            }
+
+            // use the last block timestamp if t is not specified
+            const timestamp = body.timestamp || (Util.get_now_as_timestamp() - 12);
+            if (!_.isNumber(timestamp)) {
+                ctx.status = 400;
+                ctx.body = `Bad request: invalid timestamp ${timestamp}`;
+                return;
+            }
+
+            console.log(`will query hash weight for ${timestamp} ${list.length} values`);
+
+            const result = {
+                ret: 0,
+                result: [],
+            };
+
+            for (const value of list) {
+                const { valid, mixhash } = Util.check_and_fix_mixhash(value);
+                if (!valid) {
+                    result.ret = -1;
+                    result.msg = `invalid hash: ${value}`;
+                    continue;
+                }
+
+                const { ret, chain, exp, weight, point } =
+                    await this.hash_helper.query_hash_weight(
+                        timestamp,
+                        mixhash,
+                    );
+                if (ret !== 0) {
+                    result.ret = ret;
+                    result.msg = `failed to query hash weight for ${value}`;
+                    break;
+                }
+
+                result.result.push({
+                    value,
+                    weight,
+                    chain,
+                    exp,
+                    point,
+                })
+            }
 
             ctx.body = result;
         });
