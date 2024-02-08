@@ -72,26 +72,26 @@ class InscribeStore {
         }
     }
 
-    queryInscriptionDataByHashBatch(hashs) {
-        if (!hashs) {
+    queryInscriptionDataByHashBatch(hashes) {
+        if (!hashes || !Array.isArray(hashes) || hashes.length == 0) {
             return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
         }
 
-        const mixhashs = []
-        for (const hash of hashs) {
+        const mixhashes = []
+        for (const hash of hashes) {
             const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
             if (!valid) {
-                return makeResponse(ERR_CODE.INVALID_PARAM, "Invalid param");
+                return makeResponse(ERR_CODE.INVALID_PARAM, `Invalid param: ${hash}`);
             }
-            mixhashs.push(mixhash)
+            mixhashes.push(mixhash)
         }
 
         try {
-            const sqlInscriptions = `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN (${mixhashs.map(h => `'${h}'`).join(',')})`;
+            const sqlInscriptions = `SELECT * FROM ${TABLE_NAME.INSCRIBE_DATA} WHERE hash IN (${mixhashes.map(h => `'${h}'`).join(',')})`;
             const stmt = this.m_store.indexDB.prepare(sqlInscriptions);
             const ret = stmt.all();
 
-            logger.debug('queryInscriptionDataByHash:', hashs, "ret:", ret, "sql:", sqlInscriptions);
+            logger.debug('queryInscriptionDataByHash:', hashes, "ret:", ret, "sql:", sqlInscriptions);
 
             if (ret) {
                 const sqlNumber = `SELECT inscription_number, inscription_id FROM ${TABLE_NAME.INSCRIPTIONS} WHERE inscription_id IN (${ret.map(ins => `'${ins.inscription_id}'`).join(',')})`;

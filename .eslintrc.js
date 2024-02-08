@@ -25,6 +25,7 @@ module.exports = {
     },
     "globals": {
         "_": "readonly",
-        "process": "readonly"
+        "process": "readonly",
+        "logger": "readonly",
     }
 }
