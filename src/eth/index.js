@@ -110,7 +110,11 @@ class ETHIndex {
 
         let percent;
         if (eth > local) {
-            percent = (((local - genesis_block_height) / (eth - genesis_block_height)) * 100).toFixed(2);
+            percent = (
+                ((local - genesis_block_height) /
+                    (eth - genesis_block_height)) *
+                100
+            ).toFixed(2);
         } else {
             percent = 100;
         }
@@ -207,8 +211,6 @@ class ETHIndex {
         const chunk_size = this.eth_blocks_process_step;
         assert(chunk_size > 0, `chunk size should be positive`);
 
-        const sync_begin = this.current_block_height;
-
         // sync blocks in chunk during [this.current_block_height, latest_block_number]
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -228,15 +230,16 @@ class ETHIndex {
                 return { ret };
             }
 
+            console.log(
+                `sync eth blocks [${this.current_block_height}, ${end}] success`,
+            );
+
             this.current_block_height = end + 1;
             if (this.current_block_height >= latest_block_number) {
                 break;
             }
         }
 
-        console.log(
-            `sync eth blocks [${sync_begin}, ${latest_block_number}] success`,
-        );
         return { ret: 0 };
     }
 
@@ -298,22 +301,14 @@ class ETHIndex {
                 return { ret: -1 };
             }
 
-            const { ret: convert_ret, hash_str } = Util.hex_to_base58(hash);
-            if (convert_ret !== 0) {
-                console.error(`failed to convert hash ${hash} to base58`);
-                return { ret: convert_ret };
-            }
-
-            assert(
-                _.isString(hash_str),
-                `hash should be string after convert to base58 ${hash_str}`,
-            );
+            const { valid, mixhash } = Util.check_and_fix_mixhash(hash);
+            assert(valid, `invalid mixhash ${hash}`);
 
             point = Number(point);
 
             const { ret } = await this.storage.update_point(
                 block_height,
-                hash_str,
+                mixhash,
                 point,
             );
             if (ret !== 0) {
@@ -347,8 +342,7 @@ class ETHIndex {
      * @returns {ret: number, exp: number, point: number}
      */
     async query_hash_exp(timestamp, hash) {
-        const { ret, point } = 
-        await this._query_hash_point(timestamp, hash);
+        const { ret, point } = await this._query_hash_point(timestamp, hash);
         if (ret !== 0) {
             console.error(`failed to query hash point ${hash}`);
             return { ret };
@@ -368,6 +362,8 @@ class ETHIndex {
      * @returns {ret: number, point: number}
      */
     async _query_hash_point(timestamp, hash) {
+        assert(Util.is_valid_hex_mixhash(hash), `invalid hex hash ${hash}`);
+
         // find target block height for timestamp
         // if now found, we should wait for the block and retry
         let target_block_height;
@@ -382,10 +378,10 @@ class ETHIndex {
             }
 
             if (block_height == null) {
-
                 // if we have not fetch the first block yet, we should fetch the first block
                 if (this.first_block_timestamp == null) {
-                    const {ret, block_height, timestamp} = await this.storage.query_first_block();
+                    const { ret, block_height, timestamp } =
+                        await this.storage.query_first_block();
                     if (ret !== 0) {
                         console.error(`failed to query first eth block`);
                         return { ret };
@@ -395,7 +391,10 @@ class ETHIndex {
                 }
 
                 // on testnet this case maybe happen
-                if (this.first_block_timestamp != null && timestamp < this.first_block_timestamp) {
+                if (
+                    this.first_block_timestamp != null &&
+                    timestamp < this.first_block_timestamp
+                ) {
                     console.warn(
                         `timestamp ${timestamp} is less than first block timestamp ${this.first_block_timestamp}`,
                     );
@@ -427,7 +426,7 @@ class ETHIndex {
 
         if (point == 0) {
             console.warn(
-                `no point found for hash ${hash}`,
+                `no point found for hash ${target_block_height} ${hash}`,
             );
             return { ret: 0, point: 0 };
         }
