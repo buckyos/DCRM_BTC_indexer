@@ -1,5 +1,6 @@
 const assert = require('assert');
 const sqlite3 = require('sqlite3').verbose();
+const { Util } = require('../util');
 
 const UserHashRelation = {
     Owner: 0,
@@ -102,7 +103,7 @@ class UserHashRelationStorage {
     ) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
-        assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(
             _.isString(inscription_id),
             `inscription_id should be string: ${inscription_id}`,
@@ -135,7 +136,9 @@ class UserHashRelationStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
-                        console.log(`new relations ${address} ${hash} ${relation}`);
+                        console.log(
+                            `new relations ${address} ${hash} ${relation}`,
+                        );
                         resolve({
                             ret: 0,
                         });
@@ -154,7 +157,7 @@ class UserHashRelationStorage {
     async query_relation(address, hash) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
-        assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         return new Promise((resolve) => {
             this.db.get(
@@ -184,7 +187,7 @@ class UserHashRelationStorage {
     async update_to_owner(address, hash) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
-        assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         return new Promise((resolve) => {
             this.db.run(
@@ -228,7 +231,7 @@ class UserHashRelationStorage {
             _.isString(to_address),
             `to_address should be string: ${to_address}`,
         );
-        assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         // first delete new owner's relation if exists
         const { ret: delete_ret } = await this.delete_resonance(
@@ -251,7 +254,9 @@ class UserHashRelationStorage {
                         );
                         resolve({ ret: -1 });
                     } else {
-                        console.log(`owner relations updated successfully ${from_address} -> ${to_address} ${hash}`);
+                        console.log(
+                            `owner relations updated successfully ${from_address} -> ${to_address} ${hash}`,
+                        );
                         resolve({
                             ret: 0,
                         });
@@ -268,7 +273,7 @@ class UserHashRelationStorage {
      */
     async get_resonances_by_hash(hash) {
         assert(this.db != null, `db should not be null`);
-        assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         return new Promise((resolve) => {
             this.db.all(
@@ -322,7 +327,7 @@ class UserHashRelationStorage {
      */
     async get_resonance_count_by_hash(hash) {
         assert(this.db != null, `db should not be null`);
-        assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         return new Promise((resolve) => {
             this.db.get(
@@ -344,14 +349,14 @@ class UserHashRelationStorage {
 
     /**
      * @comment delete resonance relation if exists for (address, hash) pair
-     * @param {string} address 
-     * @param {string} hash 
+     * @param {string} address
+     * @param {string} hash
      * @returns {Promise<{ret: number, count: number}>}
      */
     async delete_resonance(address, hash) {
         assert(this.db != null, `db should not be null`);
         assert(_.isString(address), `address should be string: ${address}`);
-        assert(_.isString(hash), `hash should be string: ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         return new Promise((resolve) => {
             this.db.run(
@@ -372,7 +377,9 @@ class UserHashRelationStorage {
                                 ret: 0,
                             });
                         } else {
-                            console.log(`Resonance relations deleted successfully ${address} ${hash}`);
+                            console.log(
+                                `Resonance relations deleted successfully ${address} ${hash}`,
+                            );
                             resolve({
                                 ret: 0,
                             });

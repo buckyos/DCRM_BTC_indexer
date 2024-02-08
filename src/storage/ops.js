@@ -1,5 +1,5 @@
 const assert = require('assert');
-
+const { Util } = require('../util');
 
 class TokenOpsStorage {
     constructor(config) {
@@ -26,7 +26,7 @@ class TokenOpsStorage {
      * @returns {ret: number}
      */
     _init_tables() {
-       assert(this.db != null, `db should not be null`);
+        assert(this.db != null, `db should not be null`);
 
         return new Promise((resolve) => {
             this.db.serialize(() => {
@@ -194,7 +194,7 @@ class TokenOpsStorage {
         state,
     ) {
         assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(
             typeof inscription_id === 'string',
             `inscription_id should be string`,
@@ -206,7 +206,10 @@ class TokenOpsStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof txid === 'string', `txid should be string`);
         assert(typeof address === 'string', `address should be string`);
-        assert(typeof inner_amount === 'string', `inner_amount should be string`);
+        assert(
+            typeof inner_amount === 'string',
+            `inner_amount should be string`,
+        );
         assert(typeof op === 'string', `op should be string`);
         assert(
             Number.isInteger(state) && state >= 0,

@@ -790,7 +790,7 @@ class TokenIndexStorage {
         assert(typeof address === 'string', `address should be string`);
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof txid === 'string', `txid should be string`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(typeof content === 'string', `content should be string`);
         assert(
             BigNumberUtil.is_positive_number_string(mint_amount),
@@ -962,7 +962,7 @@ class TokenIndexStorage {
     ) {
         assert(this.db != null, `db should not be null`);
         assert(typeof inscription_id === 'string', `should be string`);
-        assert(typeof hash === 'string', `should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(
             Number.isInteger(block_height) && block_height >= 0,
             `should be non-negative integer`,
@@ -1102,7 +1102,7 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof txid === 'string', `txid should be string`);
         assert(typeof content === 'string', `content should be string`);
-        assert(typeof hash === 'string', `hash should be string ${hash}`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(
             BigNumberUtil.is_positive_number_string(user_bonus),
             `user_bonus should be positive number string ${user_bonus}`,
@@ -1527,7 +1527,7 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof txid === 'string', `txid should be string`);
         assert(typeof content === 'string', `content should be string`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(typeof address === 'string', `address should be string`);
         assert(
             BigNumberUtil.is_positive_number_string(price),
@@ -1663,7 +1663,7 @@ class TokenIndexStorage {
         assert(Number.isInteger(timestamp), `timestamp should be integer`);
         assert(typeof txid === 'string', `txid should be string`);
         assert(typeof address === 'string', `address should be string`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(typeof content === 'string', `content should be string`);
         assert(
             Number.isInteger(state) && state >= 0,
@@ -1844,7 +1844,7 @@ class TokenIndexStorage {
         resonance_count,
     ) {
         assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(
             typeof inscription_id === 'string',
             `inscription_id should be string`,
@@ -1912,7 +1912,7 @@ class TokenIndexStorage {
      */
     async set_inscribe_data_price(hash, price) {
         assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(
             BigNumberUtil.is_positive_number_string(price),
             `price should be positive number string: ${price}`,
@@ -1945,7 +1945,7 @@ class TokenIndexStorage {
      */
     async update_resonance_count(hash) {
         assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         const sql = `
                 UPDATE inscribe_data SET resonance_count = resonance_count + 1 WHERE hash = ? AND resonance_count < 15
@@ -1980,7 +1980,7 @@ class TokenIndexStorage {
      */
     async reset_resonance_count(hash, count) {
         assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(_.isNumber(count), `count should be number ${count}`);
         assert(count <= 15, `count should <= 15 ${count}`);
 
@@ -2030,7 +2030,7 @@ class TokenIndexStorage {
             _.isNumber(current_block_height),
             `current_block_height should be number`,
         );
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
         assert(typeof new_owner === 'string', `new_owner should be string`);
         assert(
             Number.isInteger(new_block_height),
@@ -2085,7 +2085,7 @@ class TokenIndexStorage {
      */
     async get_inscribe_data(hash) {
         assert(this.db != null, `db should not be null`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be valid hex mixhash: ${hash}`);
 
         const sql = `
                 SELECT * FROM inscribe_data WHERE hash = ?

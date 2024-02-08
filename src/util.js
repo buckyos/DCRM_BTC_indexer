@@ -347,6 +347,11 @@ class Util {
                 hash_str = hash_str.slice(2);
             }
 
+            const decoded = new Uint8Array(Buffer.from(hash_str, 'hex'));
+            if (decoded.length !== 32) {
+                return false;
+            }
+
             return true;
         } catch (err) {
             console.warn(`hash not a hex string ${hash_str} ${err}`);
@@ -354,6 +359,32 @@ class Util {
         }
     }
 
+    /**
+     * @comment check if the string is valid and strict hex mixhash, should not start with 0x or 0X
+     * @param {string} hash_str 
+     * @returns {boolean}
+     */
+    static is_valid_and_strict_hex_mixhash(hash_str) {
+        assert(_.isString(hash_str), `mixhash should be string ${hash_str}`);
+
+        // Try to decode as hex
+        try {
+            if (hash_str.startsWith('0x') || hash_str.startsWith('0X')) {
+                return false;
+            }
+
+            const decoded = new Uint8Array(Buffer.from(hash_str, 'hex'));
+            if (decoded.length !== 32) {
+                return false;
+            }
+
+            return true;
+        } catch (err) {
+            console.warn(`hash not a hex string ${hash_str} ${err}`);
+            return false;
+        }
+    }
+    
     /**
      *
      * @param {string} mixhash

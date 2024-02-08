@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const assert = require('assert');
 const path = require('path');
 const { ETH_INDEX_DB_FILE } = require('../constants');
+const { Util } = require('../util');
 
 class ETHIndexStorage {
     constructor(data_dir) {
@@ -138,7 +139,7 @@ class ETHIndexStorage {
             typeof block_height === 'number',
             `block_height should be number`,
         );
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be hex string: ${hash}`);
 
         return new Promise((resolve) => {
             this.db.get(
@@ -173,7 +174,7 @@ class ETHIndexStorage {
             `block_height should be number: ${block_height}`,
         );
         assert(block_height > 0, `block_height should be greater than 0`);
-        assert(typeof hash === 'string', `hash should be string`);
+        assert(Util.is_valid_and_strict_hex_mixhash(hash), `hash should be hex string: ${hash}`);
         assert(typeof amount === 'number', `amount should be number`);
 
         const { ret, point } = await this.get_history_point(
