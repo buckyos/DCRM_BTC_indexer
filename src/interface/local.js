@@ -11,6 +11,9 @@ const { UTXORetriever } = require('./utxo');
 const { TokenStat } = require('./stat');
 const { IncomeStat } = require('./income');
 
+// for better performance when query the latest block height for now
+const ETH_LATEST_BLOCK_TIMESTAMP_DIFF = 24;
+
 class StateService {
     constructor(config, executor) {
         assert(_.isObject(config), `invalid config: ${config}`);
@@ -283,7 +286,7 @@ class IndexLocalInterface {
             }
 
             // use the last block timestamp if t is not specified
-            const timestamp = t || (Util.get_now_as_timestamp() - 12);
+            const timestamp = t || (Util.get_now_as_timestamp() - ETH_LATEST_BLOCK_TIMESTAMP_DIFF);
             if (!_.isNumber(timestamp)) {
                 ctx.status = 400;
                 ctx.body = `Bad request: invalid timestamp ${timestamp}`;
@@ -332,7 +335,7 @@ class IndexLocalInterface {
             }
 
             // use the last block timestamp if t is not specified
-            const timestamp = body.timestamp || (Util.get_now_as_timestamp() - 12);
+            const timestamp = body.timestamp || (Util.get_now_as_timestamp() - ETH_LATEST_BLOCK_TIMESTAMP_DIFF);
             if (!_.isNumber(timestamp)) {
                 ctx.status = 400;
                 ctx.body = `Bad request: invalid timestamp ${timestamp}`;
