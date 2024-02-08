@@ -18,7 +18,7 @@ class ETHIndex {
         this.state_storage = new StateStorage(dir);
 
         this.current_block_height = 0;
-        this.eth_blocks_process_step = 64;
+        this.eth_blocks_process_step = 256;
 
         this.contract = undefined;
         this.lucky_mint_contract = undefined;
