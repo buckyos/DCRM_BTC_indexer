@@ -15,20 +15,24 @@ class RankStore {
 
         this.m_resonantRankList = {
             lastUpdateTime: 0,
-            list: null
+            list: null,
+            isUpdating: false
         };
     }
 
     async queryResonantRank(limit, offset) {
         try {
             const now = Date.now();
-            if (now - this.m_resonantRankList.lastUpdateTime > UPDATE_INTERVAL) {
+            if (now - this.m_resonantRankList.lastUpdateTime > UPDATE_INTERVAL &&
+                !this.m_resonantRankList.isUpdating) {
+                this.m_resonantRankList.isUpdating = true;
                 const list = await this._getResonantRankList();
                 //console.debug('resonant rank list:', list);
                 if (list) {
                     this.m_resonantRankList.list = list;
                     this.m_resonantRankList.lastUpdateTime = now;
                 }
+                this.m_resonantRankList.isUpdating = false;
             }
 
             const list = this.m_resonantRankList.list;
